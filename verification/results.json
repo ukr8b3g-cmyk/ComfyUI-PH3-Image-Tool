@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0-rc3",
+  "date": "2026-11-07",
+  "python_tests": 73,
+  "javascript_tests": 51,
+  "browser_regression_checks": 22,
+  "browser_brushup_checks": 22,
+  "browser_total_checks": 44,
+  "failures": 0,
+  "environment": {
+    "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+    "os": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "node": "22.16.0",
+    "chromium": "144.0.7559.96",
+    "Pillow": "12.3.0",
+    "numpy": "2.3.5",
+    "torch": "2.10.0+cpu",
+    "aiohttp": "3.13.3",
+    "playwright": "1.57.0"
+  },
+  "generation_in_browser_tests": "SIMULATED, no model inference",
+  "cpu_processing_and_encoding": "real implementation",
+  "user_report": "User confirmed preceding build works with supplied workflow; not counted as rc3 tool-run evidence",
+  "live_comfyui_rc3": false,
+  "windows_rc3": false,
+  "gpu_inference": false,
+  "onnx_inference": false,
+  "github_changed": false,
+  "runtime_dependencies_added": false
+}

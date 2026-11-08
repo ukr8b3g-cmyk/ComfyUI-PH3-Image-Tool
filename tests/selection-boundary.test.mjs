@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {selectionBoundary,rectangleMask} from '../web/selection.mjs';
+test('selection boundary outlines exterior and holes without tinting interior',()=>{const m=new Uint8ClampedArray(81).fill(255);m[40]=0;const p=selectionBoundary(m,9,9),alpha=i=>p[i*4+3];assert.equal(alpha(0),255);assert.equal(alpha(10),0);assert.equal(alpha(39),255);assert.equal(alpha(40),0);assert.equal(alpha(80),255);assert.ok(p.some((x,i)=>i%4===0&&x===255));});
+test('boundary handles disconnected regions, threshold and empty mask',()=>{const m=rectangleMask(10,10,1,1,4,4);m[88]=32;m[89]=31;const p=selectionBoundary(m,10,10);assert.equal(p[88*4+3],255);assert.equal(p[89*4+3],0);assert.equal(p[22*4+3],0);assert.ok(selectionBoundary(new Uint8ClampedArray(4),2,2).every(x=>x===0));});

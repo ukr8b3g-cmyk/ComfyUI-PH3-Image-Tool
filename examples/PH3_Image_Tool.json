@@ -1,0 +1,121 @@
+{
+  "id": "6e3e2e32-3450-4c68-a248-4dd316b50d13",
+  "revision": 0,
+  "last_node_id": 3,
+  "last_link_id": 1,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PH3ImageTool",
+      "pos": [
+        100,
+        180
+      ],
+      "size": [
+        370,
+        180
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "shape": 7,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "alpha",
+          "type": "MASK",
+          "links": null
+        },
+        {
+          "name": "selection",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PH3ImageTool"
+      },
+      "widgets_values": [
+        "",
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "type": "SaveImage",
+      "pos": [
+        600,
+        180
+      ],
+      "size": [
+        350,
+        300
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "PH3-Image-Tool"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "Note",
+      "pos": [
+        100,
+        -80
+      ],
+      "size": [
+        850,
+        200
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "1. Open PH3 Image Tool before queueing. Import an image or create a canvas.\n2. Select installed P-H3 models in Settings. Generate inside the editor; generation uses the normal ComfyUI queue.\n3. Adopt results, then Save / Apply to Node. Save this ComfyUI workflow too.\n4. Queue this workflow to send the committed RGB image to SaveImage. Use editor PNG export for alpha.\nOptional: connect an IMAGE upstream and execute once, then use Import input in the editor.\nRC: live ComfyUI/GPU/Windows acceptance testing remains required."
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

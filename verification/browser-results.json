@@ -1,0 +1,31 @@
+{
+  "environment": "Offline Chromium + actual CPU modules; simulated GPU response; localStorage replaced with an in-memory test store",
+  "checks": [
+    "editor opens without ComfyUI or models",
+    "local PNG import sets canvas and retains image layer",
+    "editable Japanese text layer",
+    "vector speech-bubble preset",
+    "Undo/Redo retains document state and advances revision",
+    "SFX, symbol, concentration-line and frame layers",
+    "CPU comic conversion creates a new layer, keeps original",
+    "connected-color cutout creates transparent image layer",
+    "rectangle selection persists as separate grayscale asset",
+    "settings bind installed model names without downloading anything",
+    "simulated P-H3 result attaches raw image plus editable mask",
+    "stale generation is kept as candidate, not auto-applied after editing",
+    "prompt-only changes invalidate pending automatic result application",
+    "locked layer rejects deletion and hides mutating property controls",
+    "AI-text generation is separate from image generation and keeps original text",
+    "Save/Apply commits native-resolution composite and editable project",
+    "close/reopen restores layers, mask, prompt and settings from disk",
+    "portable archive contains project assets and metadata",
+    "PNG export is original size, not reduced screen preview",
+    "desktop editor rendered and captured in Chromium",
+    "compact viewport remains inside window",
+    "no unhandled browser exceptions"
+  ],
+  "passed": 22,
+  "page_errors": [],
+  "gpu_tested": false,
+  "live_comfyui_tested": false
+}

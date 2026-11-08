@@ -1,0 +1,16 @@
+[project]
+name = "comfyui-ph3-image-tool"
+version = "0.2.0rc3+manga.1"
+description = "Local P-H3 single-image generation and layered editing tool for ComfyUI"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+# Runtime uses ComfyUI's existing Pillow, NumPy, PyTorch and aiohttp.
+# ONNX Runtime is an optional, preinstalled integration, never auto-installed.
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/ukr8b3g-cmyk/ComfyUI-PH3-Image-Tool"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"

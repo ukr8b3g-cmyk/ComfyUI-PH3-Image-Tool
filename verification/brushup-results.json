@@ -1,0 +1,31 @@
+{
+  "environment": "Offline Chromium + actual CPU processing/encoding; in-memory localStorage for test; no GPU or live ComfyUI",
+  "passed": 22,
+  "checks": [
+    "Graphical bubble gallery: 11 previews, search, cancel without edits; image processing buttons visible",
+    "Layer thumbnails remain visible under the Generation panel",
+    "Unmodified mouse wheel zooms about cursor without changing document revision",
+    "Middle drag and Space+drag pan the viewport without moving artwork",
+    "Alt+wheel rotates only the view; document bytes unchanged",
+    "Rectangle selection under a rotated view maps back to native image coordinates",
+    "Corner resize preserves the opposite anchor and aspect ratio",
+    "Side resize changes one dimension without shifting the opposite edge",
+    "Rotation handle rotates the selected layer, separately from view rotation",
+    "Delete, Ctrl+Z, and delivered mouse Back/Forward events perform Undo/Redo",
+    "Delete inside text input edits text, not the selected layer",
+    "Arrow nudges and Ctrl+D duplicate work without corrupting existing layers",
+    "Native comic/XDoG preview and controls are non-destructive; Cancel retains the source",
+    "Comic Apply processes 720×480 source, preserves layer transform and the hidden original",
+    "Background picker maps letterboxed preview correctly; cutout/edge preview and full-size alpha apply",
+    "PNG download preserves native dimensions and alpha, excludes checkerboard",
+    "Lossless WebP actual download equals PNG pixels including transparency",
+    "JPEG quality 70 uses chosen white matte and persists the export preference",
+    "Closing export during setup leaves no orphan modal or exceptions",
+    "Project save/reopen retains new presets, processing recipes, alpha and export settings",
+    "Compact 1000×760 layout keeps the processing tools and layer dock accessible",
+    "No unhandled Chromium exceptions"
+  ],
+  "page_errors": [],
+  "gpu_tested": false,
+  "live_comfyui_tested": false
+}

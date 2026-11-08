@@ -1,0 +1,135 @@
+{
+  "template": "Create a standalone Japanese manga sound-effect lettering design displaying exactly {text}.\n{reference}\n{layout}\n{style}\nPreserve every character, small kana, dakuten and punctuation exactly. Keep dakuten as two distinct strokes, never a handakuten circle. Do not add, remove, translate or replace any characters.\nKeep the complete design centered inside the middle 65 percent of the image with generous empty margins on all sides. No stroke, tip or decoration may touch or cross the image edges.\nUse solid black ink on a clean pure-white background. Black and white only, no grey shading. No people, scenery, logos, watermarks, page panels or additional text.",
+  "reference_on": "Preserve the exact lettering content, glyph silhouettes, small kana, dakuten and punctuation in <Picture 1>. Keep the established lettering style and arrangement. Modify only the requested decoration; do not redesign or replace the glyphs. If a new writing direction is explicitly requested, reflow the same readable characters into that direction.",
+  "reference_off": "Create the lettering from the text instruction alone.",
+  "horizontal": "Arrange the lettering horizontally, read from left to right. Follow explicit line breaks. Give individual characters lively spacing and slight expressive tilts while keeping the complete text readable.",
+  "vertical": "Arrange the lettering in exactly {rows} rows in one narrow upright column. Read each row once from top to bottom in this exact order: {units}. Each Japanese character stays upright, not rotated sideways. Keep small kana noticeably smaller. A final punctuation group occupies one shared row below the last kana, with its marks side by side.",
+  "presets": [
+    {
+      "id": "angular",
+      "ja": "太く鋭い",
+      "en": "Bold and angular",
+      "style": "Use bold solid-black hand-drawn strokes, angular silhouettes and sharp tapered ends, expressing a sudden impact or startled twitch. Lettering only: no surrounding speech bubble or border."
+    },
+    {
+      "id": "round",
+      "ja": "丸くポップ",
+      "en": "Round and playful",
+      "style": "Use bold, rounded, bouncy hand-drawn letters with playful individual tilts and clear counters. Lettering only: no surrounding speech bubble or border."
+    },
+    {
+      "id": "thin",
+      "ja": "細く繊細",
+      "en": "Thin and delicate",
+      "style": "Use thin, delicate hand-drawn strokes with nervous, uneven pressure and tapered ends. Keep every character distinct and readable. No surrounding speech bubble or border."
+    },
+    {
+      "id": "spiky",
+      "ja": "トゲ吹き出し",
+      "en": "Spiky speech bubble",
+      "style": "Use bold angular manga lettering. Add one spiky speech bubble around the text, with varied sharp tips, a black outline and white interior. Leave a clear gap between the letters and the outline, with generous outer margins around every tip."
+    },
+    {
+      "id": "thought",
+      "ja": "思考雲",
+      "en": "Thought cloud",
+      "style": "Use clear rounded manga lettering inside one hand-drawn thought cloud with a black outline and white interior. Keep cloud lobes smooth, with a clear gap around the lettering and generous outer margins."
+    },
+    {
+      "id": "vibration",
+      "ja": "周囲の振動線",
+      "en": "Surrounding vibration lines",
+      "style": "Use bold readable manga lettering. Add several thin, short wavering motion lines outside the letters to express a startled vibration. Keep the original letter strokes clean; the motion lines are separate and do not cover the text. No enclosing speech bubble."
+    },
+    {
+      "id": "wavy",
+      "ja": "文字自体の震え",
+      "en": "Trembling letter shapes",
+      "style": "Make the contours of the letters themselves slightly wavy and trembling, with nervous uneven edges and controlled stroke variation. Keep the text readable. Do not add separate motion lines or an enclosing speech bubble."
+    },
+    {
+      "id": "pop",
+      "ja": "ポップ",
+      "en": "Pop",
+      "style": "Use thick, rounded, bouncy Japanese display lettering with lively spacing, clear counters and playful individual tilts. Keep every character upright and recognizable. No surrounding symbols or extra text. DETACHED DAKUTEN: For every voiced kana such as ビ, make three disconnected black shapes: the kana body and two separate short dakuten strokes. Place BOTH dakuten entirely ABOVE the body. The bottom of EACH dakuten must be higher than the highest edge of the kana body. Leave a wide pure-white gap beneath both dakuten, at least one complete dakuten height, and a clear white gap between the two dakuten. The main kana upper arm ends well below the floating marks. Never attach, bridge, fuse or overlap either dakuten with the kana body. Do not turn dakuten into circles or punctuation."
+    },
+    {
+      "id": "cute",
+      "ja": "キュート",
+      "en": "Cute",
+      "style": "Use soft rounded Japanese lettering with plump strokes, small playful irregularities and a gentle cheerful rhythm. Preserve the exact characters, small kana and separate dakuten strokes. Do not replace dots or punctuation with hearts or stars."
+    },
+    {
+      "id": "fancy",
+      "ja": "ファンシー",
+      "en": "Fancy",
+      "style": "Use whimsical decorative Japanese display lettering with softly flared stroke ends and lively asymmetry. Maintain the complete legible glyph silhouettes; leave clear space between characters and punctuation. Do not add extra symbols."
+    }
+  ],
+  "styles": [
+    {
+      "id": "angular",
+      "ja": "太く鋭い",
+      "en": "Bold and angular",
+      "style": "Use bold hand-drawn manga strokes, angular silhouettes, sharp tapered ends and slight individual tilts. Keep every character and punctuation distinctly readable."
+    },
+    {
+      "id": "pop",
+      "ja": "ポップ",
+      "en": "Pop",
+      "style": "Use thick, rounded, bouncy Japanese display lettering with lively spacing, clear counters and playful individual tilts. Keep every character upright and recognizable. No surrounding symbols or extra text. DETACHED DAKUTEN: For every voiced kana such as ビ, make three disconnected black shapes: the kana body and two separate short dakuten strokes. Place BOTH dakuten entirely ABOVE the body. The bottom of EACH dakuten must be higher than the highest edge of the kana body. Leave a wide pure-white gap beneath both dakuten, at least one complete dakuten height, and a clear white gap between the two dakuten. The main kana upper arm ends well below the floating marks. Never attach, bridge, fuse or overlap either dakuten with the kana body. Do not turn dakuten into circles or punctuation."
+    },
+    {
+      "id": "cute",
+      "ja": "キュート",
+      "en": "Cute",
+      "style": "Use soft rounded Japanese lettering with plump strokes, small playful irregularities and a gentle cheerful rhythm. Preserve the exact characters, small kana and separate dakuten strokes. Do not replace dots or punctuation with hearts or stars."
+    },
+    {
+      "id": "fancy",
+      "ja": "ファンシー",
+      "en": "Fancy",
+      "style": "Use whimsical decorative Japanese display lettering with softly flared stroke ends and lively asymmetry. Maintain the complete legible glyph silhouettes; leave clear space between characters and punctuation. Do not add extra symbols."
+    },
+    {
+      "id": "thin",
+      "ja": "細く繊細",
+      "en": "Thin and delicate",
+      "style": "Use delicate hand-drawn strokes with nervous uneven pressure, clean counters and tapered ends. Preserve legibility and every mark."
+    }
+  ],
+  "decorations": [
+    {
+      "id": "none",
+      "ja": "なし",
+      "en": "None",
+      "style": "Do not add a surrounding bubble or motion lines."
+    },
+    {
+      "id": "spiky",
+      "ja": "トゲ吹き出し",
+      "en": "Spiky speech bubble",
+      "style": "Add a spiky speech bubble around the text. Draw one complete closed black outline with visible sharp spikes and a white interior. Keep the existing lettering intact inside it, including every character, detached dakuten and punctuation. Leave a clear white gap between the lettering and bubble outline, and generous outer margins around every tip. Do not turn dakuten into bubble tips or add punctuation for emphasis."
+    },
+    {
+      "id": "thought",
+      "ja": "思考雲",
+      "en": "Thought cloud",
+      "style": "Add one closed thought cloud around the lettering, with a black outline and white interior. Keep a clear gap around the lettering and generous margins around the complete cloud."
+    },
+    {
+      "id": "vibration",
+      "ja": "周囲の振動線",
+      "en": "Surrounding vibration lines",
+      "style": "Preserve the clean lettering. Add several thin short wavering motion lines outside the letters to express a startled vibration. Motion lines must remain separate from dakuten and punctuation. Do not add an enclosing bubble."
+    },
+    {
+      "id": "wavy",
+      "ja": "文字自体の震え",
+      "en": "Trembling letter shapes",
+      "style": "Make the contours of the letter strokes visibly irregular and trembling: repeated small waves along each stroke, rather than simply tilting whole glyphs. Preserve complete readable character shapes, separate dakuten strokes and the exact punctuation count. No external motion lines or enclosing bubble. A controlled raster tremble will also be applied after generation."
+    }
+  ],
+  "candidate_template": "Edit <Picture 1>. First scale the existing lettering down uniformly to occupy only the central half of the image, preserving every glyph. {style}\nPreserve the exact existing text {text}, its glyph shapes, small kana and punctuation. Keep both dakuten of each voiced kana detached from the main body and from each other, retaining clear pure-white gaps. Do not add, remove, translate or replace any character or punctuation.\n{layout}\nKeep the ENTIRE bubble and all spikes inside the central 70 percent of the image. Leave a thick continuous pure-white border on every side, at least 15 percent of the image width and height. Make the bubble smaller if necessary; never crop any spike. Solid black ink and white interior only, on a pure-white background. No people, scenery, logos, watermarks or additional text.",
+  "dakuten_priority": "PRIORITY: Make every dakuten visibly detached. Shift both short dakuten marks farther UP and RIGHT than standard typesetting, so their complete bounding boxes lie above and to the right of the main kana body. Leave a broad band of pure white between the body and both marks. Think of one lower base glyph plus two separately floating accents, never a connected font outline. Preserve the exact requested voiced kana and its two marks."
+}

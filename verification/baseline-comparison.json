@@ -1,0 +1,34 @@
+{
+  "baseline": "ComfyUI-PH3-Image-Tool-0.1.1-rc2.zip",
+  "baseline_sha256": "7f5172d23393a7c1e84da8f1a802fa7659b166388c0fd82a497f7215a6f1f28e",
+  "unchanged_files": {
+    "generation.py": {
+      "sha256": "8dbb55d9654112dcba27399c99ea4f3eea3d2527090026defd9f37172ac910ab",
+      "byte_identical": true
+    },
+    "nodes.py": {
+      "sha256": "ea4b312da2a6e12b1b83e88c13c22ce275bb259f994b09a50dae41e6782f3ad4",
+      "byte_identical": true
+    },
+    "storage.py": {
+      "sha256": "339ebb0b6304c3ad9686c476b5a9e2a6a5916135d2e0fcfdc09265fc9fc66450",
+      "byte_identical": true
+    },
+    "runtime.py": {
+      "sha256": "7e046a41e757db28633ecf643aa5458803561259eb279e33349e700ffa113168",
+      "byte_identical": true
+    },
+    "processing.py": {
+      "sha256": "b082e080a81c9af2253672d09832ebdf0ae6f65e02be92214bb729232a2b4f52",
+      "byte_identical": true
+    },
+    "web/extension.js": {
+      "sha256": "713f69da5e2bb0c992461a852c5f032b3bb251aee213eb75acc68c15169a2b53",
+      "byte_identical": true
+    }
+  },
+  "example_workflow_unchanged": true,
+  "user_workflow_parsed": true,
+  "user_workflow_modified_or_bundled": false,
+  "user_node_id_and_output_order_preserved": true
+}

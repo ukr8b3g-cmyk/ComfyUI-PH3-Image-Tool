@@ -1,0 +1,316 @@
+TAP version 13
+# Subtest: view roundtrip at 0 degrees
+ok 1 - view roundtrip at 0 degrees
+  ---
+  duration_ms: 1.21434
+  type: 'test'
+  ...
+# Subtest: view roundtrip at 30 degrees
+ok 2 - view roundtrip at 30 degrees
+  ---
+  duration_ms: 0.103255
+  type: 'test'
+  ...
+# Subtest: view roundtrip at -90 degrees
+ok 3 - view roundtrip at -90 degrees
+  ---
+  duration_ms: 0.158699
+  type: 'test'
+  ...
+# Subtest: view roundtrip at 180 degrees
+ok 4 - view roundtrip at 180 degrees
+  ---
+  duration_ms: 0.080251
+  type: 'test'
+  ...
+# Subtest: zoom about pointer retains anchor after rotation and pan
+ok 5 - zoom about pointer retains anchor after rotation and pan
+  ---
+  duration_ms: 1.480211
+  type: 'test'
+  ...
+# Subtest: view rotation retains anchor
+ok 6 - view rotation retains anchor
+  ---
+  duration_ms: 0.147292
+  type: 'test'
+  ...
+# Subtest: fit respects rotated extents
+ok 7 - fit respects rotated extents
+  ---
+  duration_ms: 0.344489
+  type: 'test'
+  ...
+# Subtest: wheel normalizes line and page units and clamps extremes
+ok 8 - wheel normalizes line and page units and clamps extremes
+  ---
+  duration_ms: 0.184588
+  type: 'test'
+  ...
+# Subtest: resize nw preserves opposite anchor at 38 degrees
+ok 9 - resize nw preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.464851
+  type: 'test'
+  ...
+# Subtest: resize n preserves opposite anchor at 38 degrees
+ok 10 - resize n preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.363988
+  type: 'test'
+  ...
+# Subtest: resize ne preserves opposite anchor at 38 degrees
+ok 11 - resize ne preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.130367
+  type: 'test'
+  ...
+# Subtest: resize e preserves opposite anchor at 38 degrees
+ok 12 - resize e preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.090276
+  type: 'test'
+  ...
+# Subtest: resize se preserves opposite anchor at 38 degrees
+ok 13 - resize se preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.057586
+  type: 'test'
+  ...
+# Subtest: resize s preserves opposite anchor at 38 degrees
+ok 14 - resize s preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.044276
+  type: 'test'
+  ...
+# Subtest: resize sw preserves opposite anchor at 38 degrees
+ok 15 - resize sw preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.089675
+  type: 'test'
+  ...
+# Subtest: resize w preserves opposite anchor at 38 degrees
+ok 16 - resize w preserves opposite anchor at 38 degrees
+  ---
+  duration_ms: 0.041713
+  type: 'test'
+  ...
+# Subtest: corner ratio-lock and free resize differ without translating fixed anchor
+ok 17 - corner ratio-lock and free resize differ without translating fixed anchor
+  ---
+  duration_ms: 0.186791
+  type: 'test'
+  ...
+# Subtest: ported grayscale keeps alpha and source bytes
+ok 18 - ported grayscale keeps alpha and source bytes
+  ---
+  duration_ms: 1.22726
+  type: 'test'
+  ...
+# Subtest: ported monochrome keeps alpha and source bytes
+ok 19 - ported monochrome keeps alpha and source bytes
+  ---
+  duration_ms: 0.356377
+  type: 'test'
+  ...
+# Subtest: ported comic keeps alpha and source bytes
+ok 20 - ported comic keeps alpha and source bytes
+  ---
+  duration_ms: 0.702058
+  type: 'test'
+  ...
+# Subtest: ported xdog keeps alpha and source bytes
+ok 21 - ported xdog keeps alpha and source bytes
+  ---
+  duration_ms: 0.183707
+  type: 'test'
+  ...
+# Subtest: zero strength is byte-identical
+ok 22 - zero strength is byte-identical
+  ---
+  duration_ms: 0.293362
+  type: 'test'
+  ...
+# Subtest: upstream grayscale equation including white under alpha
+ok 23 - upstream grayscale equation including white under alpha
+  ---
+  duration_ms: 0.111428
+  type: 'test'
+  ...
+# Subtest: monochrome produces binary RGB
+ok 24 - monochrome produces binary RGB
+  ---
+  duration_ms: 0.188004
+  type: 'test'
+  ...
+# Subtest: comic invalid buffers and unbounded options rejected
+ok 25 - comic invalid buffers and unbounded options rejected
+  ---
+  duration_ms: 0.293442
+  type: 'test'
+  ...
+# Subtest: edge no-op preserves source and uses supplied alpha
+ok 26 - edge no-op preserves source and uses supplied alpha
+  ---
+  duration_ms: 0.89587
+  type: 'test'
+  ...
+# Subtest: white matte correction recovers red without alpha loss
+ok 27 - white matte correction recovers red without alpha loss
+  ---
+  duration_ms: 0.105118
+  type: 'test'
+  ...
+# Subtest: black matte correction unpremultiplies color
+ok 28 - black matte correction unpremultiplies color
+  ---
+  duration_ms: 0.118719
+  type: 'test'
+  ...
+# Subtest: cutout shape validation
+ok 29 - cutout shape validation
+  ---
+  duration_ms: 0.193672
+  type: 'test'
+  ...
+# Subtest: contracted edges and inside feather never restore removed pixels
+ok 30 - contracted edges and inside feather never restore removed pixels
+  ---
+  duration_ms: 0.352842
+  type: 'test'
+  ...
+# Subtest: defringe borrows interior color but does not alter alpha
+ok 31 - defringe borrows interior color but does not alter alpha
+  ---
+  duration_ms: 0.737241
+  type: 'test'
+  ...
+# Subtest: bounded history and non-revivable canvas revisions
+ok 32 - bounded history and non-revivable canvas revisions
+  ---
+  duration_ms: 1.152026
+  type: 'test'
+  ...
+# Subtest: new edit after undo discards redo branch
+ok 33 - new edit after undo discards redo branch
+  ---
+  duration_ms: 0.123436
+  type: 'test'
+  ...
+# Subtest: history byte budget prevents unlimited metadata copies
+ok 34 - history byte budget prevents unlimited metadata copies
+  ---
+  duration_ms: 0.248244
+  type: 'test'
+  ...
+# Subtest: rotated coordinate roundtrip
+ok 35 - rotated coordinate roundtrip
+  ---
+  duration_ms: 1.986775
+  type: 'test'
+  ...
+# Subtest: stale generation refused after undo revision advances
+ok 36 - stale generation refused after undo revision advances
+  ---
+  duration_ms: 0.302125
+  type: 'test'
+  ...
+# Subtest: candidate layer keeps raw image and separate selection mask
+ok 37 - candidate layer keeps raw image and separate selection mask
+  ---
+  duration_ms: 0.216647
+  type: 'test'
+  ...
+# Subtest: seed rejects silent integer precision loss
+ok 38 - seed rejects silent integer precision loss
+  ---
+  duration_ms: 0.440895
+  type: 'test'
+  ...
+# Subtest: canvas size limits
+ok 39 - canvas size limits
+  ---
+  duration_ms: 0.169706
+  type: 'test'
+  ...
+# Subtest: layer reorder respects boundaries
+ok 40 - layer reorder respects boundaries
+  ---
+  duration_ms: 0.473694
+  type: 'test'
+  ...
+# Subtest: rectangular selection clips to canvas
+ok 41 - rectangular selection clips to canvas
+  ---
+  duration_ms: 0.855569
+  type: 'test'
+  ...
+# Subtest: ellipse stays inside box
+ok 42 - ellipse stays inside box
+  ---
+  duration_ms: 0.220152
+  type: 'test'
+  ...
+# Subtest: polygon point test
+ok 43 - polygon point test
+  ---
+  duration_ms: 0.144979
+  type: 'test'
+  ...
+# Subtest: lasso selection bounded
+ok 44 - lasso selection bounded
+  ---
+  duration_ms: 0.21896
+  type: 'test'
+  ...
+# Subtest: selection combine operations
+ok 45 - selection combine operations
+  ---
+  duration_ms: 0.228435
+  type: 'test'
+  ...
+# Subtest: invert twice restores mask
+ok 46 - invert twice restores mask
+  ---
+  duration_ms: 0.124408
+  type: 'test'
+  ...
+# Subtest: brush leaves outside untouched
+ok 47 - brush leaves outside untouched
+  ---
+  duration_ms: 0.359733
+  type: 'test'
+  ...
+# Subtest: generated image is inserted below editable text and decorations
+ok 48 - generated image is inserted below editable text and decorations
+  ---
+  duration_ms: 0.224339
+  type: 'test'
+  ...
+# Subtest: prompt edits permanently invalidate a pending result, including edit-back
+ok 49 - prompt edits permanently invalidate a pending result, including edit-back
+  ---
+  duration_ms: 0.174753
+  type: 'test'
+  ...
+# Subtest: first use selects unambiguous installed P-H3 model variants only
+ok 50 - first use selects unambiguous installed P-H3 model variants only
+  ---
+  duration_ms: 0.553234
+  type: 'test'
+  ...
+# Subtest: ambiguous duplicate model names are never silently chosen
+ok 51 - ambiguous duplicate model names are never silently chosen
+  ---
+  duration_ms: 0.211779
+  type: 'test'
+  ...
+1..51
+# tests 51
+# suites 0
+# pass 51
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 84.902094
