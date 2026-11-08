@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-09",
+  "method": "Chrome live ComfyUI editor; T2I, spiky-bubble composition, layer adoption and PNG export",
+  "real_gpu_jobs": 4,
+  "all_jobs_succeeded": true,
+  "source_text": "ビクッ!!",
+  "t2i_seeds": {
+    "horizontal": 480282021876860,
+    "vertical": 1867749871112545
+  },
+  "results": [
+    {
+      "kind": "vertical",
+      "seed": 1867749871112545,
+      "glyph_pixels_identical": true,
+      "edge_clipped": false,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "glyph_rect": {
+        "x": 1034,
+        "y": 525,
+        "w": 311,
+        "h": 1055
+      },
+      "export_mode": "RGBA",
+      "export_size": [
+        1024,
+        1024
+      ],
+      "export_alpha_extrema": [
+        0,
+        255
+      ],
+      "export_bbox": [
+        393,
+        279,
+        631,
+        489
+      ],
+      "export_sha256": "8d8f66e141b04b2d1d876e749c1c6a707e2679b577de65c12b8c391f1e3b9c2c"
+    },
+    {
+      "kind": "horizontal",
+      "seed": 1867749871112545,
+      "glyph_pixels_identical": true,
+      "edge_clipped": false,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "glyph_rect": {
+        "x": 505,
+        "y": 776,
+        "w": 992,
+        "h": 367
+      },
+      "export_mode": "RGBA",
+      "export_size": [
+        1024,
+        1024
+      ],
+      "export_alpha_extrema": [
+        0,
+        255
+      ],
+      "export_bbox": [
+        421,
+        297,
+        603,
+        471
+      ],
+      "export_sha256": "47bcc0f0986be88682ce254ecc53e25292d127378236385d730ecaad5e10ce6b"
+    }
+  ],
+  "portable_project_retains_original_lettering": true,
+  "node_launch": "User clicked the canvas-rendered launch button; remaining actions used Chrome UI",
+  "code_fix_required": false,
+  "pixel_equality_scope": "Native composite glyph rectangle, before canvas placement scaling"
+}

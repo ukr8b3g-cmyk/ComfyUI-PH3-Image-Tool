@@ -4,7 +4,9 @@
 
 文字プロパティの「AI効果文字」で、文字・プリセット・縦横・色/グラデーションを選んでT2I生成できます。参照は初期オフです。生成した候補へトゲ/思考吹き出しを追加する際は、AIには空の枠だけを生成させ、元文字を描き直さず合成します。
 
-横書き・縦書きの「ビクッ!!」をSeed42/43/44で実GPU検証し、各3/3で濁点分離、感嘆符2個、文字領域の全画素一致、端切れなし、外側透過を確認しました。Python126件・JavaScript99件成功。GPU検証は標準API経由で、更新後の実エディター画面からの操作確認は未実施です。[検証方法と制約](docs/PRESERVED_LETTERING_VALIDATION_JA.md)。
+横書き・縦書きの「ビクッ!!」をSeed42/43/44で実GPU検証し、各3/3で濁点分離、感嘆符2個、文字領域の全画素一致、端切れなし、外側透過を確認しました。Python126件・JavaScript99件成功。さらに2026-11-09、Chromeの実エディターで横書き・縦書きのT2I生成→候補へのトゲ吹き出し追加→レイヤー採用→透過PNG書き出しを確認しました。実GPU4ジョブが成功し、元文字の全画素一致、濁点分離、感嘆符2個、端切れなし、1024×1024 RGBAの外側透過・内側の白を確認しています。再編集用プロジェクトにも元文字資産を保持しています。[検証条件・実出力](docs/PRESERVED_LETTERING_VALIDATION_JA.md#chrome実エディターの受入確認--2026-11-09)。
+
+**Live editor validation (2026-11-09):** Horizontal and vertical ビクッ!! were generated, decorated with a spiky bubble, adopted as layers and exported as transparent PNGs through the real Chrome editor. All four P-H3 jobs passed. The original glyph region remained pixel-identical; both exported PNGs retain transparent exteriors and opaque white bubble interiors. See the [validation record and exported images](docs/PRESERVED_LETTERING_VALIDATION_JA.md).
 
 導入/更新後は作品を保存してComfyUIを再起動し、Ctrl+F5で再読み込みしてください。以下のrc3/editor.1記録は過去の移植段階の記録です。
 
