@@ -1,3 +1,4 @@
+import {isDecorationLayer} from './core.mjs?v=9d2b3fb59c01be4a';
 import {drawSourceSpeed} from './source-speed.mjs?v=8ed0e47f8bb24088';
 import {drawSourceBubble} from './source-bubbles.mjs?v=8ed0e47f8bb24088';
 import {drawSourceText} from './source-text.mjs?v=8ed0e47f8bb24088';
@@ -96,7 +97,7 @@ export function drawLayer(ctx,l,rasters) {
 export function drawDocument(ctx,doc,rasters,{includeText=true,background=true}={}) {
   ctx.clearRect(0,0,doc.width,doc.height);
   if(background&&!doc.transparent){ctx.fillStyle=doc.background;ctx.fillRect(0,0,doc.width,doc.height);}
-  for(const l of doc.layers)if(includeText||l.type==='image')drawLayer(ctx,l,rasters);
+  for(const l of doc.layers)if(includeText||!isDecorationLayer(l))drawLayer(ctx,l,rasters);
 }
 export async function exportCanvas(doc,cache,options={}) {
   await prepareFonts(doc);

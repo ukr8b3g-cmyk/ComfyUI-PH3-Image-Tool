@@ -1,6 +1,19 @@
 // Pure document state; image bytes live in the local content-addressed store.
 export const VERSION = 1;
 export const MAX_PIXELS = 16777216;
+export const MAX_LAYERS = 256;
+export function ensureLayerCapacity(doc, count=1) {
+  if (!Number.isInteger(count) || count < 0) throw Error('Invalid layer count');
+  if (doc.layers.length + count > MAX_LAYERS) throw Error('Layer limit: 256');
+}
+// Raster stamps and AI lettering are decoration even though their type is image.
+export function isDecorationLayer(layer) {
+  return layer.type !== 'image' || layer.decoration === true || layer.generation?.mode === 'lettering';
+}
+export function imageInsertionIndex(doc) {
+  const first = doc.layers.findIndex(isDecorationLayer);
+  return first < 0 ? doc.layers.length : first;
+}
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const uid = () => {const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('');};
 export const clamp = (n, low, high) => Math.min(high, Math.max(low, Number(n) || 0));
@@ -65,7 +78,7 @@ export function layerFromCandidate(doc, job, index=0) {
         mask_asset:req.mask_asset,generation_size:req.generation_size,region:req.region,...(req.mode==='lettering'?{preserved_lettering_asset:item.preserved_lettering_asset,glyph_rect:item.glyph_rect,lettering:req.lettering,source_layer_id:req.source_layer?.id,parent_job_id:req.parent_job_id,parent_result_index:req.parent_result_index,finish_only:!!req.finish_only}:{} )}});
 }
 export function addLetteringLayer(doc,job,index,name){
-    if(doc.layers.length>=256)throw Error('Layer limit: 256');
+    ensureLayerCapacity(doc);
     const layer=layerFromCandidate(doc,job,index);layer.name=name;
     const unchanged=snapshot=>{const current=doc.layers.find(l=>l.id===snapshot?.id);return current&&!current.locked&&JSON.stringify(current)===JSON.stringify(snapshot)?current:null;};
     const parent=unchanged(job.request.parent_layer),source=unchanged(job.request.source_layer);
@@ -87,8 +100,9 @@ export function randomSeed(){const v=new Uint32Array(2);crypto.getRandomValues(v
 export function contentSignature(doc){return JSON.stringify([doc.width,doc.height,doc.background,doc.transparent,doc.layers,doc.selection_asset]);}
 
 export function insertImageLayer(doc, layer) {
-  let index=-1;doc.layers.forEach((item,i)=>{if(item.type==='image')index=i;});
-  doc.layers.splice(index+1,0,layer);
+  ensureLayerCapacity(doc);
+  // Do not reorder the user's existing stack. Insert beneath its first decoration.
+  doc.layers.splice(imageInsertionIndex(doc),0,layer);
 }
 
 // Every editing instruction change invalidates pending results, even if later restored.

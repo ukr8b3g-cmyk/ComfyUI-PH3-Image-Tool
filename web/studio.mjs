@@ -4,16 +4,16 @@ import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=8ed0e47f8bb240
 import {editorShortcut} from './shortcuts.mjs?v=8ed0e47f8bb24088';
 import {SOURCE_ASSETS} from './source-assets.mjs?v=8ed0e47f8bb24088';
 import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=8ed0e47f8bb24088';
-import {moveLayerRelative,clone,uid,makeLayer,History,checkSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=8ed0e47f8bb24088';
+import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=9d2b3fb59c01be4a';
 import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=8ed0e47f8bb24088';
-import {RasterCache,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=8ed0e47f8bb24088';
+import {RasterCache,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=9d2b3fb59c01be4a';
 import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=8ed0e47f8bb24088';
 import {t} from './i18n.mjs?v=8ed0e47f8bb24088';
 import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=8ed0e47f8bb24088';
 import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=8ed0e47f8bb24088';
 import {openProcessing} from './processing-ui.mjs?v=8ed0e47f8bb24088';
 import {openManga} from './manga-ui.mjs?v=8ed0e47f8bb24088';
-import {addMangaLayers} from './manga-core.mjs?v=8ed0e47f8bb24088';
+import {addMangaLayers} from './manga-core.mjs?v=9d2b3fb59c01be4a';
 
 const styleURL=new URL('./style.css'+new URL(import.meta.url).search,import.meta.url).href;
 const el=(tag,cls='',text=null)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==null)e.textContent=text;return e;};
@@ -25,6 +25,17 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   let record=projectId?await client.get('/projects/'+projectId):await client.post('/projects',{});
   let doc=clone(record.document);if(hostLocale)doc.settings.locale=String(hostLocale).toLowerCase().startsWith('ja')?'ja':'en';
   let savedText=JSON.stringify(doc),selected=null,tool='move',operation='replace',zoom=1;
+  // Capture recovery data before any asynchronous bootstrap work or auto defaults.
+  let draftRecovery=readDraftRecovery(record);
+  function readDraftRecovery(saved) {
+    const key='ph3-tool:draft:'+saved.id;
+    try {
+      const raw=localStorage.getItem(key);if(!raw)return null;
+      let draft=null;try{draft=JSON.parse(raw);}catch{}
+      if(draft?.document&&JSON.stringify(draft.document)===JSON.stringify(saved.document))return null;
+      return {id:saved.id,key,raw,draft}; // Preserve malformed drafts for explicit export/discard too.
+    } catch {return null;}
+  }
   let pixelOptions={tolerance:30,contiguous:true,merged:true,antialias:true};
   try{Object.assign(pixelOptions,JSON.parse(localStorage.getItem('ph3-tool:pixel-selection')||'{}'));}catch{}
   let view={zoom:1,x:0,y:0,angle:0},viewDrag=null,layerClipboard=null;
@@ -53,7 +64,65 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     try{return await fn();}finally{busy--;disabled.forEach(([x,v])=>{if(x.isConnected)x.disabled=v;});updateToolbar();}
   }
   function dirty(){return JSON.stringify(doc)!==savedText;}
-  function stashDraft(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>{if(closed)return;try{localStorage.setItem('ph3-tool:draft:'+record.id,JSON.stringify({revision:record.revision,document:doc}));}catch{status('Draft storage unavailable; use Save or Export project.',true);}},350);}
+  function stashDraft(){
+    clearTimeout(draftTimer);if(draftRecovery)return;
+    const id=record.id;
+    draftTimer=setTimeout(()=>{
+      if(closed||draftRecovery||record.id!==id)return;
+      try{localStorage.setItem('ph3-tool:draft:'+id,JSON.stringify({revision:record.revision,document:doc}));}
+      catch{status('Draft storage unavailable; use Save or Export project.',true);}
+    },350);
+  }
+  function suggestModels(){
+    if(!catalog||draftRecovery||closed)return;
+    const suggested=suggestInstalledPH3Models(doc.settings,catalog);
+    if(suggested.selected.length)commit(d=>{d.settings=suggested.settings;},{canvasChange:false,refresh:false});
+    if(!ph3ModelReadiness(doc.settings,catalog).ready)status(tr('setupFirst'),true);
+  }
+  function offerDraftRecovery(){
+    const pending=draftRecovery;if(!pending||pending.id!==record.id)return;
+    const {body,actions,finish,box}=modal(tr('recoverDraft'));let resolved=false;
+    const ja=doc.settings.locale!=='en';
+    body.append(el('p','',pending.draft?.document?tr(pending.draft.revision===record.revision?'recoverDraftHelp':'recoverCopyHelp'):
+      (ja?'下書きを読み取れません。退避するか、明示的に破棄してください。':'The draft cannot be read. Download it or explicitly discard it.')));
+    // Closing the recovery prompt must never mean permission to replace the draft.
+    box.addEventListener('ph3-close',()=>{if(!resolved)queueMicrotask(()=>{if(!closed)requestClose();});},{once:true});
+    const backup=el('button','',ja?'下書きJSONを退避':'Download draft JSON');
+    backup.onclick=()=>download(new Blob([pending.raw],{type:'application/json'}),'PH3-recovery-draft.json');
+    const discard=el('button','',ja?'下書きを破棄':'Discard draft');
+    discard.onclick=()=>{
+      if(busy)return;
+      try{
+        if(localStorage.getItem(pending.key)!==pending.raw)throw Error(ja?'別の画面で下書きが変更されました。開き直してください。':'The draft changed in another editor. Reopen the project.');
+        localStorage.removeItem(pending.key);draftRecovery=null;resolved=true;finish();suggestModels();
+      }catch(error){fail(error);}
+    };
+    actions.prepend(backup,discard);
+    if(pending.draft?.document){
+      const restore=el('button','primary',tr('restoreDraft'));
+      restore.onclick=async()=>{
+        if(busy)return;
+        try{await withBusy(async()=>{
+          if(pending.id!==record.id)throw Error(tr('processingConflict'));
+          const recovered=clone(pending.draft.document);
+          checkSize(recovered.width,recovered.height);ensureLayerCapacity(recovered,0);
+          if(pending.draft.revision!==record.revision){
+            const copy=await client.post('/projects',{document:recovered});
+            // The old draft remains recoverable until its new copy is safely stored.
+            resolved=true;finish();await switchRecord(copy);
+            try{if(localStorage.getItem(pending.key)===pending.raw)localStorage.removeItem(pending.key);}catch{}
+          }else{
+            const previous=doc;
+            doc=recovered;
+            try{await restoreSelection();}catch(error){doc=previous;await restoreSelection();throw error;}
+            doc.canvas_revision=Math.max(previous.canvas_revision,doc.canvas_revision)+1;
+            history.clear();draftRecovery=null;resolved=true;finish();syncPrompt();localize();await renderAll();fit();stashDraft();
+          }
+        });suggestModels();}catch(error){fail(error);}
+      };
+      actions.prepend(restore);
+    }
+  }
   function commit(fn,{canvasChange=true,refresh=true}={}){
     const previous=new Map(doc.layers.filter(l=>l.type==='text').map(l=>[l.id,textLayoutSignature(l)]));history.record(doc);fn(doc);for(const l of doc.layers)if(l.type==='text'&&!l.locked&&l.autoFit!==false&&previous.get(l.id)!==textLayoutSignature(l))fitTextBox(textMeasure,l);if(canvasChange)doc.canvas_revision++;
     stashDraft();if(refresh){renderAll();}else updateToolbar();
@@ -111,6 +180,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   async function undo(){if(gesture||pan||viewDrag){cancelGesture();return;}const previous=history.undo(doc);if(!previous)return;doc=previous;selected=null;await restoreSelection();syncPrompt();stashDraft();await renderAll();}
   async function redo(){if(gesture||pan||viewDrag){cancelGesture();return;}const next=history.redo(doc);if(!next)return;doc=next;selected=null;await restoreSelection();syncPrompt();stashDraft();await renderAll();}
   async function saveRecord(apply=true){
+    if(draftRecovery)throw Error(tr('recoverDraftHelp'));
     const snapshot=clone(doc),flat=await exportCanvas(snapshot,cache),image=await client.upload(await toBlob(flat));snapshot.composite_asset=image.asset;
     const next=await client.put('/projects/'+record.id,{revision:record.revision,document:snapshot});
     record=next;doc=clone(next.document);savedText=JSON.stringify(doc);clearTimeout(draftTimer);try{localStorage.removeItem('ph3-tool:draft:'+record.id);}catch{}
@@ -118,7 +188,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     updateToolbar();status(tr('saved'));return next;
   }
   async function save(){await withBusy(()=>saveRecord(true),'saving');}
-  async function saveCopy(){await withBusy(async()=>{const flat=await exportCanvas(doc,cache),info=await client.upload(await toBlob(flat));doc.composite_asset=info.asset;record=await client.post('/projects',{document:doc});savedText=JSON.stringify(doc);if(!detached&&onApply)await onApply(record);updateToolbar();status(tr('saved'));},'saving');}
+  async function saveCopy(){if(draftRecovery)throw Error(tr('recoverDraftHelp'));await withBusy(async()=>{clearTimeout(draftTimer);const flat=await exportCanvas(doc,cache),info=await client.upload(await toBlob(flat));doc.composite_asset=info.asset;record=await client.post('/projects',{document:doc});savedText=JSON.stringify(doc);if(!detached&&onApply)await onApply(record);updateToolbar();status(tr('saved'));},'saving');}
   async function exportProject(){await withBusy(async()=>{await saveRecord(true);download(await client.archive(record.id),(doc.title||'project')+'.ph3tool');});}
   async function exportImage(){
     const snapshot=clone(doc),{body,actions,finish,box}=modal(tr('export'));box.classList.add('ph3-export-modal');
@@ -144,7 +214,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     saveFile.onclick=()=>{if(!blob||encodedKey!==JSON.stringify(options))return;download(blob,(snapshot.title||'image').replace(/[\\/:*?"<>|]/g,'_')+'.'+(options.format==='jpeg'?'jpg':options.format));commit(d=>{d.settings.export_format=options.format;d.settings.export_quality=options.quality/100;d.settings.png_compression=options.png_compression;d.settings.webp_lossless=options.webp_lossless;},{canvasChange:false,refresh:false});finish();status(tr('exported'));};
     refresh();await encode();
   }
-  async function switchRecord(next){record=next;doc=clone(next.document);savedText=JSON.stringify(doc);selected=null;history.clear();cache.dispose();jobs=[];currentJobs.clear();await restoreSelection();syncPrompt();localize();await loadJobs();await renderAll();fit();}
+  async function switchRecord(next){clearTimeout(draftTimer);record=next;doc=clone(next.document);savedText=JSON.stringify(doc);draftRecovery=readDraftRecovery(record);selected=null;history.clear();cache.dispose();jobs=[];currentJobs.clear();await restoreSelection();syncPrompt();localize();await loadJobs();await renderAll();fit();suggestModels();offerDraftRecovery();}
   function confirmSwitch(){return !dirty()||confirm(tr('confirmNew'));}
   async function newProject(){
     const {body,actions,finish}=modal(tr('newProject'));
@@ -165,17 +235,19 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     for(const item of list){const b=el('button','',`${item.title} — ${new Date(item.saved_at*1000).toLocaleString()}`);b.style.display='block';b.style.width='100%';b.style.marginTop='6px';b.onclick=async()=>{if(!confirmSwitch())return;finish();try{await withBusy(async()=>switchRecord(await client.get('/projects/'+item.id)));}catch(e){fail(e);}};body.append(b);}
   }
   async function addImage(info,name='Image'){
+    ensureLayerCapacity(doc);
     commit(d=>{if(!d.layers.length){checkSize(info.width,info.height);d.width=info.width;d.height=info.height;d.selection_asset=null;selection=new Uint8ClampedArray(d.width*d.height);invalidate();}
       const scale=Math.min(1,d.width/info.width,d.height/info.height),w=info.width*scale,h=info.height*scale;
       const layer=makeLayer('image',d.width,d.height,{asset:info.asset,name,w,h,x:(d.width-w)/2,y:(d.height-h)/2});insertImageLayer(d,layer);selected=layer.id;});await renderAll();fit();modeSelect.value='full';
   }
   async function importImages(files=null){files??=await filePicker('image/png,image/jpeg,image/webp',true);if(!files.length)return;
+    ensureLayerCapacity(doc,files.length);
     await withBusy(async()=>{for(const f of files){const info=await client.upload(f,f.name);await addImage(info,f.name.replace(/\.[^.]+$/,''));}});status(tr('loaded'));
   }
-  async function importStamp(){const files=await filePicker('image/png,image/webp',true);if(!files.length)return;await withBusy(async()=>{for(const file of files){const info=await client.upload(file,file.name);const scale=Math.min(doc.width*.3/info.width,doc.height*.3/info.height,1);addObject('image',{asset:info.asset,name:file.name,w:info.width*scale,h:info.height*scale,decoration:true});}});status(tr('loaded'));}
+  async function importStamp(){const files=await filePicker('image/png,image/webp',true);if(!files.length)return;ensureLayerCapacity(doc,files.length);await withBusy(async()=>{for(const file of files){const info=await client.upload(file,file.name);const scale=Math.min(doc.width*.3/info.width,doc.height*.3/info.height,1);addObject('image',{asset:info.asset,name:file.name,w:info.width*scale,h:info.height*scale,decoration:true});}});status(tr('loaded'));}
   async function importInput(){if(!inputAsset){status(tr('noInput'),true);return;}await withBusy(()=>addImage(inputAsset,'ComfyUI input'));}
   function addObject(type,overrides={}){
-    if(doc.layers.length>=256)throw Error('Layer limit: 256');
+    ensureLayerCapacity(doc);
     commit(d=>{const layer=makeLayer(type,d.width,d.height,overrides);d.layers.push(layer);selected=layer.id;});tool='move';setTool('move');showTab('properties');
   }
   function presetModal(type,choices,applyToSelected=false){const {body,finish,box}=modal(tr(type),{dismissOutside:true,drawer:true});box.classList.add('ph3-gallery-modal');
@@ -195,7 +267,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     function populate(){grid.replaceChildren();for(const asset of SOURCE_ASSETS.filter(a=>a.category===category&&JSON.stringify([a.name,a.labels]).toLowerCase().includes(search.value.toLowerCase()))){
       const label=asset.labels?.[doc.settings.locale]||asset.name;const url=new URL('./source-assets/'+asset.path,import.meta.url),b=el('button','ph3-preset-card'),img=el('img');b.setAttribute('aria-label',label);img.loading='lazy';img.src=url.href;img.alt=label;img.style.cssText='width:100%;height:110px;object-fit:contain';
       if(asset.mask){const preview=el('span','ph3-tinted-preview');preview.style.background=asset.fill||'#ffd42a';preview.style.maskImage=`url("${url.href}")`;preview.setAttribute('aria-label',label);b.append(preview);}else b.append(img);b.append(el('span','',label));
-      b.onclick=async()=>{try{await withBusy(async()=>{const response=await fetch(url);if(!response.ok)throw Error('Asset unavailable');const info=await client.upload(await response.blob(),asset.name+'.png');const scale=Math.min(doc.width*.45/info.width,doc.height*.45/info.height,1);addObject('image',{asset:info.asset,name:label,w:info.width*scale,h:info.height*scale,colorize:!!asset.mask,tintColor:asset.fill||'#ffd42a',decoration:true});});finish();status(tr('loaded'));}catch(error){fail(error);}};grid.append(b);
+      b.onclick=async()=>{try{ensureLayerCapacity(doc);await withBusy(async()=>{const response=await fetch(url);if(!response.ok)throw Error('Asset unavailable');const info=await client.upload(await response.blob(),asset.name+'.png');const scale=Math.min(doc.width*.45/info.width,doc.height*.45/info.height,1);addObject('image',{asset:info.asset,name:label,w:info.width*scale,h:info.height*scale,colorize:!!asset.mask,tintColor:asset.fill||'#ffd42a',decoration:true});});finish();status(tr('loaded'));}catch(error){fail(error);}};grid.append(b);
     }}search.oninput=populate;populate();
   }
   async function fontBrowser(layer){
@@ -227,7 +299,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   }
   async function mergeVisible(){
     if(!doc.layers.some(l=>l.visible))return;
-    if(doc.layers.length>=256)throw Error('Layer limit: 256');
+    ensureLayerCapacity(doc);
     if(doc.layers.some(l=>l.visible&&l.locked))throw Error(tr('mergeLocked'));
     const snapshot=clone(doc),signature=JSON.stringify(doc.layers);
     await withBusy(async()=>{const image=await exportCanvas(snapshot,cache,{background:false}),info=await client.upload(await toBlob(image));if(signature!==JSON.stringify(doc.layers))throw Error(tr('processingConflict'));
@@ -270,8 +342,8 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     const change=(key,value)=>commit(d=>{const layer=d.layers.find(x=>x.id===l.id);layer[key]=value;if(layer.type==='text'&&['w','h'].includes(key))layer.autoFit=false;});
     function layoutSlider(key,value,min,max,label=key,step=1,parent=props,rangeBounds=null){
       let before=null;
-      const preview=v=>{if(!before)before=clone(doc);renderToken++;l[key]=v;if(l.type==='text'&&['w','h'].includes(key))l.autoFit=false;if(l.type==='text'&&l.autoFit!==false&&!['opacity','rotation','x','y','w','h'].includes(key))fitTextBox(textMeasure,l);draw();};
-      const finish=v=>{if(!before){change(key,v);return;}const original=before;before=null;l[key]=v;if(l.type==='text'&&['w','h'].includes(key))l.autoFit=false;if(l.type==='text'&&l.autoFit!==false&&!['opacity','rotation','x','y','w','h'].includes(key))fitTextBox(textMeasure,l);if(JSON.stringify(original.layers)!==JSON.stringify(doc.layers)){history.record(original);doc.canvas_revision++;stashDraft();}renderAll();};
+      const preview=v=>{if(!before){before=clone(doc);doc.canvas_revision++;}renderToken++;l[key]=v;if(l.type==='text'&&['w','h'].includes(key))l.autoFit=false;if(l.type==='text'&&l.autoFit!==false&&!['opacity','rotation','x','y','w','h'].includes(key))fitTextBox(textMeasure,l);draw();};
+      const finish=v=>{if(!before){change(key,v);return;}const original=before;before=null;l[key]=v;if(l.type==='text'&&['w','h'].includes(key))l.autoFit=false;if(l.type==='text'&&l.autoFit!==false&&!['opacity','rotation','x','y','w','h'].includes(key))fitTextBox(textMeasure,l);if(JSON.stringify(original.layers)!==JSON.stringify(doc.layers))history.record(original);stashDraft();renderAll();};
       sliderField(parent,label,value,finish,min,max,step,preview,rangeBounds);
     }
     function colorProperty(key,label=key,value=l[key]?.slice(0,7)||'#111111',imageTint=false){
@@ -280,8 +352,8 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       const apply=v=>{l[key]=v;if(imageTint){l.colorize=true;const toggle=props.querySelector('input[data-i18n-label="colorize"]');if(toggle)toggle.checked=true;}};
       const redrawTint=async token=>{try{const prepared=await cache.prepare(clone(doc));if(token!==renderToken||closed)return;rasters=prepared;draw();}catch(e){if(token===renderToken&&!closed)fail(e);}};
       const syncSwatches=()=>{const row=control.closest('.ph3-field')?.nextElementSibling;if(row?.classList.contains('ph3-color-swatches'))for(const b of row.children)b.setAttribute('aria-pressed',String(b.getAttribute('aria-label').toLowerCase()===control.value.toLowerCase()));};
-      control.oninput=()=>{const v=read();if(busy||!v||!before&&l[key]===v&&(!imageTint||l.colorize))return;if(!before)before=clone(doc);const token=++renderToken;apply(v);syncSwatches();if(imageTint)redrawTint(token);else draw();};
-      control.onchange=()=>{const v=read();if(busy||!v)return;if(!before){if(l[key]!==v||imageTint&&!l.colorize){if(imageTint)commit(()=>apply(v));else change(key,v);}return;}const original=before;before=null;apply(v);if(JSON.stringify(original.layers)!==JSON.stringify(doc.layers)){history.record(original);doc.canvas_revision++;stashDraft();}renderAll();};
+      control.oninput=()=>{const v=read();if(busy||!v||!before&&l[key]===v&&(!imageTint||l.colorize))return;if(!before){before=clone(doc);doc.canvas_revision++;}const token=++renderToken;apply(v);syncSwatches();if(imageTint)redrawTint(token);else draw();};
+      control.onchange=()=>{const v=read();if(busy||!v)return;if(!before){if(l[key]!==v||imageTint&&!l.colorize){if(imageTint)commit(()=>apply(v));else change(key,v);}return;}const original=before;before=null;apply(v);if(JSON.stringify(original.layers)!==JSON.stringify(doc.layers))history.record(original);stashDraft();renderAll();};
       field(props,label,control);return control;
     }
     const transform=el('details','ph3-processing-details ph3-transform');transform.dataset.layerId=l.id;transform.open=!!transformOpen;transform.append(el('summary','',tr('transform')));
@@ -375,7 +447,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     header.onpointerup=header.onpointercancel=()=>{drag=null;save();};
     header.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)||e.target!==header)return;e.preventDefault();e.stopPropagation();frame.style.left=Math.max(0,Math.min(root.clientWidth-frame.offsetWidth,frame.offsetLeft+({ArrowLeft:-10,ArrowRight:10}[e.key]||0)))+'px';frame.style.top=Math.max(0,Math.min(root.clientHeight-44,frame.offsetTop+({ArrowUp:-10,ArrowDown:10}[e.key]||0)))+'px';save();};
   }
-  function layerAction(action,inPlace=false){if(action==='duplicate'&&doc.layers.length>=256)throw Error('Layer limit: 256');const l=doc.layers.find(x=>x.id===selected);if(!l)return;if(l.locked&&action!=='duplicate'){status(tr('lockedHint'),true);return;}
+  function layerAction(action,inPlace=false){if(action==='duplicate')ensureLayerCapacity(doc);const l=doc.layers.find(x=>x.id===selected);if(!l)return;if(l.locked&&action!=='duplicate'){status(tr('lockedHint'),true);return;}
     commit(d=>{const layer=d.layers.find(x=>x.id===selected);if(action==='duplicate'){const copy={...clone(layer),id:uid(),name:layer.name+' copy',x:layer.x+(inPlace?0:10),y:layer.y+(inPlace?0:10)};d.layers.push(copy);selected=copy.id;}
       if(action==='remove'){d.layers=d.layers.filter(x=>x.id!==selected);selected=null;}
       if(action==='up'||action==='down')reorder(d.layers,selected,action==='up'?1:-1);
@@ -455,6 +527,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     await openProcessing({action,onManga:()=>mangaModal(false),layer:clone(layer),doc:snapshot,cache,client,selection:mask,modal,tr,catalog,onError:fail,
       onApply:async(info,meta)=>{
         if(record.id!==project||JSON.stringify(doc.layers.find(l=>l.id===layer.id))!==baseline)throw Error(tr('processingConflict'));
+        ensureLayerCapacity(doc);
         commit(d=>{const prior=d.layers.find(x=>x.id===layer.id),index=d.layers.indexOf(prior);prior.visible=false;
           const next={...clone(prior),id:uid(),asset:info.asset,mask_asset:null,visible:true,name:prior.name+' · '+tr(action==='comic'?'comic':'cutout'),processing:{action:meta.action,preset:meta.preset,source_asset:meta.source_asset,settings:meta.settings}};
           d.layers.splice(index+1,0,next);selected=next.id;Object.assign(d.settings,meta.settings);if(meta.transparent)d.transparent=true;
@@ -471,7 +544,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     const signature=JSON.stringify(layer),project=record.id,revision=doc.canvas_revision;
     const check=()=>{if(record.id!==project||doc.canvas_revision!==revision||JSON.stringify(doc.layers.find(l=>l.id===layer.id))!==signature)throw Error(tr('processingConflict'));};
     await openManga({ph3,onClassic:()=>processModal('comic'),layer:clone(layer),doc:clone(doc),cache,client,modal,tr,catalog,
-      onApply:async(result)=>{check();commit(d=>{const layers=addMangaLayers(d,result,{sourceId:layer.id,sourceSignature:signature,names:mangaNames()});selected=layers[2].id;});await renderAll();status(tr('ready'));},
+      onApply:async(result)=>{check();ensureLayerCapacity(doc,4);commit(d=>{const layers=addMangaLayers(d,result,{sourceId:layer.id,sourceSignature:signature,names:mangaNames()});selected=layers[2].id;});await renderAll();status(tr('ready'));},
       onGenerate:async(source,settings,preset)=>{check();await generate('manga',{source_asset:source,source_layer_id:layer.id,manga_settings:settings,manga_preset:preset});showTab('generate');}
     });
   }
@@ -500,12 +573,13 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   async function generate(mode=null,extra={},prepareSource=null){
     mode??=modeSelect.value;
     if(mode==='selection'&&!maskBounds(selection,doc.width,doc.height))throw Error(tr('requireSelection'));
-    if(!['new','enhance','lettering'].includes(mode)&&!doc.layers.some(l=>l.type==='image'&&l.visible))throw Error(tr('requireImage'));
+    const hasSource=doc.layers.some(l=>l.visible&&l.type==='image'&&(doc.settings.include_text||!isDecorationLayer(l)));
+    if(!['new','enhance','lettering'].includes(mode)&&!extra.source_asset&&!hasSource)throw Error(tr('requireImage'));
     await withBusy(async()=>{
       if(mode!=='enhance'&&doc.settings.random_seed)doc.settings.seed=randomSeed();
       await saveRecord(true);
       let source=prepareSource?await prepareSource():extra.source_asset||null;
-      if(!source&&!['new','lettering'].includes(mode)&&doc.layers.some(l=>l.visible&&l.type==='image'))source=(await client.upload(await toBlob(await exportCanvas(doc,cache,{includeText:!!doc.settings.include_text})))).asset;
+      if(!source&&!['new','lettering'].includes(mode)&&hasSource)source=(await client.upload(await toBlob(await exportCanvas(doc,cache,{includeText:!!doc.settings.include_text})))).asset;
       const prepared=await client.post(`/projects/${record.id}/prepare`,{revision:record.revision,mode,source_asset:source,...extra});
       let queued;try{queued=await client.queue(prepared.prompt);}catch(e){await client.post('/jobs/'+prepared.job.id+'/state',{error:String(e.message),status:'failed'}).catch(()=>{});throw e;}
       if(!queued.prompt_id)throw Error('ComfyUI did not return a prompt_id');
@@ -528,7 +602,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
         if(!job.suppress_auto&&!stoppingJobs.has(id)){
           if(job.request.mode==='enhance'){
             if(candidateMatches(doc,job,record.id)&&doc.prompt.original===job.request.original_prompt){commit(d=>{d.prompt.ai=job.text;d.prompt.source='ai';},{refresh:false});syncPrompt();status(tr('ready'));}
-          }else if(!['manga','lettering'].includes(job.request.mode)&&doc.settings.auto_apply&&candidateMatches(doc,job,record.id)&&!doc.layers.some(l=>l.generation?.job_id===job.id)){await adopt(job,0,false);}
+          }else if(!['manga','lettering'].includes(job.request.mode)&&doc.settings.auto_apply&&candidateMatches(doc,job,record.id)&&!doc.layers.some(l=>l.generation?.job_id===job.id)){try{await adopt(job,0,false);}catch(error){status(error.message,true);}}
           else if(!candidateMatches(doc,job,record.id))status(tr('stale'));
         }
       }else if(job.status==='failed'){currentJobs.delete(id);status(job.error||'Generation failed',true);}
@@ -553,7 +627,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     if(!candidateMatches(doc,job,record.id)){
       if(!manual)return;if(!confirm(tr('confirmStale')))return;
     }
-    if(job.request.mode==='lettering'&&doc.layers.length>=256)throw Error('Layer limit: 256');
+    ensureLayerCapacity(doc,job.request.mode==='manga'?4:1);
     commit(d=>{const layer=layerFromCandidate(d,job,index);
       if(job.request.mode==='manga'){
         const layers=addMangaLayers(d,job.results[index],{sourceId:candidateMatches(d,job,record.id)?job.request.source_layer?.id:null,sourceSignature:JSON.stringify(job.request.source_layer),names:mangaNames(),generation:layer.generation});selected=layers[2].id;
@@ -684,11 +758,11 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     if(ctrl&&key==='z'){e.preventDefault();(e.shiftKey?redo:undo)().catch(fail);}
     else if(ctrl&&key==='y'){e.preventDefault();redo().catch(fail);}
     else if(ctrl&&key==='c'){const l=doc.layers.find(l=>l.id===selected);if(l){layerClipboard=clone(l);e.preventDefault();}}
-    else if(ctrl&&key==='v'&&layerClipboard){e.preventDefault();addObject(layerClipboard.type,{...clone(layerClipboard),id:uid(),x:layerClipboard.x+12,y:layerClipboard.y+12,locked:false});}
+    else if(ctrl&&key==='v'&&layerClipboard){e.preventDefault();try{addObject(layerClipboard.type,{...clone(layerClipboard),id:uid(),x:layerClipboard.x+12,y:layerClipboard.y+12,locked:false});}catch(error){fail(error);}}
     else if(ctrl&&key==='0'){e.preventDefault();fit();}
     else if(ctrl&&key==='1'){e.preventDefault();zoomAt(1);}
     else if(e.key.startsWith('Arrow')){const l=doc.layers.find(l=>l.id===selected);if(l&&!l.locked){e.preventDefault();const delta=e.shiftKey?10:1;commit(d=>{const target=d.layers.find(x=>x.id===l.id);if(e.key==='ArrowLeft')target.x-=delta;if(e.key==='ArrowRight')target.x+=delta;if(e.key==='ArrowUp')target.y-=delta;if(e.key==='ArrowDown')target.y+=delta;target.x=Math.max(-32768,Math.min(32768,target.x));target.y=Math.max(-32768,Math.min(32768,target.y));});}}
-    else if(!ctrl){const action={v:'move',m:'rect',w:'wand',l:'lasso',b:'brush',e:'erase',h:'hand',r:'rotateView'}[key];if(action){e.preventDefault();setTool(action);}if(key==='t')addObject('text');if(key==='0'){e.preventDefault();resetView();}if(key==='+'||key==='='){e.preventDefault();zoomAt(zoom*1.2);}if(key==='-'){e.preventDefault();zoomAt(zoom/1.2);}if(key==='['||key===']'){e.preventDefault();doc.settings.brush=Math.min(512,Math.max(1,(doc.settings.brush||32)+(key==='['?-4:4)));stashDraft();status(tr('brushSize')+': '+doc.settings.brush);}if(key==='?')help();}
+    else if(!ctrl){const action={v:'move',m:'rect',w:'wand',l:'lasso',b:'brush',e:'erase',h:'hand',r:'rotateView'}[key];if(action){e.preventDefault();setTool(action);}if(key==='t'){try{addObject('text');}catch(error){fail(error);}}if(key==='0'){e.preventDefault();resetView();}if(key==='+'||key==='='){e.preventDefault();zoomAt(zoom*1.2);}if(key==='-'){e.preventDefault();zoomAt(zoom/1.2);}if(key==='['||key===']'){e.preventDefault();doc.settings.brush=Math.min(512,Math.max(1,(doc.settings.brush||32)+(key==='['?-4:4)));stashDraft();status(tr('brushSize')+': '+doc.settings.brush);}if(key==='?')help();}
   },events);
   root.addEventListener('keyup',e=>{if(e.code==='Space')space=false;},events);
   window.addEventListener('blur',()=>{space=false;if(gesture||pan||viewDrag)cancelGesture();},events);
@@ -752,22 +826,9 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   function requestClose(){if(busy)return false;if(dirty()&&!confirm(tr('warningClose')))return false;root.querySelectorAll('.ph3-overlay').forEach(o=>o.ph3Finish?.());closed=true;clearTimeout(draftTimer);clearTimeout(pollTimer);abort.abort();cache.dispose();root.close();root.remove();onClose?.();return true;}
   root.showModal();syncPrompt();localize();showTab('generate');setTool('move');await restoreSelection();await renderAll();fit();status(tr('ready'));for(const key of ['properties','layers','candidates']){const pref=panelPrefs(key);if(pref.docked===false)toggleFloat(key,pref.visible??key==='layers');}showTab('generate');
   catalog=await client.get('/capabilities').catch(e=>{fail(e);return null;});
-  if(catalog){
-    const suggested=suggestInstalledPH3Models(doc.settings,catalog);
-    if(suggested.selected.length){
-      // Persist in the editor only; generation still requires an explicit click.
-      commit(d=>{d.settings=suggested.settings;},{canvasChange:false,refresh:false});
-    }
-    if(!ph3ModelReadiness(doc.settings,catalog).ready)status(tr('setupFirst'),true);
-  }
+  suggestModels();
   await loadJobs().catch(fail);
-  try{
-    const draft=JSON.parse(localStorage.getItem('ph3-tool:draft:'+record.id)||'null');
-    if(draft?.document&&JSON.stringify(draft.document)!==savedText){
-      const {body,actions,finish}=modal(tr('recoverDraft'));body.append(el('p','',tr(draft.revision===record.revision?'recoverDraftHelp':'recoverCopyHelp')));
-      const restore=el('button','primary',tr('restoreDraft'));restore.onclick=async()=>{finish();try{if(draft.revision!==record.revision){await switchRecord(await client.post('/projects',{document:draft.document}));}else{doc=clone(draft.document);await restoreSelection();syncPrompt();localize();await renderAll();fit();}}catch(e){fail(e);}};actions.prepend(restore);
-    }
-  }catch{}
+  if(!closed)offerDraftRecovery();
   return {focus:()=>root.focus(),close:requestClose,updateInput:value=>inputAsset=value,detach:()=>{detached=true;status(tr('detached'));},
     // Read-only testing/diagnostic surface; no programmatic hidden execution.
     snapshot:()=>clone(doc),viewSnapshot:()=>({...view}),element:root};
