@@ -21,6 +21,17 @@ class APITests(unittest.IsolatedAsyncioTestCase):
         rec=await self.create();url='/ph3_image_tool/projects/'+rec['id'];body={'revision':0,'document':rec['document']}
         self.assertEqual((await self.client.put(url,json=body)).status,200)
         self.assertEqual((await self.client.put(url,json=body)).status,409)
+    async def test_new_canvas_cap_and_legacy_document_import(self):
+        for width,height in [(2049,1),(1,2049)]:
+            response=await self.client.post('/ph3_image_tool/projects',json={'width':width,'height':height})
+            self.assertEqual(response.status,400);self.assertEqual((await response.json())['error']['code'],'CANVAS_LIMIT')
+        response=await self.client.post('/ph3_image_tool/projects',json={'width':2048,'height':2048})
+        self.assertEqual(response.status,200)
+        # Metadata-only legacy copy: do not allocate a large raster.
+        response=await self.client.post('/ph3_image_tool/projects',json={'document':document(2049,1)})
+        self.assertEqual(response.status,200);record=await response.json()
+        saved=await self.client.put('/ph3_image_tool/projects/'+record['id'],json={'revision':record['revision'],'document':record['document']})
+        self.assertEqual(saved.status,200)
     async def test_cross_origin_write_refused(self):
         r=await self.client.post('/ph3_image_tool/projects',json={},headers={'Origin':'https://evil.example'})
         self.assertEqual(r.status,403);self.assertEqual(self.store.projects(),[])

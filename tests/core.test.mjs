@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {History,checkSize,makeLayer,localPoint,worldPoint,candidateMatches,reorder,safeSeed,randomSeed,layerFromCandidate} from '../web/core.mjs';
+import {History,checkSize,checkNewSize,makeLayer,localPoint,worldPoint,candidateMatches,reorder,safeSeed,randomSeed,layerFromCandidate} from '../web/core.mjs';
 import {combineMasks,rectangleMask,ellipseMask,polygonMask,pointInPolygon,strokeMask,invertMask,maskBounds} from '../web/selection.mjs';
 const doc=()=>({width:128,height:96,canvas_revision:1,layers:[],settings:{},selection_asset:null});
 test('bounded history and non-revivable canvas revisions',()=>{const h=new History(2);let d=doc();for(let i=0;i<4;i++){h.record(d);d={...d,canvas_revision:d.canvas_revision+1};}assert.equal(h.past.length,2);const u=h.undo(d);assert.equal(u.canvas_revision,6);const r=h.redo(u);assert.equal(r.canvas_revision,7);});
@@ -10,6 +10,14 @@ test('stale generation refused after undo revision advances',()=>{const d=doc(),
 test('candidate layer keeps raw image and separate selection mask',()=>{const job={id:'job',request:{mode:'selection',mask_asset:'m',prompt:'apple',config:{seed:42},region:[1,2,3,4]},results:[{asset:'patch',raw_asset:'raw',x:1,y:2,w:3,h:4}]};const layer=layerFromCandidate(doc(),job);assert.equal(layer.asset,'raw');assert.equal(layer.mask_asset,'m');assert.equal(layer.x,1);});
 test('seed rejects silent integer precision loss',()=>{assert.equal(safeSeed('691899913323484'),'691899913323484');assert.throws(()=>safeSeed('18446744073709551615'));assert.throws(()=>safeSeed('-1'));assert.ok(Number.isSafeInteger(Number(randomSeed())));});
 test('canvas size limits',()=>{checkSize(2912,2912);assert.throws(()=>checkSize(8192,8192));assert.throws(()=>checkSize(0,1));});
+test('new and resized canvases stop at 2048 without invalidating legacy dimensions',()=>{checkNewSize(2048,2048);assert.throws(()=>checkNewSize(2049,1),/2048/);assert.throws(()=>checkNewSize(1,2049),/2048/);checkSize(2049,1);});
+test('settings confirmation accepts the same 1 to 100 quality range as export',async()=>{
+ const {readFile}=await import('node:fs/promises'),source=await readFile(new URL('../web/studio.mjs',import.meta.url),'utf8');
+ const guard=source.match(/for\(const \[key,min,max\]of \[\['context'[\s\S]*?throw Error\(`Invalid \$\{key\}`\);/)[0];
+ const confirm=new Function('draft',guard),draft={context:0,feather:0,brush:40,max_megapixels:1};
+ for(const quality of [1,5,9,10,80,100])assert.doesNotThrow(()=>confirm({...draft,export_quality:quality/100}));
+ for(const quality of [0,101,NaN])assert.throws(()=>confirm({...draft,export_quality:quality/100}),/export_quality/);
+});
 test('layer reorder respects boundaries',()=>{const layers=[{id:'a'},{id:'b'}];assert.equal(reorder(layers,'a',-1),false);assert.equal(reorder(layers,'a',1),true);assert.equal(layers[1].id,'a');});
 test('rectangular selection clips to canvas',()=>{const m=rectangleMask(10,10,-5,-5,3,4);assert.deepEqual(maskBounds(m,10,10),[0,0,3,4]);assert.equal(m.reduce((n,v)=>n+(v>0),0),12);});
 test('ellipse stays inside box',()=>{const m=ellipseMask(20,20,3,4,15,16),bounds=maskBounds(m,20,20);assert.deepEqual(bounds,[3,4,12,12]);assert.equal(m[0],0);});

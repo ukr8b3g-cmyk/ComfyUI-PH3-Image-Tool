@@ -1,11 +1,23 @@
-import {isDecorationLayer} from './core.mjs?v=8f31cf47e6499d9f';
-import {drawSourceSpeed} from './source-speed.mjs?v=8f31cf47e6499d9f';
-import {drawSourceBubble} from './source-bubbles.mjs?v=8f31cf47e6499d9f';
-import {drawSourceText} from './source-text.mjs?v=8f31cf47e6499d9f';
-import {prepareFonts} from './source-fonts.mjs?v=8f31cf47e6499d9f';
-import {readMask,maskCanvas} from './selection.mjs?v=8f31cf47e6499d9f';
+import {isDecorationLayer} from './core.mjs?v=7910cb39adb1a324';
+import {drawSourceSpeed} from './source-speed.mjs?v=7910cb39adb1a324';
+import {drawSourceBubble} from './source-bubbles.mjs?v=7910cb39adb1a324';
+import {drawSourceText} from './source-text.mjs?v=7910cb39adb1a324';
+import {prepareFonts} from './source-fonts.mjs?v=7910cb39adb1a324';
+import {readMask,maskCanvas} from './selection.mjs?v=7910cb39adb1a324';
 export function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 export const imageRasterKey=l=>(l.mask_asset?l.asset+':'+l.mask_asset:l.asset)+(l.colorize?':tint:'+(l.tintColor||'#ffd42a'):'');
+export const previewRasterKey=l=>'layer-preview:'+l.id;
+export const layerRaster=(rasters,l)=>rasters.get(previewRasterKey(l))||rasters.get(imageRasterKey(l));
+// Apply display-only modifiers once, to either an immutable source or a live
+// layer-local preview. Raw paint assets never contain their display mask/tint.
+export function modifiedRaster(layer,source,mask=null){
+  if(!mask&&!layer.colorize)return source;
+  const out=canvas(mask?.width||source.width,mask?.height||source.height),ctx=out.getContext('2d');
+  ctx.drawImage(source,0,0,out.width,out.height);
+  if(mask){ctx.globalCompositeOperation='destination-in';ctx.drawImage(maskCanvas(readMask(mask,out.width,out.height),out.width,out.height,true),0,0);}
+  if(layer.colorize){ctx.globalCompositeOperation='source-in';ctx.fillStyle=layer.tintColor||'#ffd42a';ctx.fillRect(0,0,out.width,out.height);}
+  return out;
+}
 export class RasterCache {
   constructor(assetUrl){this.assetUrl=assetUrl;this.images=new Map();this.masked=new Map();}
   async get(key) {
@@ -19,20 +31,9 @@ export class RasterCache {
   async prepare(doc) {
     const keys=new Set(doc.layers.filter(x=>x.type==='image'&&x.visible).flatMap(x=>[x.asset,x.mask_asset]).filter(Boolean));
     const output=new Map();await Promise.all([...keys].map(async k=>output.set(k,await this.get(k))));
-    for(const l of doc.layers.filter(x=>x.type==='image'&&x.visible&&x.mask_asset)) {
-      const key=l.asset+':'+l.mask_asset;
-      if(!this.masked.has(key)) {
-        const m=output.get(l.mask_asset),src=output.get(l.asset),c=canvas(m.width,m.height),ctx=c.getContext('2d');
-        ctx.drawImage(src,0,0,c.width,c.height);ctx.globalCompositeOperation='destination-in';ctx.drawImage(maskCanvas(readMask(m,m.width,m.height),m.width,m.height,true),0,0);
-        this.masked.set(key,c);
-        // Bounded cache: original immutable assets remain on disk.
-        if(this.masked.size>8){const oldest=this.masked.keys().next().value;this.masked.delete(oldest);}
-      }
-      output.set(key,this.masked.get(key));
-    }
-    for(const l of doc.layers.filter(x=>x.type==='image'&&x.visible&&x.colorize)){
-      const key=imageRasterKey(l),src=output.get(l.mask_asset?l.asset+':'+l.mask_asset:l.asset);
-      if(!this.masked.has(key)){const c=canvas(src.width,src.height),ctx=c.getContext('2d');ctx.drawImage(src,0,0);ctx.globalCompositeOperation='source-in';ctx.fillStyle=l.tintColor||'#ffd42a';ctx.fillRect(0,0,c.width,c.height);this.masked.set(key,c);if(this.masked.size>8)this.masked.delete(this.masked.keys().next().value);}
+    for(const l of doc.layers.filter(x=>x.type==='image'&&x.visible&&(x.mask_asset||x.colorize))){
+      const key=imageRasterKey(l);
+      if(!this.masked.has(key)){this.masked.set(key,modifiedRaster(l,output.get(l.asset),output.get(l.mask_asset)));if(this.masked.size>8)this.masked.delete(this.masked.keys().next().value);}
       output.set(key,this.masked.get(key));
     }
     return output;
@@ -86,7 +87,7 @@ export function drawLayer(ctx,l,rasters) {
   ctx.save();ctx.globalAlpha=l.opacity;ctx.translate(l.x+l.w/2,l.y+l.h/2);ctx.rotate(l.rotation*Math.PI/180);ctx.translate(-l.w/2,-l.h/2);
   ctx.fillStyle=l.fill||'#111111';ctx.strokeStyle=l.stroke||'#111111';ctx.lineWidth=l.lineWidth||0;ctx.lineJoin='round';
   if(l.type==='image'){
-    const bitmap=rasters.get(imageRasterKey(l));if(bitmap)ctx.drawImage(bitmap,0,0,l.w,l.h);
+    const bitmap=layerRaster(rasters,l);if(bitmap)ctx.drawImage(bitmap,0,0,l.w,l.h);
   }else if(l.type==='text'||l.type==='sfx')text(ctx,l);
   else if(l.type==='bubble')bubble(ctx,l);
   else if(l.type==='symbol')symbol(ctx,l);

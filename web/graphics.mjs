@@ -1,5 +1,5 @@
-import {canvas,drawLayer} from './render.mjs?v=8f31cf47e6499d9f';
-import {makeLayer} from './core.mjs?v=8f31cf47e6499d9f';
+import {canvas,drawLayer} from './render.mjs?v=7910cb39adb1a324';
+import {makeLayer} from './core.mjs?v=7910cb39adb1a324';
 const paths={
  aiLettering:'M3 4h12 M9 4v17 M5 21h8 M19 3v6 M16 6h6 M19 14v6 M16 17h6',
  wand:'m4 20 12-12 3 3L7 23z M5 3v6 M2 6h6 M16 1v4 M14 3h4 M21 15v6 M18 18h6',colorRange:'M12 3a9 9 0 1 0 9 9 M12 7a5 5 0 1 0 5 5 M12 10a2 2 0 1 0 2 2 M16 2l6 6-7 7-6-6z',

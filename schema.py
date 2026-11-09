@@ -89,7 +89,7 @@ def asset_ids(value):
     def walk(item):
         if isinstance(item, dict):
             for key, val in item.items():
-                if key in {"asset", "mask_asset", "selection_asset", "composite_asset", "source_asset", "raw_asset"} and val:
+                if key in {"asset", "mask_asset", "selection_asset", "composite_asset", "source_asset", "raw_asset", "result_asset"} and val:
                     result.add(identifier(val, "asset"))
                 else:
                     walk(val)

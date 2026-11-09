@@ -12,7 +12,7 @@ def options(settings):
     if directory and (directory.startswith('/') or any(p in ('','.','..') for p in directory.split('/')) or re.search(r'[:<>"|?*\x00-\x1f]',directory)):
         raise ToolError('INVALID_OUTPUT','Use a subfolder under ComfyUI output, without absolute paths or ..')
     quality=settings.get('export_quality',.8)
-    if isinstance(quality,bool) or not isinstance(quality,(int,float)) or not .1<=quality<=1:raise ToolError('INVALID_OUTPUT','Invalid WebP quality')
+    if isinstance(quality,bool) or not isinstance(quality,(int,float)) or not .01<=quality<=1:raise ToolError('INVALID_OUTPUT','Invalid WebP quality')
     result={'enabled':enabled,'directory':directory,'quality':round(quality*100)}
     location=settings.get('output_location','')
     if location:

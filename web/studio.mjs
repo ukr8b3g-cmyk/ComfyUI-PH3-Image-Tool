@@ -1,27 +1,29 @@
-import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=8f31cf47e6499d9f';
-import {brushOverlay} from './brush-overlay.mjs?v=8f31cf47e6499d9f';
-import {adjustedPixels,strokeCoverage,paintedPixels,localePreference} from './selection-edit.mjs?v=8f31cf47e6499d9f';
-import {retouchControls} from './retouch-ui.mjs?v=8f31cf47e6499d9f';
-import {chooseOutputFolder} from './folder-ui.mjs?v=8f31cf47e6499d9f';
-import {QUICK_COLORS,colorControl} from './color-swatches.mjs?v=8f31cf47e6499d9f';
-import {openLettering} from './lettering-ui.mjs?v=8f31cf47e6499d9f';
-import {visibleJobs} from './job-review.mjs?v=8f31cf47e6499d9f';
-import {sharedProgress} from './inline-progress.mjs?v=8f31cf47e6499d9f';
-import {fitTextBox,textLayoutSignature} from './source-text.mjs?v=8f31cf47e6499d9f';
-import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=8f31cf47e6499d9f';
-import {editorShortcut} from './shortcuts.mjs?v=8f31cf47e6499d9f';
-import {STAMP_ASSETS} from './source-assets.mjs?v=8f31cf47e6499d9f';
-import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=8f31cf47e6499d9f';
-import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=8f31cf47e6499d9f';
-import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=8f31cf47e6499d9f';
-import {RasterCache,imageRasterKey,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=8f31cf47e6499d9f';
-import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=8f31cf47e6499d9f';
-import {t} from './i18n.mjs?v=8f31cf47e6499d9f';
-import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=8f31cf47e6499d9f';
-import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=8f31cf47e6499d9f';
-import {openProcessing} from './processing-ui.mjs?v=8f31cf47e6499d9f';
-import {openManga} from './manga-ui.mjs?v=8f31cf47e6499d9f';
-import {addMangaLayers} from './manga-core.mjs?v=8f31cf47e6499d9f';
+import {reconcileJob} from './job-presence.mjs?v=7910cb39adb1a324';
+import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=7910cb39adb1a324';
+import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=7910cb39adb1a324';
+import {brushOverlay} from './brush-overlay.mjs?v=7910cb39adb1a324';
+import {adjustedPixels,strokeCoverage,paintedPixels,localePreference} from './selection-edit.mjs?v=7910cb39adb1a324';
+import {retouchControls} from './retouch-ui.mjs?v=7910cb39adb1a324';
+import {chooseOutputFolder} from './folder-ui.mjs?v=7910cb39adb1a324';
+import {QUICK_COLORS,colorControl} from './color-swatches.mjs?v=7910cb39adb1a324';
+import {openLettering} from './lettering-ui.mjs?v=7910cb39adb1a324';
+import {visibleJobs} from './job-review.mjs?v=7910cb39adb1a324';
+import {sharedProgress} from './inline-progress.mjs?v=7910cb39adb1a324';
+import {fitTextBox,textLayoutSignature} from './source-text.mjs?v=7910cb39adb1a324';
+import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=7910cb39adb1a324';
+import {editorShortcut} from './shortcuts.mjs?v=7910cb39adb1a324';
+import {STAMP_ASSETS} from './source-assets.mjs?v=7910cb39adb1a324';
+import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=7910cb39adb1a324';
+import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=7910cb39adb1a324';
+import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=7910cb39adb1a324';
+import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=7910cb39adb1a324';
+import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=7910cb39adb1a324';
+import {t} from './i18n.mjs?v=7910cb39adb1a324';
+import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=7910cb39adb1a324';
+import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=7910cb39adb1a324';
+import {openProcessing} from './processing-ui.mjs?v=7910cb39adb1a324';
+import {openManga} from './manga-ui.mjs?v=7910cb39adb1a324';
+import {addMangaLayers} from './manga-core.mjs?v=7910cb39adb1a324';
 
 const styleURL=new URL('./style.css'+new URL(import.meta.url).search,import.meta.url).href;
 const el=(tag,cls='',text=null)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==null)e.textContent=text;return e;};
@@ -107,7 +109,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     box.addEventListener('ph3-close',()=>{if(!resolved)queueMicrotask(()=>{if(!closed)requestClose();});},{once:true});
     const startNew=el('button','',tr('newFromDraft'));startNew.dataset.tone='blue';
     startNew.onclick=async()=>{if(busy)return;try{await withBusy(async()=>{
-      const next=await client.post('/projects',{width:doc.width,height:doc.height});
+      const next=await client.post('/projects',{width:Math.min(2048,doc.width),height:Math.min(2048,doc.height)});
       // The previous draft is deliberately untouched and remains recoverable.
       resolved=true;finish();await switchRecord(next);
     });}catch(error){fail(error);}};actions.append(startNew);
@@ -156,7 +158,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   }
   async function renderAll(){
     const token=++renderToken,snapshot=clone(doc);
-    try{await prepareFonts(snapshot);const prepared=await cache.prepare(snapshot);if(token!==renderToken||closed)return;rasters=prepared;draw();renderLayers();renderProperties();updateToolbar();}catch(e){fail(e);}
+    try{await prepareFonts(snapshot);const prepared=await cache.prepare(snapshot);if(token!==renderToken||closed)return;rasters=prepared;if(retouchSession?.preview)rasters.set(previewRasterKey(retouchSession.target),retouchSession.preview);if(gesture?.type==='paint'&&gesture.target)rasters.set(previewRasterKey(gesture.target),modifiedRaster(gesture.target,gesture.canvas,rasters.get(gesture.target.mask_asset)));draw();renderLayers();renderProperties();updateToolbar();}catch(e){fail(e);}
   }
   function draw(){
     if(closed)return;brushCursor.refresh();
@@ -232,7 +234,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   function confirmSwitch(){return !dirty()||confirm(tr('confirmNew'));}
   async function newProject(){
     const {body,actions,finish,box}=modal(tr('newProject'));box.classList.add('ph3-new-project');
-    const w=inputControl(doc.width,'number'),h=inputControl(doc.height,'number');
+    const w=inputControl(Math.min(2048,doc.width),'number'),h=inputControl(Math.min(2048,doc.height),'number');w.max=h.max=2048;
     field(body,'width',w);field(body,'height',h);
     const presets=[[1024,1024],[1248,1248],[1456,1456],[880,1184],[1088,1456],[1248,1680],[832,1248],[1024,1536],[1184,1776],[768,1360],[944,1680],[1088,1936],[720,1456],[880,1776],[1024,2048]];
     const swap=button('swapDimensions',()=>{[w.value,h.value]=[h.value,w.value];sizes.value=presets.some(([pw,ph])=>String(pw)===w.value&&String(ph)===h.value)?w.value+'x'+h.value:'';});swap.classList.add('ph3-swap-dimensions');body.append(swap);
@@ -240,7 +242,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     field(body,'canvasPreset',sizes);sizes.onchange=()=>{if(sizes.value)[w.value,h.value]=sizes.value.split('x');};for(const input of [w,h])input.addEventListener('input',()=>{sizes.value=presets.some(([pw,ph])=>String(pw)===w.value&&String(ph)===h.value)?w.value+'x'+h.value:'';});sizes.value=presets.some(([pw,ph])=>pw===doc.width&&ph===doc.height)?doc.width+'x'+doc.height:'';
     const alpha=inputControl(doc.transparent,'checkbox');field(body,'transparent',alpha);
     const message=el('p','ph3-small');body.append(message);
-    const create=button('create',async()=>{try{const width=Number(w.value),height=Number(h.value);checkSize(width,height);if(!confirmSwitch())return;
+    const create=button('create',async()=>{try{const width=Number(w.value),height=Number(h.value);checkNewSize(width,height);if(!confirmSwitch())return;
       await withBusy(async()=>{let next=await client.post('/projects',{width,height});if(next.document.transparent!==alpha.checked){next.document.transparent=alpha.checked;next=await client.put('/projects/'+next.id,{revision:next.revision,document:next.document});}await switchRecord(next);});finish();status(tr('ready'));
     }catch(error){message.textContent=error.message;message.classList.add('error');}});actions.prepend(create);
   }
@@ -252,7 +254,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   }
   async function addImage(info,name='Image'){
     ensureLayerCapacity(doc);
-    commit(d=>{if(!d.layers.length){checkSize(info.width,info.height);d.width=info.width;d.height=info.height;d.selection_asset=null;selection=new Uint8ClampedArray(d.width*d.height);invalidate();}
+    commit(d=>{if(!d.layers.length){checkSize(info.width,info.height);const fit=Math.min(1,2048/Math.max(info.width,info.height));d.width=Math.max(1,Math.round(info.width*fit));d.height=Math.max(1,Math.round(info.height*fit));d.selection_asset=null;selection=new Uint8ClampedArray(d.width*d.height);invalidate();}
       const scale=Math.min(1,d.width/info.width,d.height/info.height),w=info.width*scale,h=info.height*scale;
       const layer=makeLayer('image',d.width,d.height,{asset:info.asset,name,w,h,x:(d.width-w)/2,y:(d.height-h)/2});insertImageLayer(d,layer);selected=layer.id;});await renderAll();fit();modeSelect.value='full';
   }
@@ -344,7 +346,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     if(!editExisting)ensureLayerCapacity(doc);
     const snapshot=clone(layer),project=record.id;let session;
     await withBusy(async()=>{
-      const previous=editExisting?layer.retouch:null;
+      const previous=editExisting?editableRetouch(layer):null;
       const source=previous?await cache.get(previous.source_asset):(await cache.prepare({layers:[layer]})).get(imageRasterKey(layer));
       const c=canvas(source.width,source.height),ctx=c.getContext('2d');ctx.drawImage(source,0,0);
       let mask=null;
@@ -360,7 +362,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     if(!s.started){doc.canvas_revision++;s.started=true;}
     const c=canvas(s.width,s.height),ctx=c.getContext('2d'),pixels=ctx.createImageData(s.width,s.height);pixels.data.set(adjustedPixels(s.pixels,s.mask,s.type,s.settings));ctx.putImageData(pixels,0,0);s.preview=c;
     // The bitmap already includes the layer mask/tint; the key retains placement.
-    rasters.set(imageRasterKey(s.target),c);draw();
+    rasters.set(previewRasterKey(s.target),c);draw();
   }
   function cancelRetouch(){retouchSession=null;renderAll();}
   async function applyRetouch(){
@@ -374,7 +376,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       if(!s.editing)ensureLayerCapacity(doc);retouchSession=null;
       commit(d=>{
         const original=d.layers.find(l=>l.id===s.target.id),result=s.editing?original:{...clone(original),id:uid(),name:tr('retouch'+s.type)};
-        result.asset=asset;result.mask_asset=null;result.colorize=false;result.retouch={type:s.type,settings:clone(s.settings),source_asset:s.source,mask_asset:s.maskAsset};
+        result.asset=asset;result.mask_asset=null;result.colorize=false;if(!s.editing)bakeRetouch(result);result.retouch={type:s.type,settings:clone(s.settings),source_asset:s.source,mask_asset:s.maskAsset,result_asset:asset};
         if(!s.editing){original.visible=false;d.layers.splice(d.layers.indexOf(original)+1,0,result);}selected=result.id;
       });
     });await renderAll();
@@ -388,7 +390,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       for(let i=0;i<mask.length;i++)pixels.data[i*4+3]=Math.round(pixels.data[i*4+3]*mask[i]/255);ctx.putImageData(pixels,0,0);
       const asset=(await client.upload(await toBlob(c))).asset;
       if(project!==record.id||JSON.stringify(doc.layers.find(x=>x.id===l.id))!==JSON.stringify(l))throw Error(tr('processingConflict'));
-      ensureLayerCapacity(doc);commit(d=>{const copy={...clone(l),id:uid(),name:tr('copySelection'),asset,mask_asset:null,colorize:false};delete copy.retouch;d.layers.splice(d.layers.findIndex(x=>x.id===l.id)+1,0,copy);selected=copy.id;});
+      ensureLayerCapacity(doc);commit(d=>{const copy={...clone(l),id:uid(),name:tr('copySelection'),asset,mask_asset:null,colorize:false};bakeRetouch(copy);d.layers.splice(d.layers.findIndex(x=>x.id===l.id)+1,0,copy);selected=copy.id;});
     });
   }
   function renderPaintProperties(){
@@ -403,7 +405,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     if(p.x<0||p.y<0||p.x>=doc.width||p.y>=doc.height)return;
     const layer=doc.layers.find(l=>l.id===selected&&l.paint&&!l.locked&&l.visible&&l.x===0&&l.y===0&&l.w===doc.width&&l.h===doc.height&&!l.rotation);
     if(!layer)ensureLayerCapacity(doc);
-    const c=canvas(doc.width,doc.height),ctx=c.getContext('2d');if(layer)ctx.drawImage(rasters.get(imageRasterKey(layer)),0,0,c.width,c.height);
+    const c=canvas(doc.width,doc.height),ctx=c.getContext('2d');if(layer)ctx.drawImage(rasters.get(layer.asset),0,0,c.width,c.height);
     gesture={type:'paint',before:clone(doc),project:record.id,target:layer?clone(layer):null,base:ctx.getImageData(0,0,c.width,c.height).data,coverage:new Uint8ClampedArray(selection.length),canvas:c,last:p,mask:maskBounds(selection,doc.width,doc.height)?new Uint8ClampedArray(selection):null,
       size:doc.settings.paint_size??40,hardness:doc.settings.paint_hardness??80,opacity:(doc.settings.paint_opacity??100)/100,color:doc.settings.paint_color||'#ffffff'};
     doc.canvas_revision++;movePaint(p);
@@ -411,7 +413,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   function movePaint(p){
     const g=gesture;strokeCoverage(g.coverage,doc.width,doc.height,g.last,p,g.size,g.hardness,g.mask);g.last=p;
     const ctx=g.canvas.getContext('2d'),pixels=ctx.createImageData(doc.width,doc.height);pixels.data.set(paintedPixels(g.base,g.coverage,g.color,g.opacity));ctx.putImageData(pixels,0,0);
-    if(g.target)rasters.set(imageRasterKey(g.target),g.canvas);else paintPreview=g.canvas;draw();
+    if(g.target)rasters.set(previewRasterKey(g.target),modifiedRaster(g.target,g.canvas,rasters.get(g.target.mask_asset)));else paintPreview=g.canvas;draw();
   }
   async function finishPaint(g){
     paintPreview=null;if(!g.coverage.some(v=>v>0)||g.opacity===0){await renderAll();return;}
@@ -419,7 +421,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       const asset=(await client.upload(await toBlob(g.canvas))).asset;
       if(g.project!==record.id||g.target&&JSON.stringify(doc.layers.find(l=>l.id===g.target.id))!==JSON.stringify(g.target))throw Error(tr('processingConflict'));
       if(!g.target)ensureLayerCapacity(doc);history.record(g.before);
-      if(g.target)doc.layers.find(l=>l.id===g.target.id).asset=asset;
+      if(g.target){const target=doc.layers.find(l=>l.id===g.target.id);bakeRetouch(target);target.asset=asset;}
       else {const l=makeLayer('image',doc.width,doc.height,{asset,name:tr('paintLayer'),paint:true,decoration:true,x:0,y:0,w:doc.width,h:doc.height});doc.layers.push(l);selected=l.id;}
       stashDraft();await renderAll();
     });
@@ -486,7 +488,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       colorProperty('tintColor','tintColor',l.tintColor||'#ffd42a',true);
       colorSwatches(props,l.tintColor||'#ffd42a',value=>commit(d=>Object.assign(d.layers.find(x=>x.id===l.id),{tintColor:value,colorize:true})));
       props.append(button('maskLayer',applyLayerMask),button('clearLayerMask',()=>change('mask_asset',null)));
-      const adjustRow=el('div','ph3-row ph3-adjustment-actions');for(const kind of ['hue_saturation','brightness_contrast','curves'])adjustRow.append(button('retouch'+kind,()=>startRetouch(kind)));props.append(adjustRow);if(l.retouch)props.append(button('editRetouch',()=>startRetouch(l.retouch.type,true)));
+      const adjustRow=el('div','ph3-row ph3-adjustment-actions');for(const kind of ['hue_saturation','brightness_contrast','curves'])adjustRow.append(button('retouch'+kind,()=>startRetouch(kind)));props.append(adjustRow);if(editableRetouch(l))props.append(button('editRetouch',()=>startRetouch(l.retouch.type,true)));else if(l.retouch||l.retouch_history?.length)props.append(el('p','ph3-small',tr('retouchBakedHelp')));
       if(l.generation){const info=el('details','ph3-generation-info');info.append(el('summary','',tr('generationInfo')),el('p','ph3-small',`P-H3 · Seed ${l.generation.seed}\n${l.generation.prompt}`));props.append(info);}
     }else{
       if(['text','sfx','bubble'].includes(l.type)){
@@ -615,7 +617,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     control('mouse_undo','checkbox');general.lastChild.firstChild.textContent=tr('mouseUndo');
     control('history_limit','number');general.lastChild.firstChild.textContent=tr('historyLimit');
     control('export_format','text',[['png','PNG'],['webp','WebP'],['jpeg','JPEG']]);general.lastChild.firstChild.textContent=tr('format');
-    const quality=inputControl(Math.round((draft.export_quality??.8)*100),'number');quality.min=10;quality.max=100;quality.step=1;quality.onchange=()=>draft.export_quality=Number(quality.value)/100;field(general,'quality',quality);
+    const quality=inputControl(Math.round((draft.export_quality??.8)*100),'number');quality.min=1;quality.max=100;quality.step=1;quality.onchange=()=>draft.export_quality=Number(quality.value)/100;field(general,'quality',quality);
     for(const [key,label,min,max,step]of [['context','context',0,1,.05],['feather','feather',0,64,1],['brush','brushSize',1,512,1],['max_megapixels','megapixels',.25,8.5,.25]]){const c=control(key,'number');c.min=min;c.max=max;c.step=step;general.lastChild.firstChild.textContent=tr(label);}
     body.append(el('h3','',tr('engine')),el('p','ph3-small',tr('modelWarning')),el('p','ph3-model-status',modelSummary()));
     const fields=[['unet_name','unet','diffusion_models'],['clip_name','clip','text_encoders'],['vae_name','vae','vae'],['lora_name','lora','loras'],['enhancer_name','upsampler','text_encoders']];
@@ -640,8 +642,8 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     const random=inputControl(draft.random_seed,'checkbox');random.onchange=()=>draft.random_seed=random.checked;field(body,'randomSeed',random);
     body.append(el('p','ph3-small',catalog.cutout?.onnx_available&&catalog.cutout?.model_available?'ISNet: local model ready':tr('cutoutUnavailable')));
     const ok=el('button','primary',tr('ok'));ok.onclick=async()=>{try{
-      const width=Number(w.value),height=Number(h.value);checkSize(width,height);draft.seed=safeSeed(draft.seed);draft.history_limit=Math.round(Math.min(100,Math.max(5,draft.history_limit||40)));
-      for(const [key,min,max]of [['context',0,1],['feather',0,64],['brush',1,512],['max_megapixels',.25,8.5],['export_quality',.1,1]])if(!Number.isFinite(draft[key])||draft[key]<min||draft[key]>max)throw Error(`Invalid ${key}`);
+      const width=Number(w.value),height=Number(h.value);if(width!==doc.width||height!==doc.height)checkNewSize(width,height);else checkSize(width,height);draft.seed=safeSeed(draft.seed);draft.history_limit=Math.round(Math.min(100,Math.max(5,draft.history_limit||40)));
+      for(const [key,min,max]of [['context',0,1],['feather',0,64],['brush',1,512],['max_megapixels',.25,8.5],['export_quality',.01,1]])if(!Number.isFinite(draft[key])||draft[key]<min||draft[key]>max)throw Error(`Invalid ${key}`);
       if(!Number.isFinite(draft.ph3_lora_strength)||draft.ph3_lora_strength<-10||draft.ph3_lora_strength>10)throw Error(tr('invalidLoraStrength'));
       for(const slot of draft.extra_loras){if(!Number.isFinite(slot.strength)||slot.strength<-10||slot.strength>10)throw Error(tr('invalidLoraStrength'));if(slot.enabled&&slot.name&&slot.strength!==0&&!(catalog.loras||[]).includes(slot.name))throw Error(tr('missingExtraLora'));}
       const canvasBackground=background.value,canvasTransparent=transparent.checked;Object.assign(doc,originalCanvas);
@@ -658,8 +660,8 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
         if(record.id!==project||JSON.stringify(doc.layers.find(l=>l.id===layer.id))!==baseline)throw Error(tr('processingConflict'));
         ensureLayerCapacity(doc);
         commit(d=>{const prior=d.layers.find(x=>x.id===layer.id),index=d.layers.indexOf(prior);prior.visible=false;
-          const next={...clone(prior),id:uid(),asset:info.asset,mask_asset:null,visible:true,name:prior.name+' · '+tr(action==='comic'?'comic':'cutout'),processing:{action:meta.action,preset:meta.preset,source_asset:meta.source_asset,settings:meta.settings}};
-          d.layers.splice(index+1,0,next);selected=next.id;Object.assign(d.settings,meta.settings);if(meta.transparent)d.transparent=true;
+          const next={...clone(prior),id:uid(),asset:info.asset,mask_asset:null,colorize:false,visible:true,name:prior.name+' · '+tr(action==='comic'?'comic':'cutout'),processing:{action:meta.action,preset:meta.preset,source_asset:meta.source_asset,settings:meta.settings}};
+          bakeRetouch(next);d.layers.splice(index+1,0,next);selected=next.id;Object.assign(d.settings,meta.settings);if(meta.transparent)d.transparent=true;
         });await renderAll();status(tr('ready'));
       }});
   }
@@ -720,11 +722,11 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     });startPolling();return submittedJob;
   }
   const stoppingJobs=new Set();
-  async function loadJobs(){jobs=await client.get('/projects/'+record.id+'/jobs');for(const job of jobs)if(['queued','prepared'].includes(job.status))currentJobs.set(job.id,job);renderJobs();if(currentJobs.size)startPolling();}
+  async function loadJobs(){jobs=await client.get('/projects/'+record.id+'/jobs');for(const job of jobs)if(['queued','prepared','running'].includes(job.status))currentJobs.set(job.id,job);renderJobs();if(currentJobs.size)startPolling();}
   function startPolling(){if(!pollTimer&&!closed)pollTimer=setTimeout(poll,900);}
   async function poll(){pollTimer=null;if(closed)return;
     try{for(const [id,old]of [...currentJobs]){
-      let job=await client.get('/jobs/'+id);if(stoppingJobs.has(id))continue;
+      let job=await reconcileJob(client,await client.get('/jobs/'+id));if(stoppingJobs.has(id))continue;
       if(job.cancel_requested){const stopped=await confirmStopped(client,job);if(stopped){job=stopped;currentJobs.delete(id);}}
       jobs=jobs.map(x=>x.id===id?job:x);
       if(job.status==='succeeded'){

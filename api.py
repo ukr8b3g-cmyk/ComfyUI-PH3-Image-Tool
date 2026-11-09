@@ -170,6 +170,10 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
     @guarded
     async def create(request):
         payload = await json_body(request)
+        if not payload.get("document"):
+            from .schema import dimensions
+            width,height=dimensions(payload.get("width",1024),payload.get("height",1024))
+            if width>2048 or height>2048:raise ToolError("CANVAS_LIMIT","New canvas dimensions must be at most 2048 x 2048")
         doc = payload.get("document") or default_document(payload.get("width", 1024), payload.get("height", 1024))
         return web.json_response(await asyncio.to_thread(store_provider().create, doc))
 

@@ -149,6 +149,11 @@ class Store:
     def mark_job(self, key, changes):
         with self.lock:
             job = self.job(key)
+            if changes.get("only_if_unfinished") is True:
+                if job["status"] not in {"prepared", "queued", "running"} or job.get("results") or job.get("text"):
+                    return job
+                if changes.get("expected_prompt_id") != job.get("prompt_id"):
+                    return job
             if "prompt_id" in changes:
                 value = changes["prompt_id"]
                 if not isinstance(value, str) or not 1 <= len(value) <= 128 or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_." for c in value):

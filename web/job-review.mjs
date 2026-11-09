@@ -1,4 +1,5 @@
-import {cancelGeneration,confirmStopped,isInQueue} from './job-cancel.mjs?v=8f31cf47e6499d9f';
+import {reconcileJob} from './job-presence.mjs?v=7910cb39adb1a324';
+import {cancelGeneration,confirmStopped,isInQueue} from './job-cancel.mjs?v=7910cb39adb1a324';
 const pause=(ms,signal)=>new Promise((resolve,reject)=>{
  const done=()=>{signal?.removeEventListener('abort',abort);resolve();},timer=setTimeout(done,ms);
  const abort=()=>{clearTimeout(timer);signal.removeEventListener('abort',abort);reject(signal.reason);};
@@ -16,7 +17,7 @@ export function generationReview(client,job,{signal,onUpdate=()=>{},interval=900
   async wait(){
    for(;;){
     signal?.throwIfAborted();
-    try{last=await client.get('/jobs/'+job.id);}catch(error){emit(cancelled?'stopFailed':'connectionRetry',error);await pause(interval,signal);continue;}
+    try{last=await reconcileJob(client,{...job,...await client.get('/jobs/'+job.id)});}catch(error){emit(cancelled?'stopFailed':'connectionRetry',error);await pause(interval,signal);continue;}
     signal?.throwIfAborted();
     if(last.cancel_requested||last.error==='Cancelled')cancelled=true;
     if(cancelled){
@@ -38,7 +39,7 @@ export function generationReview(client,job,{signal,onUpdate=()=>{},interval=900
 // Watch a standard queued job without applying it or interrupting other work.
 export async function waitForJob(client,job,{signal,onUpdate=()=>{},interval=900}={}){
  for(;;){
-  signal?.throwIfAborted();const next=await client.get('/jobs/'+job.id);signal?.throwIfAborted();onUpdate(next);
+  signal?.throwIfAborted();const next=await reconcileJob(client,{...job,...await client.get('/jobs/'+job.id)});signal?.throwIfAborted();onUpdate(next);
   if(next.status==='succeeded'){if(!next.results?.length)throw Error('Generation returned no images');return next;}
   if(next.status==='failed')throw Error(next.error||'Generation failed');
   if(next.prompt_id){const run=(await client.history(next.prompt_id))[next.prompt_id];if(run?.status?.status_str==='error'){

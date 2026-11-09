@@ -265,5 +265,6 @@ previousEdit:["前回の編集があります", "Previous edits are available"],
 resumeDraftHelp:["前回の画像と編集状態を再開しますか？", "Resume the previous image and editing state?"],
 newFromDraft:["新規で開く", "Start new"],
 resumeDraft:["編集を再開", "Resume editing"],
+retouchBakedHelp:["別の加工が適用済みです。新しい調整は現在の画像を元に作成します。過去の調整情報は履歴として保持しています。","Other edits are baked into this image. New adjustments start from the current pixels; earlier settings are retained as provenance."],
 };
 export const t=(locale,key)=>pairs[key]?.[locale==='en'?1:0]??key;

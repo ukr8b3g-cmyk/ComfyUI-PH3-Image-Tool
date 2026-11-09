@@ -1,3 +1,5 @@
+import {editableRetouch,bakeRetouch} from '../web/edit-provenance.mjs';
+import {previewRasterKey,modifiedRaster} from '../web/render.mjs';
 // Executes the actual editor handlers with deterministic in-memory rasters and
 // asset transport. This is an integration fixture, not a browser/GPU test.
 import test from 'node:test';
@@ -18,7 +20,7 @@ function fixture(){
  const assets=new Map([['source',source]]);let uploads=0;
  const doc={width:4,height:4,canvas_revision:1,settings:{paint_size:2,paint_hardness:100,paint_opacity:50,paint_color:'#ff0000'},layers:[makeLayer('image',4,4,{id:'source-layer',asset:'source',x:0,y:0,w:4,h:4}),makeLayer('text',4,4,{id:'text',text:'keep me'})]};
  const history=new History();
- const ctx={doc,selected:'source-layer',record:{id:'project'},retouchSession:null,gesture:null,paintPreview:null,history,canvas,clone,makeLayer,uid,ensureLayerCapacity,adjustedPixels,strokeCoverage,paintedPixels,maskBounds,
+ const ctx={doc,selected:'source-layer',record:{id:'project'},retouchSession:null,gesture:null,paintPreview:null,history,editableRetouch,bakeRetouch,previewRasterKey,modifiedRaster,canvas,clone,makeLayer,uid,ensureLayerCapacity,adjustedPixels,strokeCoverage,paintedPixels,maskBounds,
    selection:new Uint8ClampedArray([255,255,0,0,255,255,0,0,0,0,0,0,0,0,0,0]),rasters:new Map([['source',source]]),imageRasterKey:l=>l.asset,
    cache:{get:async key=>assets.get(key),prepare:async()=>assets},selectedImage:()=>ctx.doc.layers.find(l=>l.id===ctx.selected&&l.type==='image'),
    layerSelectionMask:(_l,mask,_dw,_dh,w,h)=>{const c=canvas(w,h);for(let i=0;i<mask.length;i++)c.data[i*4]=mask[i];return c;},

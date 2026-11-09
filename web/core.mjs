@@ -20,6 +20,8 @@ export const clamp = (n, low, high) => Math.min(high, Math.max(low, Number(n) ||
 export function checkSize(w, h) {
   if (!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1 || w > 8192 || h > 8192 || w * h > MAX_PIXELS) throw Error('Canvas must be 1–8192 pixels per side and at most 16 megapixels.');
 }
+// Limit new/resized canvases without invalidating older project documents.
+export function checkNewSize(w,h){checkSize(w,h);if(w>2048||h>2048)throw Error('New canvas dimensions must be at most 2048 x 2048.');}
 export function makeLayer(type, width, height, overrides={}) {
   const big = type === 'speed' || type === 'frame';
   return {id:uid(),type,name:type,x:big?0:width*.22,y:big?0:height*.25,
