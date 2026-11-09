@@ -2,7 +2,7 @@
 
 ## Adapted code
 
-`web/selection.mjs` adapts the selection-mask primitives from:
+`web/selection.mjs` adapts the selection-mask primitives, and `web/retouch-core.mjs` adapts the pure mask, H/S, B/C, tone-curve and paint-compositing calculations from:
 
 - Project: Speech-Bubble-Comic-Editor-App
 - Owner/copyright: Copyright (c) 2026 ukr8b3g-cmyk
@@ -10,7 +10,7 @@
 - Observed: 2026-11-07
 - License: MIT; reproduced in this package's LICENSE.
 
-For `web/selection.mjs`, only selection/mask behavior is adapted. The separate Quick Retouch interface, desktop APIs and comic-page workspaces are not included. Existing source repositories remain unchanged.
+For `web/selection.mjs`, only selection/mask behavior is adapted. The separate Quick Retouch interface, desktop APIs and comic-page workspaces are not included. PH3 selection/adjustment/paint controls are integrated into its existing Properties panel. Existing source repositories remain unchanged.
 
 ## Additional source ports in 0.2.0-rc3
 

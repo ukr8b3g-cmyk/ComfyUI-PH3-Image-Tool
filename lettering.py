@@ -140,10 +140,17 @@ def request(store, record, payload, config, generation_size):
         store.image(source)  # Validate the immutable uploaded reference before creating a job.
     preserved = source if source and opts['reference_kind'] == 'candidate' and opts['decoration'] in {'spiky', 'thought'} else None
     instruction = bubble_prompt(opts) if preserved else prompt(opts); width, height = material_size(opts)
+    placement_box=payload.get('placement_box')
+    if placement_box is not None:
+        if not isinstance(placement_box,list) or len(placement_box)!=4:raise ToolError('INVALID_LETTERING','Invalid lettering placement')
+        x,y,w,h=placement_box
+        number(x,0,doc['width'],'placement x');number(y,0,doc['height'],'placement y')
+        number(w,1,doc['width'],'placement width');number(h,1,doc['height'],'placement height')
+        if x+w>doc['width'] or y+h>doc['height']:raise ToolError('INVALID_LETTERING','Placement exceeds canvas')
     return dict(mode='lettering', canvas_revision=doc['canvas_revision'], document_revision=record['revision'],
                 canvas=[doc['width'], doc['height']], region=[0, 0, width, height], generation_size=list(generation_size),
                 source_asset=source, crop_asset=None if preserved else source, preserved_lettering_asset=preserved, mask_asset=None, references=[], lettering=opts,
-                source_layer=copy.deepcopy(target), reference_layer=copy.deepcopy(reference_layer),
+                placement_box=placement_box, source_layer=copy.deepcopy(target), reference_layer=copy.deepcopy(reference_layer),
                 prompt=instruction, instruction=instruction, prompt_source='lettering',
                 original_prompt=doc['prompt']['original'], config=config,
                 parent_job_id=parent, parent_result_index=index, parent_layer=adopted_parent)
@@ -323,6 +330,10 @@ def refinish(store, project_id, payload):
 
 
 def placement(req, size):
+    if req.get('placement_box'):
+        x,y,bw,bh=req['placement_box'];width,height=size;scale=min(bw/width,bh/height,1)
+        w,h=width*scale,height*scale
+        return dict(x=x+(bw-w)/2,y=y+(bh-h)/2,w=w,h=h)
     cw, ch = req['canvas']; layer = req.get('parent_layer') or req.get('source_layer'); vertical = req['lettering']['vertical']
     wanted = (layer['h'] if vertical else layer['w']) if layer else (ch if vertical else cw) * .5
     width, height = size

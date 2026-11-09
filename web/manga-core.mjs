@@ -1,13 +1,13 @@
-import {clone,uid,makeLayer,ensureLayerCapacity,imageInsertionIndex,isDecorationLayer} from './core.mjs?v=9d2b3fb59c01be4a';
+import {clone,uid,makeLayer,ensureLayerCapacity,imageInsertionIndex,isDecorationLayer} from './core.mjs?v=8f31cf47e6499d9f';
 export const MANGA_DEFAULTS=Object.freeze({screen_lines:200,white_point:.8,black_point:.3,light_tone:.18,dark_tone:.42,gradation:1,white_lines:.4});
 export const MANGA_ROLES=['paper','tone','ink','white'];
-export function addMangaLayers(doc,result,{sourceId=null,sourceSignature=null,names={},generation=null}={}) {
+export function addMangaLayers(doc,result,{sourceId=null,sourceSignature=null,names={},generation=null,preserveExisting=false}={}) {
   if(!Array.isArray(result.layers)||result.layers.length!==4||MANGA_ROLES.some(r=>!result.layers.some(l=>l.role===r&&l.asset)))throw Error('Invalid manga layer bundle');
   ensureLayerCapacity(doc,4);
   if(result.width!==doc.width||result.height!==doc.height)throw Error('Manga canvas size changed; render again');
   const source=doc.layers.find(l=>l.id===sourceId),matches=source&&(!sourceSignature||JSON.stringify(source)===sourceSignature);
   const group=uid(),previous=matches?source.processing?.manga_group:null;
-  if(matches&&(source.locked||(previous&&doc.layers.some(l=>l.processing?.manga_group===previous&&l.locked))))throw Error('Unlock the manga layers before replacing this group');
+  if(!preserveExisting&&matches&&(source.locked||(previous&&doc.layers.some(l=>l.processing?.manga_group===previous&&l.locked))))throw Error('Unlock the manga layers before replacing this group');
   let at=matches?doc.layers.indexOf(source)+1:imageInsertionIndex(doc);
   if(at<0)at=doc.layers.length;
   const layers=MANGA_ROLES.map(role=>makeLayer('image',doc.width,doc.height,{
@@ -18,7 +18,7 @@ export function addMangaLayers(doc,result,{sourceId=null,sourceSignature=null,na
     ...(generation?{generation:clone(generation)}:{})
   }));
   // Preserve originals and all decorations; only the adopted source/group is hidden.
-  if(matches){source.visible=false;if(previous)for(const l of doc.layers)if(l.processing?.manga_group===previous)l.visible=false;}
+  if(!preserveExisting&&matches){source.visible=false;if(previous)for(const l of doc.layers)if(l.processing?.manga_group===previous)l.visible=false;}
   doc.layers.splice(at,0,...layers);
   doc.settings.manga_settings=clone(result.settings);
   if(result.has_alpha)doc.transparent=true;

@@ -1,3 +1,4 @@
+import {nodeProgress} from './node-progress.mjs?v=8f31cf47e6499d9f';
 import {app} from '../../../scripts/app.js';
 import {api} from '../../../scripts/api.js';
 
@@ -15,9 +16,9 @@ function install(node,knownType=false){
     let baseline=[String(widget(node,'project_id')?.value||''),Number(widget(node,'revision')?.value||0)];
     try{
       // Keep the launch widget independent of the editor module graph.
-      const [{Client},{openStudio}]=await Promise.all([import('./client.mjs?v=8ed0e47f8bb24088'),import('./studio.mjs?v=9d2b3fb59c01be4a')]);
-      const client=new Client({fetcher:(path,opts)=>api.fetchApi(path,opts),url:path=>api.apiURL(path),clientId:api.clientId});
-      const editor=await openStudio({client,hostLocale:app.ui?.settings?.getSettingValue?.('Comfy.Locale')||document.documentElement.lang||navigator.language,projectId:baseline[0],inputAsset:node.__ph3Input||null,
+      const [{Client},{openStudio}]=await Promise.all([import('./client.mjs?v=8f31cf47e6499d9f'),import('./studio.mjs?v=8f31cf47e6499d9f')]);
+      const client=new Client({fetcher:(path,opts)=>api.fetchApi(path,opts),url:path=>api.apiURL(path),clientId:api.clientId,progressEvents:api});
+      const editor=await openStudio({client,onGenerationJob:(job,graph)=>monitor.queued(job,graph),hostLocale:()=>app.ui?.settings?.getSettingValue?.('Comfy.Locale')||document.documentElement.lang||navigator.language,projectId:baseline[0],inputAsset:node.__ph3Input||null,
         onApply:record=>{
           if(!node.graph)throw Error('The destination node was removed. The project is still saved locally.');
           const current=[String(widget(node,'project_id')?.value||''),Number(widget(node,'revision')?.value||0)];
@@ -31,9 +32,10 @@ function install(node,knownType=false){
     }catch(error){console.error('[PH3 Image Tool]',error);window.alert('PH3 Image Tool: '+error.message);}
     finally{node.__ph3Opening=false;}
   },{serialize:false});
+  const monitor=nodeProgress(node,api,app.ui?.settings?.getSettingValue?.('Comfy.Locale')||document.documentElement.lang);
   launch.serialize=false;node.__ph3ToolInstalled=true;
   const executed=node.onExecuted;node.onExecuted=function(message,...args){const result=executed?.call(this,message,...args);if(message?.ph3_input?.[0]){node.__ph3Input=message.ph3_input[0];editors.get(node)?.updateInput(node.__ph3Input);}return result;};
-  const removed=node.onRemoved;node.onRemoved=function(...args){editors.get(node)?.detach();return removed?.apply(this,args);};
+  const removed=node.onRemoved;node.onRemoved=function(...args){monitor.dispose();editors.get(node)?.detach();return removed?.apply(this,args);};
   node.setSize?.([Math.max(350,node.size?.[0]||0),Math.max(160,node.computeSize?.()[1]||0)]);
 }
 app.registerExtension({name:'ukr8b3g.ph3-image-tool',nodeCreated:node=>install(node),loadedGraphNode:node=>install(node),

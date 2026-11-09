@@ -1,22 +1,29 @@
-import {canvas,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=8ed0e47f8bb24088';
-import {maskBounds} from './selection.mjs?v=8ed0e47f8bb24088';
-import {COMIC_DEFAULTS,COMIC_STYLES,comicAsync,processComic} from './comic-engine.mjs?v=8ed0e47f8bb24088';
-import {cutoutAsync} from './edge-refine.mjs?v=8ed0e47f8bb24088';
-import {COMIC} from './presets.mjs?v=8ed0e47f8bb24088';
+import {ensureCutoutModel} from './cutout-model.mjs?v=8f31cf47e6499d9f';
+import {canvas,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=8f31cf47e6499d9f';
+import {maskBounds} from './selection.mjs?v=8f31cf47e6499d9f';
+import {COMIC_DEFAULTS,COMIC_STYLES,comicAsync,processComic} from './comic-engine.mjs?v=8f31cf47e6499d9f';
+import {cutoutAsync} from './edge-refine.mjs?v=8f31cf47e6499d9f';
+import {COMIC} from './presets.mjs?v=8f31cf47e6499d9f';
+import {autoColorCutout,refineCutout} from './cutout-auto.mjs?v=8f31cf47e6499d9f';
 const el=(tag,cls='',text='')=>{const e=document.createElement(tag);e.className=cls;if(text)e.textContent=text;return e;};
 const scaled=(source,max=640)=>{const f=Math.min(1,max/Math.max(source.width,source.height)),c=canvas(Math.max(1,Math.round(source.width*f)),Math.max(1,Math.round(source.height*f)));c.getContext('2d').drawImage(source,0,0,c.width,c.height);return c;};
 const data=c=>c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
-const fromData=p=>{const c=canvas(p.width,p.height);c.getContext('2d').putImageData(p,0,0);return c;};
+const fromData=p=>{const c=canvas(p.width,p.height);c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(p.data),p.width,p.height),0,0);return c;};
 export async function openProcessing({action,layer,doc,cache,client,selection,modal,tr,catalog,onApply,onError,onManga}) {
  const native=await cache.get(layer.asset),local={...doc,width:native.width,height:native.height,transparent:true,layers:[{...layer,x:0,y:0,w:native.width,h:native.height,rotation:0,opacity:1,visible:true}]};
  const source=await exportCanvas(local,cache),previewSource=scaled(source,640),thumbSource=scaled(source,150),sourceData=data(previewSource);
- const box=modal(tr(action==='comic'?'comicFilter':'cutout'));box.box.classList.add('ph3-processing');
+ const box=modal(tr(action==='comic'?'comicFilter':'cutout'),{maximizable:true});box.box.classList.add('ph3-processing');if(action!=='comic')box.box.classList.add('ph3-cutout-modal');
  const {body,actions,finish}=box;let closed=false,sequence=0,timer=null,controller=null,sourceInfo=null,previewInfo=null,maskInfo=null,latest=null;
  if(action==='comic'&&onManga){const select=el('select');select.setAttribute('aria-label',tr('filterMethod'));for(const [id,key]of [['classic','classicMethod'],['screen','screenMethod']]){const o=el('option','',tr(key));o.value=id;select.append(o);}select.onchange=()=>{if(select.value==='screen'){finish();onManga().catch(onError);}};body.append(select);}
  const savedPreset=doc.settings.comic_preset||'comic',knownPreset=COMIC_STYLES.some(x=>x[0]===savedPreset)||COMIC.some(x=>x[0]===savedPreset);
  let preset=knownPreset?savedPreset:'comic',parameters={...COMIC_DEFAULTS,...doc.settings.comic_settings},method=doc.settings.background_method||'color',tolerance=doc.settings.background_tolerance??32,seed=[0,0],legacy=!COMIC_STYLES.some(x=>x[0]===preset);
+ // Each opening starts with Auto; manual edits refine its immutable base.
+ if(action!=='comic')method='auto';
  let regions=[],regionMode='add',selectionAction='remove',applying=false;
+ let modelPrompted=false,modelPending=null;
+ let aiAvailable=!!(catalog?.cutout?.onnx_available&&catalog?.cutout?.model_available);
  let edge={width:1,amount:0,defringe:false,matte:'none',shrink:0,feather:0,...doc.settings.cutout_edge};
+ let methodSelect=null,modelNote=null;
  const bgCache=new Map(),after=el('canvas','ph3-process-canvas'),before=el('canvas','ph3-process-canvas'),note=el('p','ph3-small');
  const layout=el('div','ph3-processing-layout'),visual=el('div','ph3-processing-visual'),controls=el('div','ph3-processing-controls'),comparison=el('div','ph3-comparison');
  const panel=(label,c)=>{const frame=el('div','ph3-compare-panel'),cap=el('span','ph3-compare-label',label);frame.append(cap,c);comparison.append(frame);};
@@ -32,7 +39,7 @@ export async function openProcessing({action,layer,doc,cache,client,selection,mo
  function clear(){clearTimeout(timer);controller?.abort();sequence++;latest=null;apply.disabled=true;}
  function schedule(){clear();if(closed)return;resultLabel.textContent=tr('previewPending');timer=setTimeout(()=>renderPreview().catch(report),180);}
  function report(e){if(closed||e.name==='AbortError')return;resultLabel.textContent=e.message;resultLabel.classList.add('error');apply.disabled=true;}
- const refresh=el('button','',tr('preview')),apply=el('button','primary',tr('applyResult'));apply.disabled=true;actions.prepend(refresh,apply);refresh.onclick=()=>{clear();renderPreview(true).catch(report);};
+ const refresh=el('button','',tr('preview')),apply=el('button','primary',tr('applyResult'));apply.dataset.tone='green';refresh.dataset.tone='blue';apply.disabled=true;actions.prepend(refresh,apply);refresh.onclick=()=>{clear();renderPreview(true).catch(report);};
  let transparentResult=null;
  if(action==='comic'){
   const grid=el('div','ph3-style-grid');controls.append(grid);
@@ -45,18 +52,19 @@ export async function openProcessing({action,layer,doc,cache,client,selection,mo
   function syncRanges(){for(const[key,group]of ranges)for(const i of group.querySelectorAll('input')){i.value=parameters[key];i.disabled=legacy&&key!=='strength';}}
   syncRanges();grid.querySelectorAll('button').forEach(b=>b.classList.toggle('active',!legacy&&b.dataset.preset===preset));
  }else{
-  const available=!!(catalog?.cutout?.onnx_available&&catalog?.cutout?.model_available);
-  const methodSelect=select('cutoutMethod',[['color',tr('colorMethod')],['selection',tr('selectionMethod')],['isnet',tr('aiMethod')]],method,value=>{method=value;});
-  if(!available){methodSelect.querySelector('[value=isnet]').disabled=true;if(method==='isnet'){method='color';methodSelect.value='color';}controls.append(el('p','ph3-small',tr('cutoutUnavailable')));}
+  methodSelect=select('cutoutMethod',[['auto',tr('autoMethod')],['color',tr('colorMethod')],['selection',tr('selectionMethod')],['isnet',tr('aiMethod')]],method,value=>{method=value;});
+  if(!catalog?.cutout?.onnx_available)methodSelect.querySelector('[value=isnet]').disabled=true;
+  modelNote=el('p','ph3-small',tr(aiAvailable?'cutoutAutoAI':'isnetMissing'));controls.append(modelNote);
   controls.append(el('p','ph3-small',tr('clickRegions')));
   select('regionMode',[['add',tr('regionAdd')],['restore',tr('regionRestore')],['replace',tr('regionReplace')]],regionMode,v=>regionMode=v);
   select('selectionAction',[['remove',tr('removeSelected')],['keep',tr('keepSelected')]],selectionAction,v=>selectionAction=v);
   const regionStatus=el('p','ph3-small');controls.append(regionStatus);
   function markRegions(){before.getContext('2d').drawImage(previewSource,0,0);const c=before.getContext('2d');for(const item of regions){c.strokeStyle=item.remove?'#ee4055':'#22a878';c.lineWidth=2;c.beginPath();c.arc(item.seed[0]*before.width/source.width,item.seed[1]*before.height/source.height,7,0,Math.PI*2);c.stroke();}regionStatus.textContent=tr('regionCount')+': '+regions.length;}
   const regionButtons=el('div','ph3-row');for(const[key,fn]of [['regionUndo',()=>regions.pop()],['regionReset',()=>regions=[]]]){const b=el('button','',tr(key));b.onclick=()=>{if(applying)return;fn();markRegions();schedule();};regionButtons.append(b);}controls.append(regionButtons);markRegions();
-  before.style.cursor=after.style.cursor='crosshair';before.title=after.title=tr('clickRegions');before.onclick=after.onclick=e=>{if(applying||closed)return;method='color';methodSelect.value=method;const target=e.currentTarget,r=target.getBoundingClientRect(),scale=Math.min((r.width-2)/target.width,(r.height-2)/target.height),w=target.width*scale,h=target.height*scale,px=e.clientX-r.left-(r.width-w)/2,py=e.clientY-r.top-(r.height-h)/2;
+  before.style.cursor=after.style.cursor='crosshair';before.title=after.title=tr('clickRegions');before.onclick=after.onclick=e=>{if(applying||closed)return;const target=e.currentTarget,r=target.getBoundingClientRect(),scale=Math.min((r.width-2)/target.width,(r.height-2)/target.height),w=target.width*scale,h=target.height*scale,px=e.clientX-r.left-(r.width-w)/2,py=e.clientY-r.top-(r.height-h)/2;
     // object-fit:contain letterboxes the canvas. Padding is not an image pixel.
     if(px<0||py<0||px>=w||py>=h)return;
+    if(method==='selection'){method='color';methodSelect.value=method;}
     if(regionMode==='replace')regions=[];if(regions.length>=64){report(Error(tr('regionLimit')));return;}
     seed=[Math.max(0,Math.min(source.width-1,Math.floor(px*source.width/w))),Math.max(0,Math.min(source.height-1,Math.floor(py*source.height/h)))];regions.push({seed,remove:regionMode!=='restore'});markRegions();schedule();};
   range('tolerance',tolerance,0,255,1,v=>tolerance=v);
@@ -67,6 +75,24 @@ export async function openProcessing({action,layer,doc,cache,client,selection,mo
  note.textContent=tr('processingNote');
  async function originalUpload(){if(!sourceInfo)sourceInfo=await client.upload(await toBlob(source));return sourceInfo;}
  async function backgroundBase(explicit=false){
+  if((method==='auto'||method==='isnet')&&!aiAvailable&&catalog?.cutout?.onnx_available&&(!modelPrompted||method==='isnet')){
+   modelPrompted=true;refresh.disabled=true;
+   try{modelPending??=ensureCutoutModel({client,catalog,confirmDownload:message=>new Promise(resolve=>{const dialog=modal(tr('downloadModel'),{maximizable:false});dialog.body.append(el('p','ph3-small',message));dialog.body.lastChild.style.whiteSpace='pre-line';const yes=el('button','primary',tr('downloadModel'));yes.onclick=()=>{resolve(true);dialog.finish();};dialog.actions.prepend(yes);dialog.box.addEventListener('ph3-close',()=>resolve(false),{once:true});}),onStatus:message=>{resultLabel.textContent=message;},tr});aiAvailable=await modelPending;}
+   finally{modelPending=null;if(!closed)refresh.disabled=false;}
+   if(closed)throw new DOMException('Closed','AbortError');
+   modelNote.textContent=tr(aiAvailable?'cutoutAutoAI':'isnetMissing');
+   if(!aiAvailable&&method==='isnet'){method='auto';methodSelect.value='auto';}
+  }
+  if(method==='auto'||method==='isnet'){
+   const useAI=method==='isnet'||aiAvailable,key=useAI?'auto:isnet':'auto:color:'+tolerance;
+   if(method==='isnet'&&!explicit&&!bgCache.has(key))throw Error(tr('aiPreviewExplicit'));
+   if(!bgCache.has(key)){
+    const promise=useAI?(async()=>{const info=await originalUpload();const result=await client.post('/process',{action:'remove_background',asset:info.asset,method:'isnet'});return cache.get(result.asset);})():Promise.resolve(fromData(autoColorCutout(data(source),tolerance)));
+    bgCache.set(key,promise);promise.catch(()=>{if(bgCache.get(key)===promise)bgCache.delete(key);});
+    if(bgCache.size>6)bgCache.delete(bgCache.keys().next().value);
+   }
+   const base=await bgCache.get(key);return regions.length?fromData(refineCutout(data(source),data(scaled(base,Math.max(source.width,source.height))),regions,tolerance)):base;
+  }
   const sourceInfo=await originalUpload(),payload={action:'remove_background',asset:sourceInfo.asset,method,tolerance,seed,regions:regions.map(r=>({...r,seed:[...r.seed]})),selection_action:selectionAction};
   if(method==='selection'){if(!maskBounds(selection,doc.width,doc.height))throw Error(tr('requireSelection'));if(!maskInfo)maskInfo=await client.upload(await toBlob(layerSelectionMask(layer,selection,doc.width,doc.height,source.width,source.height)));payload.mask_asset=maskInfo.asset;}
   const key=JSON.stringify(payload);if(bgCache.has(key))return await bgCache.get(key);

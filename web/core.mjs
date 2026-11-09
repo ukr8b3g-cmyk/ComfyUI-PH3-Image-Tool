@@ -77,12 +77,12 @@ export function layerFromCandidate(doc, job, index=0) {
       seed:req.config.seed,models:req.config,source_asset:req.source_asset,raw_asset:item.raw_asset,
         mask_asset:req.mask_asset,generation_size:req.generation_size,region:req.region,...(req.mode==='lettering'?{preserved_lettering_asset:item.preserved_lettering_asset,glyph_rect:item.glyph_rect,lettering:req.lettering,source_layer_id:req.source_layer?.id,parent_job_id:req.parent_job_id,parent_result_index:req.parent_result_index,finish_only:!!req.finish_only}:{} )}});
 }
-export function addLetteringLayer(doc,job,index,name){
+export function addLetteringLayer(doc,job,index,name,{preserveExisting=false}={}){
     ensureLayerCapacity(doc);
     const layer=layerFromCandidate(doc,job,index);layer.name=name;
     const unchanged=snapshot=>{const current=doc.layers.find(l=>l.id===snapshot?.id);return current&&!current.locked&&JSON.stringify(current)===JSON.stringify(snapshot)?current:null;};
     const parent=unchanged(job.request.parent_layer),source=unchanged(job.request.source_layer);
-    if(parent)parent.visible=false;if(source)source.visible=false;
+    if(!preserveExisting){if(parent)parent.visible=false;if(source)source.visible=false;}
     const anchor=parent||source;if(anchor)doc.layers.splice(doc.layers.indexOf(anchor)+1,0,layer);else doc.layers.push(layer);
     return layer;
   }

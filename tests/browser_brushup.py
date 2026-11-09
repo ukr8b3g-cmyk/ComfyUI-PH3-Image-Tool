@@ -45,7 +45,11 @@ def main(output):
             fc.value.set_files(str(fixture_path));page.wait_for_function('ph3Editor.snapshot().layers.length===1');ready()
             original=snap();source_asset=original['layers'][0]['asset']
             # Graphical palettes and permanent layers, no hidden image-processing launchers.
-            assert page.locator('.ph3-decoration-grid canvas').count()>=5
+            assert page.locator('.ph3-left [data-i18n=otherAssets]').count()==0
+            assert page.locator('.ph3-left [data-i18n=styles]').count()==0
+            assert page.locator('.ph3-left-scroller > button').evaluate_all('(buttons)=>buttons.map(b=>b.dataset.i18n)')==['image','input','bubble','addText','aiLettering','sourceStamps','speed','frame']
+            for entry in ['symbol','sfx','stamp']:
+                assert page.locator(f'.ph3-left [data-i18n={entry}]').count()==0
             assert page.locator('.ph3-process-group [data-i18n=cutout]').is_visible()
             click('bubble','.ph3-left');page.wait_for_selector('.ph3-preset-card canvas')
             assert page.locator('.ph3-preset-card').count()==12
@@ -54,8 +58,10 @@ def main(output):
             assert page.locator('.ph3-preset-card').count()>=1
             close_modal();assert snap()==original
             checks.append('Graphical bubble gallery: 12 previews, search, cancel without edits; image processing buttons visible')
-            assert page.locator('.ph3-layer-list').is_visible()
-            checks.append('Layer thumbnails remain visible under the Generation panel')
+            assert not page.locator('.ph3-layer-list').is_visible()
+            click('layers','.ph3-tabs');assert page.locator('.ph3-layer-list').is_visible()
+            click('generationTab','.ph3-tabs');assert not page.locator('.ph3-layer-list').is_visible()
+            checks.append('Layers and Generation are independent tab views')
             # View navigation must never mutate document or export state.
             v0=view();before=snap();anchor=doc_screen(420,220)
             page.mouse.move(*anchor);page.mouse.wheel(0,-160);page.wait_for_timeout(100)

@@ -119,3 +119,62 @@
 .ph3-lettering-modal.with-reference{width:min(1060px,96%)}.ph3-lettering-body.has-reference{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}.ph3-lettering-controls{min-width:0}.ph3-lettering-previews{position:sticky;top:0;min-width:0}.ph3-lettering-previews .ph3-lettering-reference-preview{height:150px}.ph3-lettering-modal .ph3-field{grid-template-columns:110px minmax(0,1fr);gap:8px;margin:7px 0}.ph3-lettering-modal .ph3-field.wide{display:flex}@media(max-width:760px){.ph3-lettering-body.has-reference{grid-template-columns:minmax(0,1fr)}.ph3-lettering-previews{position:static}.ph3-lettering-modal .ph3-field{grid-template-columns:90px minmax(0,1fr)}}
 
 .ph3-lettering-strength input[type=number]{flex:0 0 65px;max-width:65px}.ph3-lettering-strength input[type=range]{width:auto}
+.ph3-modal-actions:has(.ph3-inline-progress){flex-wrap:wrap}.ph3-inline-progress{flex:1 1 100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(90px,180px) auto;align-items:center;gap:10px;text-align:left;padding:6px 0}.ph3-inline-progress[hidden]{display:none!important}.ph3-inline-progress [role=status]{font-size:12px;overflow-wrap:anywhere}.ph3-inline-progress .error{color:#f09393}.ph3-inline-progress .ph3-progress{margin:0}.ph3-inline-progress button{min-width:110px}@media(max-width:760px){.ph3-inline-progress{grid-template-columns:minmax(0,1fr) auto}.ph3-inline-progress [role=status]{grid-column:1/-1}}
+.ph3-inline-progress .ph3-progress.is-determinate>i{animation:none;margin-left:0;transition:width .15s ease}
+.ph3-right>.ph3-panel[hidden]{display:none!important}
+.ph3-shared-progress{display:grid;grid-template-columns:minmax(90px,1fr) auto;gap:3px 8px;align-items:center;flex:1;min-width:150px;max-width:470px;margin:0 10px}.ph3-shared-progress[hidden]{display:none!important}.ph3-shared-progress [role=status]{font-size:11px;overflow-wrap:anywhere;text-align:left}.ph3-shared-progress .ph3-progress{grid-column:1;margin:0}.ph3-shared-progress button{grid-column:2;grid-row:1/3;min-width:86px;font-size:11px}.ph3-shared-progress .error{color:#f09393}.ph3-shared-progress .ph3-progress.is-determinate>i{animation:none;margin-left:0;transition:width .15s ease}.ph3-top:has(.ph3-shared-progress:not([hidden])) .ph3-progress-anchor{flex:0}.ph3-modal-header:has(.ph3-shared-progress:not([hidden])) h2{flex:0 1 auto;margin-right:auto}@media(max-width:760px){.ph3-shared-progress{min-width:100px;margin:0 3px}.ph3-shared-progress [role=status]{font-size:10px}.ph3-shared-progress button{min-width:66px;padding:5px;font-size:10px}}
+
+.ph3-shared-progress{max-width:610px;grid-template-columns:minmax(90px,1fr) auto auto}.ph3-shared-progress .ph3-progress-review{grid-column:3;grid-row:1/3}.ph3-shared-progress [hidden]{display:none!important}
+
+.ph3-modal.ph3-new-project:not(.ph3-maximized){width:min(380px,96%);height:auto;min-height:0}.ph3-new-project .ph3-field{grid-template-columns:minmax(100px,1fr) minmax(120px,1.15fr);gap:8px;margin:8px 0}.ph3-new-project .ph3-swap-dimensions{display:block;margin:4px 0 10px auto;font-size:11px;padding:5px 9px}.ph3-new-project .ph3-modal-body>.ph3-small:empty{display:none}
+
+.ph3-auto-save{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}.ph3-auto-save input{width:16px;height:16px}
+
+/* Dense controls and shared color palette, without shrinking readable labels. */
+.ph3-tool .ph3-text-segments{justify-content:flex-start;gap:3px;flex-wrap:wrap}
+.ph3-tool .ph3-text-segments button{flex:0 1 auto;min-width:60px;min-height:25px;padding:3px 8px;border-radius:4px;font-size:12px;line-height:1.4}
+.ph3-tool .ph3-text-segments .ph3-icon{display:none}
+.ph3-tool .ph3-text-style-buttons button{min-width:46px;padding:3px 6px;gap:1px}
+.ph3-tool .ph3-style-letter{font-size:15px}
+.ph3-tool .ph3-color-swatches{display:grid;grid-template-columns:repeat(auto-fill,16px);gap:2px;width:100%;max-width:286px}
+.ph3-color-control{display:flex;align-items:center;gap:4px;min-width:0}
+.ph3-tool .ph3-color-control input[type=color]{width:36px;height:25px;flex:none;border-radius:3px}
+.ph3-tool .ph3-palette-toggle{width:25px;height:25px;min-width:25px;padding:0;border-radius:3px;font-size:18px;line-height:1}
+.ph3-tool .ph3-color-palette{position:fixed;inset:auto;margin:0;padding:8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--fg);box-shadow:0 7px 22px #0007;max-width:calc(100vw - 12px)}
+.ph3-color-palette>strong{display:block;font-size:11px;margin-bottom:5px}
+.ph3-palette-grid{display:grid;grid-template-columns:repeat(16,16px);gap:2px;margin-top:6px}
+.ph3-tool .ph3-palette-grid button{width:16px;height:16px;min-width:16px;padding:0;border:1px solid #80808066;border-radius:0}
+.ph3-tool .ph3-palette-grid button[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:0;position:relative;z-index:1}
+
+.ph3-output-settings{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:12px}
+.ph3-output-path{font-size:12px;overflow-wrap:anywhere;padding:6px 0;color:var(--fg)}
+.ph3-folder-dialog{width:min(650px,96%)}.ph3-folder-dialog .ph3-row>input{flex:1;min-width:0}.ph3-folder-dialog .ph3-row>button{flex:none}
+.ph3-folder-list{display:flex;flex-direction:column;max-height:45vh;min-height:120px;overflow:auto;gap:3px}.ph3-folder-list button{text-align:left;white-space:normal;overflow-wrap:anywhere;padding:5px 8px}
+.ph3-selection-properties{border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px}.ph3-selection-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}.ph3-selection-action-grid button{white-space:normal;padding:5px;font-size:11px}.ph3-selection-action-grid .ph3-icon{display:none}
+.ph3-curve-graph{display:block;width:100%;max-width:300px;aspect-ratio:1;border:1px solid var(--line);touch-action:none;cursor:crosshair}
+
+.ph3-adjustment-actions>button{white-space:normal;padding:4px;font-size:11px}.ph3-adjustment-actions .ph3-icon{display:none}
+
+/* Four action accents; active borders and labels remain visible independently. */
+.ph3-tool [data-tone=green],.ph3-tool .ph3-tabs button[data-tab=generate]{--action-bg:#244b40;--action-line:#609e89;--action-fg:#dcfff1}
+.ph3-tool [data-tone=blue],.ph3-tool .ph3-tabs button[data-tab=properties]{--action-bg:#29435f;--action-line:#678fbc;--action-fg:#e2efff}
+.ph3-tool [data-tone=amber],.ph3-tool .ph3-tabs button[data-tab=layers]{--action-bg:#504225;--action-line:#a78a49;--action-fg:#fff0c9}
+.ph3-tool [data-tone=red],.ph3-tool [data-ph3-close],.ph3-tool .ph3-job-stop,.ph3-tool .ph3-tabs button[data-tab=candidates]{--action-bg:#56333e;--action-line:#af6a7b;--action-fg:#ffe7ed}
+.ph3-tool button[data-tone],.ph3-tool button[data-ph3-close],.ph3-tool button.ph3-job-stop,.ph3-tool .ph3-tabs button{background:var(--action-bg,var(--panel2));border-color:var(--action-line,var(--line));color:var(--action-fg,var(--fg))}
+.ph3-tool button[data-tone]:hover,.ph3-tool button[data-ph3-close]:hover{filter:brightness(1.16)}
+.ph3-tool .ph3-tabs button.active{background:color-mix(in srgb,var(--action-bg) 72%,var(--action-line));border-color:var(--action-line);box-shadow:inset 0 0 0 1px var(--action-line);font-weight:700}
+.ph3-tool[data-theme=light] button[data-tone],.ph3-tool[data-theme=light] button[data-ph3-close],.ph3-tool[data-theme=light] .ph3-tabs button{color:var(--action-fg);background:var(--action-bg)}
+.ph3-modal-header>[data-ph3-close]{order:10;margin-left:0}
+.ph3-modal.ph3-cutout-modal:not(.ph3-maximized){width:min(1360px,98%);height:min(900px,96%)}
+.ph3-brush-ring{position:absolute;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border:1px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #151515;box-sizing:border-box}
+.ph3-brush-ring>i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:1px dotted var(--brush-color,#fff);border-radius:50%;box-shadow:0 0 0 1px #15151588;box-sizing:border-box}
+.ph3-brush-ring.resizing{background:color-mix(in srgb,var(--brush-color) 18%,transparent)}
+.ph3-brush-hud{position:absolute;z-index:3;pointer-events:none;background:#17212bea;border:1px solid #81939f;border-radius:4px;color:#fff;padding:3px 6px;font:11px/1.5 system-ui;white-space:nowrap}
+.ph3-palette-header{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px}.ph3-tool .ph3-palette-header>button{padding:0;width:22px;height:22px;font-size:16px}
+
+/* One Close in the header; the footer contains task actions only. */
+.ph3-modal-actions:empty{display:none}
+.ph3-modal.ph3-recovery-modal{width:min(440px,96%);height:auto;min-height:0}
+.ph3-recovery-modal .ph3-modal-header{padding:12px 16px}.ph3-recovery-modal .ph3-modal-header h2{font-size:15px}
+.ph3-recovery-modal .ph3-modal-body{padding:14px 16px}.ph3-recovery-modal .ph3-modal-body p{margin:0}
+.ph3-recovery-modal .ph3-modal-actions{padding:10px 16px;gap:7px}.ph3-recovery-modal .ph3-modal-actions>button{flex:1;padding:6px 9px}

@@ -57,8 +57,8 @@ def default_document(width=1024, height=1024):
         "format": FORMAT, "version": VERSION, "title": "Untitled", "canvas_revision": 0,
         "width": width, "height": height, "background": "#ffffff", "transparent": False,
         "layers": [], "selection_asset": None, "composite_asset": None,
-        "settings": {"locale": "ja", "theme": "dark", "auto_apply": True, "include_text": False,
-            "history_limit": 40, "export_format": "png", "export_quality": 0.92,
+        "settings": {"locale": "en", "locale_mode": "auto", "theme": "dark", "auto_apply": True, "include_text": False,
+            "save_generated_images": True, "save_image_directory": "", "history_limit": 40, "export_format": "webp", "export_quality": 0.8,
             "png_compression": 6, "webp_lossless": False, "mouse_undo": True,
             "context": 0.25, "feather": 4, "brush": 32, "max_megapixels": 1.0,
             "unet_name": "", "clip_name": "", "vae_name": "", "lora_name": "", "enhancer_name": "",
@@ -167,6 +167,9 @@ def validate_document(value):
         raise ToolError("INVALID_DOCUMENT", "Missing settings or prompt")
     number(settings.get("ph3_lora_strength", 1.0), -10, 10, "P-H3 LoRA strength")
     extra_loras(settings)
+    if settings.get("locale_mode","auto") not in {"auto","ja","en"}:raise ToolError("INVALID_LOCALE","Invalid language preference")
+    from .output_saving import options as output_options
+    output_options(settings)
     for key in ("original", "ai"):
         if not isinstance(prompt.get(key, ""), str) or len(prompt.get(key, "")) > 16000:
             raise ToolError("PROMPT_TOO_LONG", "Prompt exceeds 16,000 characters")

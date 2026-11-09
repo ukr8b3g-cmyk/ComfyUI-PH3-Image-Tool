@@ -26,6 +26,6 @@ def model_catalog():
     result["enhancer_available"] = "TextGenerateV2" in nodes.NODE_CLASS_MAPPINGS
     path = Path(folder_paths.models_dir) / "rembg" / "isnet-general-use.onnx"
     result["cutout"] = {"onnx_available": onnx_available(), "model_available": path.is_file(),
-                         "model": "isnet-general-use.onnx", "network_downloads": False}
+                         "model": "isnet-general-use.onnx", "network_downloads": False, "download_on_confirmation": True}
     result["storage"] = str(get_store().root)
     return result

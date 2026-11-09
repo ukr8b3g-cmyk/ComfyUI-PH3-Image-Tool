@@ -91,6 +91,8 @@ def prepare_job(store, project_id, payload, available, node_names):
         opts = lettering.options(payload.get('lettering', {}))
         size = fit_generation(*lettering.material_size(opts), settings.get('max_megapixels', 1.0))
         request = lettering.request(store, record, payload, config, size)
+        from .output_saving import options as output_options
+        request['output_save']=output_options(doc['settings'])
         job = store.create_job(project_id, request)
         return job, build_graph(job)
     prompt = doc["prompt"].get("original" if enhance else doc["prompt"]["source"], "").strip()
@@ -158,6 +160,8 @@ def prepare_job(store, project_id, payload, available, node_names):
         if supplied is not None and not isinstance(supplied, dict):
             raise ToolError('INVALID_MANGA', 'Invalid manga settings')
         request['manga_settings'] = manga_options({**defaults, **(supplied or {})})
+    from .output_saving import options as output_options
+    request['output_save']=output_options(doc['settings'])
     job = store.create_job(project_id, request)
     return job, build_graph(job)
 
@@ -238,4 +242,11 @@ def capture_images(store, job_id, images):
             result = store.put_image(patch)
         result.update(raw_asset=raw, x=x, y=y, w=width, h=height)
         results.append(result)
+    from .output_saving import save_candidates
+    try:
+        save_candidates(store,job,results)
+    except Exception as error:
+        store.finish_job(job_id,results=results)
+        store.mark_job(job_id,{'error':'Image output save failed: '+str(error)})
+        raise
     return store.finish_job(job_id, results=results)

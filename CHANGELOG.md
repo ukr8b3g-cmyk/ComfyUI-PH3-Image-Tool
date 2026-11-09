@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 — 2026-11-10
+
+- Publish the current single-image editor with generation review, shared progress/stop, non-destructive adoption, AI effect lettering and retained text assets.
+- Add selection adjustments/curves/fill/delete/copy, editable paint and sources/masks, auto language, server-local output folder selection and WebP auto-save.
+- Consolidate symbol stamps, compact controls/swatches, color important actions, enlarge cutout, remove duplicate Close and move view rotation into the top toolbar.
+- Preserve node contracts, project format and historical validation assets. Four-panel comics remain an uncommitted future consideration.
+- See [release scope and validation](docs/releases/v0.9.0.md).
+
 ## Development — 2026-11-08
 
 - Add AI lettering templates with T2I/reference modes, pop/cute/fancy styles, vertical/horizontal text, color and gradients.

@@ -25,6 +25,6 @@ NODE_NAMES = set(generation.CORE_NODES) | {"TextGenerateV2", "PH3ImageToolAsset"
 def document(w=128, h=96):
     doc = schema.default_document(w,h)
     doc["settings"].update(unet_name="h3.safetensors",clip_name="ph3.safetensors",vae_name="vae.safetensors",
-                           lora_name="ph3_lora.safetensors",enhancer_name="up.safetensors",random_seed=False)
+                           lora_name="ph3_lora.safetensors",enhancer_name="up.safetensors",random_seed=False,save_generated_images=False)
     doc["prompt"]["original"] = "Add a red apple on the palm."
     return doc

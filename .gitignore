@@ -4,3 +4,4 @@ __pycache__/
 node_modules/
 .test-data/
 .DS_Store
+dist/

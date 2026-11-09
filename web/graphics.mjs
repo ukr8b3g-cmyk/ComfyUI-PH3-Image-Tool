@@ -1,6 +1,7 @@
-import {canvas,drawLayer} from './render.mjs?v=8ed0e47f8bb24088';
-import {makeLayer} from './core.mjs?v=8ed0e47f8bb24088';
+import {canvas,drawLayer} from './render.mjs?v=8f31cf47e6499d9f';
+import {makeLayer} from './core.mjs?v=8f31cf47e6499d9f';
 const paths={
+ aiLettering:'M3 4h12 M9 4v17 M5 21h8 M19 3v6 M16 6h6 M19 14v6 M16 17h6',
  wand:'m4 20 12-12 3 3L7 23z M5 3v6 M2 6h6 M16 1v4 M14 3h4 M21 15v6 M18 18h6',colorRange:'M12 3a9 9 0 1 0 9 9 M12 7a5 5 0 1 0 5 5 M12 10a2 2 0 1 0 2 2 M16 2l6 6-7 7-6-6z',
  dockPanel:'M3 3h18v18H3z M15 3v18 M5 12h7 M9 9l3 3-3 3',
 
@@ -8,7 +9,7 @@ const paths={
 
  image:'M3 4h18v16H3z M3 16l5-5 4 4 3-3 6 6 M15 8h.01',input:'M12 2v12 m-5-5 5 5 5-5 M4 15v6h16v-6',
  move:'M12 2v20 M2 12h20 M8 6l4-4 4 4 M8 18l4 4 4-4 M6 8l-4 4 4 4 M18 8l4 4-4 4',rect:'M3 4h18v16H3z',ellipse:'M21 12a9 7 0 1 1-18 0 9 7 0 1 1 18 0',lasso:'M5 17C-2 11 4 3 13 4c11 1 11 11 3 13-5 2-10 1-9-3 2-4 7 2 3 7',
- brush:'m13 4 5-2 4 4-9 9-4-4z M9 12C2 11 6 18 2 21c8 1 11-3 10-7',erase:'m9 19-6-6L14 2l8 8-9 9H9z M7 9l8 8 M12 21h10',
+ paint:'M3 21l5-1L21 7l-4-4L4 16z M14 6l4 4',brush:'m13 4 5-2 4 4-9 9-4-4z M9 12C2 11 6 18 2 21c8 1 11-3 10-7',erase:'m9 19-6-6L14 2l8 8-9 9H9z M7 9l8 8 M12 21h10',
  text:'M3 4h18 M12 4v17 M8 21h8',bubble:'M4 4h16v12H10l-6 5v-5z',sfx:'m13 1-9 13h7l-1 9 10-14h-7z',symbol:'m12 2 3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z',stamp:'M8 3h8v7l4 4v4H4v-4l4-4z M3 21h18',speed:'M2 3l6 5 M22 3l-6 5 M2 21l6-6 M22 21l-6-6 M12 1v6 M12 23v-6 M1 12h5 M23 12h-5',frame:'M2 3h20v18H2z M6 7h12v10H6z',
  comic:'M4 3h16v18H4z M4 9h16 M11 9v12 M15 13h2 M15 17h2',cutout:'M7 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8 M7 23a4 4 0 1 1 0-8 4 4 0 0 1 0 8 M10 7l12 14 M10 17 22 3',
  undo:'M8 4 2 10l6 5 M3 10h11a7 7 0 0 1 7 7',redo:'m16 4 6 6-6 5 M21 10H10a7 7 0 0 0-7 7',settings:'M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2',

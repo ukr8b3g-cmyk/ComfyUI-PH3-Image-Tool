@@ -90,6 +90,40 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
             import folder_paths
             return Path(folder_paths.models_dir) / "rembg" / "isnet-general-use.onnx"
 
+    @routes.get(BASE + "/cutout/model")
+    @guarded
+    async def cutout_model_status(request):
+        from .cutout_model import status
+        return web.json_response(await asyncio.to_thread(status,cutout_model()))
+
+    @routes.post(BASE + "/cutout/model/download")
+    @guarded
+    async def cutout_model_download(request):
+        from .cutout_model import download
+        body=await json_body(request)
+        result=await asyncio.to_thread(download,cutout_model(),body.get('confirmed',False))
+        return web.json_response(result)
+
+    @routes.get(BASE + "/output/locations")
+    @guarded
+    async def output_locations(request):
+        from .output_locations import locations
+        return web.json_response(await asyncio.to_thread(locations,store_provider()))
+
+    @routes.post(BASE + "/output/folders")
+    @guarded
+    async def output_folders(request):
+        from .output_locations import folders
+        body=await json_body(request)
+        return web.json_response(await asyncio.to_thread(folders,body.get('path','')))
+
+    @routes.post(BASE + "/output/locations")
+    @guarded
+    async def choose_output(request):
+        from .output_locations import choose
+        body=await json_body(request)
+        return web.json_response(await asyncio.to_thread(choose,store_provider(),body.get('path')))
+
     @routes.get(BASE + "/fonts")
     @guarded
     async def fonts(request):
@@ -112,7 +146,7 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
         data.update(lettering_presets=[{k: p[k] for k in ("id", "ja", "en")} for p in lettering.PRESETS.values()],
                     lettering_styles=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.STYLES.values()],
                     lettering_decorations=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.DECORATIONS.values()],
-                    lettering_finishing=True, preserved_lettering_bubbles=True, version="0.2.0-rc3+manga.1", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
+                    lettering_finishing=True, preserved_lettering_bubbles=True, version="0.9.0", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
         return web.json_response(data)
 
     @routes.post(BASE + "/lettering/preview")
