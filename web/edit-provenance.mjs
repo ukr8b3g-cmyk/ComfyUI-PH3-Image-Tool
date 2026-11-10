@@ -1,4 +1,4 @@
-import {clone} from './core.mjs?v=c05d225929bd2f7c';
+import {clone} from './core.mjs?v=70d397f187c183a6';
 
 // A result fingerprint separates a live adjustment from its baked provenance.
 // Legacy results with processing/paint modifiers cannot prove the old source is

@@ -15,6 +15,11 @@ export function imageInsertionIndex(doc) {
   return first < 0 ? doc.layers.length : first;
 }
 export const clone = value => JSON.parse(JSON.stringify(value));
+export function historySelection(before,after,selected){
+ const old=new Map(before.layers.map(l=>[l.id,JSON.stringify(l)]));
+ const changed=after.layers.filter(l=>old.get(l.id)!==JSON.stringify(l));
+ return changed.at(-1)?.id||(after.layers.some(l=>l.id===selected)?selected:after.layers.at(-1)?.id)||null;
+}
 export const uid = () => {const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('');};
 export const clamp = (n, low, high) => Math.min(high, Math.max(low, Number(n) || 0));
 export function checkSize(w, h) {

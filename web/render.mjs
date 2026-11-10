@@ -1,9 +1,9 @@
-import {isDecorationLayer} from './core.mjs?v=c05d225929bd2f7c';
-import {drawSourceSpeed} from './source-speed.mjs?v=c05d225929bd2f7c';
-import {drawSourceBubble} from './source-bubbles.mjs?v=c05d225929bd2f7c';
-import {drawSourceText} from './source-text.mjs?v=c05d225929bd2f7c';
-import {prepareFonts} from './source-fonts.mjs?v=c05d225929bd2f7c';
-import {readMask,maskCanvas} from './selection.mjs?v=c05d225929bd2f7c';
+import {isDecorationLayer} from './core.mjs?v=70d397f187c183a6';
+import {drawSourceSpeed} from './source-speed.mjs?v=70d397f187c183a6';
+import {drawSourceBubble} from './source-bubbles.mjs?v=70d397f187c183a6';
+import {drawSourceText} from './source-text.mjs?v=70d397f187c183a6';
+import {prepareFonts} from './source-fonts.mjs?v=70d397f187c183a6';
+import {readMask,maskCanvas} from './selection.mjs?v=70d397f187c183a6';
 export function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 export const imageRasterKey=l=>(l.mask_asset?l.asset+':'+l.mask_asset:l.asset)+(l.colorize?':tint:'+(l.tintColor||'#ffd42a'):'');
 export const previewRasterKey=l=>'layer-preview:'+l.id;

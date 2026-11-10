@@ -1,0 +1,15 @@
+{
+  "passed": 7,
+  "checks": [
+    "empty layer/edit commands are disabled with reasons",
+    "no selection / no mask do not offer active mask or deselect actions",
+    "masking an original image really hides outside pixels and enables mask removal",
+    "mask removal restores original pixels and becomes disabled again",
+    "pasted cutout is already transparent; without a new selection both mask actions are disabled",
+    "reapplying the identical selection to a cutout is visually identical, not a missing processing path",
+    "front edge and locked-layer mutations are disabled"
+  ],
+  "page_errors": [],
+  "live_comfyui": false,
+  "gpu": false
+}

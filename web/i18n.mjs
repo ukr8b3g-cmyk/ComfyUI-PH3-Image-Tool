@@ -1,4 +1,6 @@
 const pairs={
+editMenu:['編集','Edit'],copyPixels:['コピー（Ctrl+C）','Copy (Ctrl+C)'],copyMerged:['表示合成をコピー','Copy Merged'],cutPixels:['切り取り（Ctrl+X）','Cut (Ctrl+X)'],pastePixels:['貼り付け（Ctrl+V）','Paste (Ctrl+V)'],duplicatePixels:['選択部分を複製（Ctrl+J）','Duplicate Selection (Ctrl+J)'],pasted:['貼り付け画像','Pasted Image'],copyDone:['コピー済み','Copied'],cutDone:['切り取り済み','Cut'],pasteDone:['貼り付け済み','Pasted'],emptyPixels:['選択範囲に画像がありません','No image pixels in selection'],clipboardNoImage:['貼り付ける画像がありません','No image to paste'],clipboardTooLarge:['貼付画像は64 MiBまでです','Clipboard image exceeds 64 MiB'],
+
 downloadModel:['モデルをダウンロード','Download model'],
 autoSaveImages:['自動保存','Auto-save'],autoSaveImagesHelp:['Save Imageノードなしで、生成候補をWebP・品質80（変更可）で保存します。保存先は設定で変更できます。','Save generated candidates as WebP without a Save Image node. Default quality is 80. Change the directory in Settings.'],
 save_generated_images:['生成結果をWebPで自動保存','Auto-save generated results as WebP'],save_image_directory:['画像の保存先','Save image directory'],outputDirectoryHelp:["生成結果は選択したフォルダーへWebPで保存します。未指定ならComfyUIの標準outputを使います。編集キャンバスの書き出しは別操作です。", "Generated results are saved as WebP in the selected folder, or ComfyUI output by default. Exporting the edited canvas is a separate action."],imageSavedTo:['WebP保存先:','WebP saved to:'],
@@ -79,7 +81,7 @@ stopHelp:['この生成だけを停止します。実行中は停止確認まで
 mergeVisibleHelp:['表示中のレイヤーを合成し、元レイヤーは非表示で保持します。','Merge visible layers and keep the originals hidden.'],
 recoverDraft:['下書きの復元','Recover draft'],recoverDraftHelp:['保存前の編集を復元しますか？','Restore unsaved edits?'],recoverCopyHelp:['保存済み作品とは世代が異なります。別作品として復元できます。','The draft has a different revision. Restore it as a separate project.'],restoreDraft:['復元','Restore'],
 
- copyPasteLayers:['レイヤーをコピー／貼り付け','Copy / paste layer'],
+ copyPasteLayers:['選択部分をコピー／新レイヤーへ貼付（範囲なしはレイヤー全体）','Copy selection / paste as a new layer (whole layer without a selection)'],
  selectionKeys:['全選択／選択解除／選択反転','Select all / deselect / invert selection'],
  orderKeys:['レイヤーを一つ背面／前面へ','Move layer backward / forward'],
  edgeKeys:['レイヤーを最背面／最前面へ','Send layer to back / bring to front'],
@@ -277,5 +279,22 @@ clearHelp:["Ctrl+D：選択解除。Ctrl+Shift+D：この編集画面で解除�
 reselectHelp:["解除直前の選択を再選択（同じ作品・キャンバスサイズのみ）。", "Restore the last cleared selection in this session (same project and canvas size)."],
 selectionToolKeys:["矩形選択 / 矩形と楕円の切替 / 投げ縄 / 自動選択", "Rectangle / cycle rectangle and ellipse / lasso / magic wand"],
 selectionModifierKeys:["選択範囲に追加 / 除外 / 共通部分。キーを離すと上部ボタンの方式へ戻ります。", "Add / subtract / intersect while selecting. Release the keys to use the selected mode button."],
+needLayer:["先に対象レイヤーを選択してください。", "Select a layer first."],
+needImage:["対象の画像レイヤーを選択してください。", "Select a target image layer."],
+needVisibleImage:["対象レイヤーを表示してください。", "Show the target layer first."],
+needVisibleLayers:["表示中のレイヤーがありません。", "There are no visible layers."],
+needSelection:["先に矩形・投げ縄・自動選択などで範囲を選択してください。", "Make a selection first using a marquee, lasso or magic wand."],
+noLayerMask:["このレイヤーにマスクはありません。コピー・貼り付け時の透明部分は、このボタンでは元に戻せません。", "This layer has no mask. Transparency baked in by copy/paste cannot be restored with this button."],
+layerCapacity:["レイヤー数が上限256に達しています。", "The 256-layer limit has been reached."],
+alreadyFront:["このレイヤーは既に最前面です。", "This layer is already at the front."],
+alreadyBack:["このレイヤーは既に最背面です。", "This layer is already at the back."],
+noInternalClipboard:["アプリ内にコピーした内容がありません。外部画像の貼り付けはCtrl+Vを使ってください。", "The internal clipboard is empty. Use Ctrl+V to paste an external image."],
+noNodeInput:["ノード入力の画像がありません。", "No node input image is available."],
+referenceCapacity:["参照画像の上限7枚に達しています。", "The seven-reference limit has been reached."],
+nothingUndo:["元に戻せる操作がありません。", "There is nothing to undo."],
+nothingRedo:["やり直せる操作がありません。", "There is nothing to redo."],
+needPrompt:["先に指示文を入力してください。", "Enter an instruction first."],
+maskLayerHelp:["選択範囲の内側を残し、外側をマスクで隠します。コピー・貼り付けで切り抜き済みの場合、同じ範囲を適用しても見た目は変わりません。", "Keep the selected area and hide the outside with a layer mask. Applying the same area to an already-cut-out paste does not change its appearance."],
+clearLayerMaskHelp:["追加したレイヤーマスクを外します。元画像の画素を削除したり、貼り付け済みの透明部分を復元する操作ではありません。", "Remove an attached layer mask. This does not restore pixels already made transparent in a pasted image."],
 };
 export const t=(locale,key)=>pairs[key]?.[locale==='en'?1:0]??key;

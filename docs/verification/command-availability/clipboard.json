@@ -1,0 +1,25 @@
+{
+  "passed": 9,
+  "checks": [
+    "real Ctrl+C/V copies only 32x28 selected pixels, preserves source, selects a new layer and clears selection",
+    "paste Undo/Redo restores both source layers and the selection in one step",
+    "pasted layer moves immediately; movement Undo/Redo leaves its source unchanged",
+    "Ctrl+J duplicates selection without changing the clipboard; one Undo removes only the duplicate",
+    "Cut/Paste and two Undo/Redo operations preserve original asset and restore exact masks and layers",
+    "Save/close/reopen keeps pixels and model/seed settings; reloaded layers remain editable with Undo/Redo",
+    "portable project roundtrip preserves the clipped image, source and cut mask",
+    "900x640: original labelled palette restored; selection controls remain on the left and tool help is retained",
+    "rotated soft mask x soft selection applies alpha once; Cut preserves remaining mask; empty selection is no-op"
+  ],
+  "page_errors": [],
+  "layout": {
+    "width": 166,
+    "content": 772,
+    "viewport": 384,
+    "label_visible": true,
+    "selection_controls_left": true
+  },
+  "models_and_seed_preserved": true,
+  "live_comfyui": false,
+  "gpu": false
+}

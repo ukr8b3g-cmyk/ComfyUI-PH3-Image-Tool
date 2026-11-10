@@ -130,8 +130,13 @@ def main(output):
             page.locator('.ph3-panel[data-panel=properties] input[type=color]').first.evaluate("el=>{el.value='#00ff00';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}")
             page.wait_for_function("window.ph3Editor.snapshot().layers[1].fill==='#00ff00'");checks.append('first color change after Save/Apply affects the current layer')
             page.screenshot(path=str(output/'save-then-edit.png'));(output/'save-then-edit.json').write_text(json.dumps(snap(),ensure_ascii=False,indent=2),encoding='utf8')
+            # Subtract/intersect are unavailable until a selection exists.
+            assert page.locator('.ph3-selection-operations button[data-operation=subtract]').is_disabled()
+            assert page.locator('.ph3-selection-operations button[data-operation=intersect]').is_disabled()
+            page.locator('[data-tool=rect]').click();area=page.locator('.ph3-canvas').bounding_box();page.mouse.move(area['x']+area['width']*.2,area['y']+area['height']*.2);page.mouse.down();page.mouse.move(area['x']+area['width']*.6,area['y']+area['height']*.6,steps=5);page.mouse.up();ready();page.wait_for_function('!!ph3Editor.snapshot().selection_asset')
             for mode in ['add','subtract','intersect','replace']:
                 page.locator('.ph3-selection-operations button[data-operation='+mode+']').click();assert page.locator('.ph3-selection-operations button[aria-pressed=true]').get_attribute('data-operation')==mode
+            click('clear','.ph3-left');ready()
             checks.append('four current selection mode buttons are mutually exclusive')
             click('generationTab','.ph3-tabs');page.get_by_label('原文',exact=True).fill('Add one red apple.');page.get_by_role('combobox',name='生成範囲',exact=True).select_option('new');count=len(snap()['layers']);click('generate','.ph3-panel[data-panel=generate]');ready()
             page.wait_for_function(f'window.ph3Editor.snapshot().layers.length==={count+1}',timeout=15000);checks.append('simulated generation adds a candidate layer without replacing existing text or image')
