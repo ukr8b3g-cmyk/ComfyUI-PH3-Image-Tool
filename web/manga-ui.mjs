@@ -1,7 +1,7 @@
-import {clone} from './core.mjs?v=7910cb39adb1a324';
-import {MANGA_DEFAULTS} from './manga-core.mjs?v=7910cb39adb1a324';
-import {exportCanvas,toBlob} from './render.mjs?v=7910cb39adb1a324';
-import {inlineProgress} from './inline-progress.mjs?v=7910cb39adb1a324';
+import {clone} from './core.mjs?v=37e99894a6ee0379';
+import {MANGA_DEFAULTS} from './manga-core.mjs?v=37e99894a6ee0379';
+import {exportCanvas,toBlob} from './render.mjs?v=37e99894a6ee0379';
+import {inlineProgress} from './inline-progress.mjs?v=37e99894a6ee0379';
 const el=(tag,cls='',text='')=>{const e=document.createElement(tag);e.className=cls;e.textContent=text;return e;};
 export async function openManga({layer,doc,cache,client,modal,tr,catalog,onApply,onGenerate,onAdopt,ph3=false,onClassic,shared}) {
   const {body,actions,finish,box}=modal(tr(ph3?'ph3ComicFilter':'comicFilter'),{maximizable:true});box.classList.add('ph3-processing');
@@ -17,14 +17,17 @@ export async function openManga({layer,doc,cache,client,modal,tr,catalog,onApply
   visual.append(comparison,note);layout.append(visual,controls);body.append(el('p','',layer.name),layout);controls.append(state);
   let preset='standard';const presetSelect=el('select');presetSelect.setAttribute('aria-label',tr(ph3?'preset':'filterMethod'));
   for(const [id,key]of (ph3?[['standard','mangaStandard'],['bold','mangaBold']]:[['classic','classicMethod'],['screen','screenMethod']])){const o=el('option','',tr(key));o.value=id;presetSelect.append(o);}
-  presetSelect.value=ph3?'standard':'screen';body.prepend(presetSelect);
+  if(!ph3){presetSelect.title=tr('filterMethodHelp');presetSelect.setAttribute('aria-description',presetSelect.title);}presetSelect.value=ph3?'standard':'screen';body.prepend(presetSelect);
   if(ph3)Object.assign(settings,{screen_lines:250,white_point:.8,black_point:.3,light_tone:.18,dark_tone:.42,gradation:1,white_lines:.4});
-  presetSelect.onchange=()=>{if(!ph3){finish();onClassic();return;}preset=presetSelect.value;Object.assign(settings,{screen_lines:250,white_point:.8,black_point:preset==='bold'?.4:.3,light_tone:.18,dark_tone:.42,gradation:1,white_lines:.4});for(const[key,input]of inputs)input.value=settings[key];white.checked=true;result=null;apply.disabled=true;};
+  presetSelect.onchange=()=>{if(!ph3){finish();onClassic();return;}preset=presetSelect.value;Object.assign(settings,{screen_lines:250,white_point:.8,black_point:preset==='bold'?.4:.3,light_tone:.18,dark_tone:.42,gradation:1,white_lines:.4});for(const[key,input,,,slider]of inputs)input.value=slider.value=settings[key];white.checked=true;result=null;apply.disabled=true;};
   const inputs=[];
   for(const[key,min,max,step]of [['screen_lines',40,600,10],['white_point',.05,1,.01],['black_point',0,.95,.01],['light_tone',0,1,.01],['dark_tone',0,1,.01],['gradation',0,1,.05]]){
     const row=el('label','ph3-field'),input=el('input');input.type='number';input.value=settings[key];input.min=min;input.max=max;input.step=step;input.setAttribute('aria-label',tr('manga_'+key));
-    input.oninput=()=>{result=null;apply.disabled=true;state.textContent=tr('previewPending');};
-    inputs.push([key,input,min,max]);row.append(el('span','',tr('manga_'+key)),input);controls.append(row);
+    const group=el('div','ph3-range-control'),slider=el('input');slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=settings[key];slider.setAttribute('aria-label',tr('manga_'+key)+' slider');
+    const invalidate=()=>{result=null;apply.disabled=true;state.textContent=tr('previewPending');};
+    slider.oninput=()=>{input.value=slider.value;invalidate();};
+    input.oninput=()=>{const value=Number(input.value);if(input.value!==''&&Number.isFinite(value)&&value>=min&&value<=max)slider.value=value;invalidate();};
+    inputs.push([key,input,min,max,slider]);group.append(slider,input);row.append(el('span','',tr('manga_'+key)),group);controls.append(row);
   }
   const white=el('input');white.type='checkbox';white.checked=!!settings.white_lines;white.setAttribute('aria-label',tr('manga_white_lines'));white.onchange=()=>{result=null;apply.disabled=true;};
   const wr=el('label','ph3-field');wr.append(el('span','',tr('manga_white_lines')),white);controls.append(wr);

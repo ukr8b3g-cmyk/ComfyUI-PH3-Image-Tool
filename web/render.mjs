@@ -1,9 +1,9 @@
-import {isDecorationLayer} from './core.mjs?v=7910cb39adb1a324';
-import {drawSourceSpeed} from './source-speed.mjs?v=7910cb39adb1a324';
-import {drawSourceBubble} from './source-bubbles.mjs?v=7910cb39adb1a324';
-import {drawSourceText} from './source-text.mjs?v=7910cb39adb1a324';
-import {prepareFonts} from './source-fonts.mjs?v=7910cb39adb1a324';
-import {readMask,maskCanvas} from './selection.mjs?v=7910cb39adb1a324';
+import {isDecorationLayer} from './core.mjs?v=37e99894a6ee0379';
+import {drawSourceSpeed} from './source-speed.mjs?v=37e99894a6ee0379';
+import {drawSourceBubble} from './source-bubbles.mjs?v=37e99894a6ee0379';
+import {drawSourceText} from './source-text.mjs?v=37e99894a6ee0379';
+import {prepareFonts} from './source-fonts.mjs?v=37e99894a6ee0379';
+import {readMask,maskCanvas} from './selection.mjs?v=37e99894a6ee0379';
 export function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 export const imageRasterKey=l=>(l.mask_asset?l.asset+':'+l.mask_asset:l.asset)+(l.colorize?':tint:'+(l.tintColor||'#ffd42a'):'');
 export const previewRasterKey=l=>'layer-preview:'+l.id;

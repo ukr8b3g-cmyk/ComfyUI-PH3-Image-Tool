@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const studio=readFileSync(new URL('../web/studio.mjs',import.meta.url),'utf8');
+const floatTabSync=studio.slice(studio.indexOf('  function syncFloatingLayerTab('),studio.indexOf('  function toggleFloat('));
 test('queueing image, AI text, manga or lettering does not switch the current tab',async()=>{
  const source=studio.slice(studio.indexOf('  async function generate('),studio.indexOf('  const stoppingJobs='));
  for(const mode of ['new','enhance','manga','lettering'])for(const tab of ['generate','properties','layers','candidates']){
@@ -14,11 +15,15 @@ test('queueing image, AI text, manga or lettering does not switch the current ta
 test('docked History and Layers are separate tab views',()=>{
  const source=studio.slice(studio.indexOf('  function showTab('),studio.indexOf('  function setTool('));
  const panels=Object.fromEntries(['generate','properties','layers','candidates'].map(k=>[k,{hidden:false}]));
- const ctx={panels,floating:new Map(),right:{dataset:{}},tabs:{children:[]},activeTab:'generate'};vm.createContext(ctx);vm.runInContext(source,ctx);
+ const ctx={panels,floating:new Map(),right:{dataset:{}},tabs:{children:[],querySelector(){return null;}},activeTab:'generate'};vm.createContext(ctx);vm.runInContext(floatTabSync+source,ctx);
  for(const tab of Object.keys(panels)){ctx.showTab(tab);for(const [key,panel]of Object.entries(panels))assert.equal(panel.hidden,key!==tab,tab+' / '+key);}
 });
 test('opening floating History is explicit and hides the previous docked view',()=>{
  const source=studio.slice(studio.indexOf('  function showTab('),studio.indexOf('  function setTool('));
  const frame={hidden:true},panels={generate:{},properties:{},layers:{},candidates:{}};let saved=0;
- const ctx={panels,floating:new Map([['candidates',{frame,constrain(){},save(){saved++;}}]]),right:{dataset:{}},tabs:{children:[]},activeTab:'layers'};vm.createContext(ctx);vm.runInContext(source,ctx);ctx.showTab('candidates');assert.equal(frame.hidden,false);assert.equal(panels.layers.hidden,true);assert.equal(ctx.activeTab,'candidates');assert.equal(saved,1);
+ const ctx={panels,floating:new Map([['candidates',{frame,constrain(){},save(){saved++;}}]]),right:{dataset:{}},tabs:{children:[],querySelector(){return null;}},activeTab:'layers'};vm.createContext(ctx);vm.runInContext(floatTabSync+source,ctx);ctx.showTab('candidates');assert.equal(frame.hidden,false);assert.equal(panels.layers.hidden,true);assert.equal(ctx.activeTab,'candidates');assert.equal(saved,1);
+});
+test('detached layers hide their duplicate tab only while the window is visible',()=>{
+ const tab={hidden:false},frame={hidden:false},floating=new Map([['layers',{frame}]]),ctx={floating,tabs:{querySelector:()=>tab}};vm.createContext(ctx);vm.runInContext(floatTabSync,ctx);
+ ctx.syncFloatingLayerTab();assert.equal(tab.hidden,true);frame.hidden=true;ctx.syncFloatingLayerTab();assert.equal(tab.hidden,false);frame.hidden=false;ctx.syncFloatingLayerTab();assert.equal(tab.hidden,true);floating.delete('layers');ctx.syncFloatingLayerTab();assert.equal(tab.hidden,false);
 });

@@ -1,4 +1,4 @@
-import {ProgressTracker} from './progress.mjs?v=7910cb39adb1a324';
+import {ProgressTracker} from './progress.mjs?v=37e99894a6ee0379';
 export function nodeProgress(node,api,locale='en'){
  const ja=String(locale).startsWith('ja'),tracker=new ProgressTracker(),terminal=new Map();let current=null,off=null;
  const widget={name:'PH3 generation progress',type:'ph3_progress',serialize:false,value:null,computeSize:()=>[260,38],draw(ctx,n,width,y){

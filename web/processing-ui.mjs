@@ -1,10 +1,10 @@
-import {ensureCutoutModel} from './cutout-model.mjs?v=7910cb39adb1a324';
-import {canvas,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=7910cb39adb1a324';
-import {maskBounds} from './selection.mjs?v=7910cb39adb1a324';
-import {COMIC_DEFAULTS,COMIC_STYLES,comicAsync,processComic} from './comic-engine.mjs?v=7910cb39adb1a324';
-import {cutoutAsync} from './edge-refine.mjs?v=7910cb39adb1a324';
-import {COMIC} from './presets.mjs?v=7910cb39adb1a324';
-import {autoColorCutout,refineCutout} from './cutout-auto.mjs?v=7910cb39adb1a324';
+import {ensureCutoutModel} from './cutout-model.mjs?v=37e99894a6ee0379';
+import {canvas,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=37e99894a6ee0379';
+import {maskBounds} from './selection.mjs?v=37e99894a6ee0379';
+import {COMIC_DEFAULTS,COMIC_STYLES,comicAsync,processComic} from './comic-engine.mjs?v=37e99894a6ee0379';
+import {cutoutAsync} from './edge-refine.mjs?v=37e99894a6ee0379';
+import {COMIC} from './presets.mjs?v=37e99894a6ee0379';
+import {autoColorCutout,refineCutout} from './cutout-auto.mjs?v=37e99894a6ee0379';
 const el=(tag,cls='',text='')=>{const e=document.createElement(tag);e.className=cls;if(text)e.textContent=text;return e;};
 const scaled=(source,max=640)=>{const f=Math.min(1,max/Math.max(source.width,source.height)),c=canvas(Math.max(1,Math.round(source.width*f)),Math.max(1,Math.round(source.height*f)));c.getContext('2d').drawImage(source,0,0,c.width,c.height);return c;};
 const data=c=>c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
@@ -14,7 +14,7 @@ export async function openProcessing({action,layer,doc,cache,client,selection,mo
  const source=await exportCanvas(local,cache),previewSource=scaled(source,640),thumbSource=scaled(source,150),sourceData=data(previewSource);
  const box=modal(tr(action==='comic'?'comicFilter':'cutout'),{maximizable:true});box.box.classList.add('ph3-processing');if(action!=='comic')box.box.classList.add('ph3-cutout-modal');
  const {body,actions,finish}=box;let closed=false,sequence=0,timer=null,controller=null,sourceInfo=null,previewInfo=null,maskInfo=null,latest=null;
- if(action==='comic'&&onManga){const select=el('select');select.setAttribute('aria-label',tr('filterMethod'));for(const [id,key]of [['classic','classicMethod'],['screen','screenMethod']]){const o=el('option','',tr(key));o.value=id;select.append(o);}select.onchange=()=>{if(select.value==='screen'){finish();onManga().catch(onError);}};body.append(select);}
+ if(action==='comic'&&onManga){const select=el('select');select.setAttribute('aria-label',tr('filterMethod'));select.title=tr('filterMethodHelp');select.setAttribute('aria-description',select.title);for(const [id,key]of [['classic','classicMethod'],['screen','screenMethod']]){const o=el('option','',tr(key));o.value=id;select.append(o);}select.onchange=()=>{if(select.value==='screen'){finish();onManga().catch(onError);}};body.append(select);}
  const savedPreset=doc.settings.comic_preset||'comic',knownPreset=COMIC_STYLES.some(x=>x[0]===savedPreset)||COMIC.some(x=>x[0]===savedPreset);
  let preset=knownPreset?savedPreset:'comic',parameters={...COMIC_DEFAULTS,...doc.settings.comic_settings},method=doc.settings.background_method||'color',tolerance=doc.settings.background_tolerance??32,seed=[0,0],legacy=!COMIC_STYLES.some(x=>x[0]===preset);
  // Each opening starts with Auto; manual edits refine its immutable base.

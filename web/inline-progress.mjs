@@ -1,4 +1,4 @@
-import {generationReview} from './job-review.mjs?v=7910cb39adb1a324';
+import {generationReview} from './job-review.mjs?v=37e99894a6ee0379';
 export function sharedProgress({home,tr}){
  const panel=document.createElement('div');panel.className='ph3-shared-progress';panel.hidden=true;
  const status=document.createElement('span');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
