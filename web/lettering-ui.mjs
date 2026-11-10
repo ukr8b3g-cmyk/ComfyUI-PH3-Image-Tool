@@ -1,8 +1,8 @@
-import {clone,makeLayer} from './core.mjs?v=37e99894a6ee0379';
-import {canvas,drawLayer,toBlob} from './render.mjs?v=37e99894a6ee0379';
-import {fitTextBox} from './source-text.mjs?v=37e99894a6ee0379';
-import {prepareFonts} from './source-fonts.mjs?v=37e99894a6ee0379';
-import {inlineProgress} from './inline-progress.mjs?v=37e99894a6ee0379';
+import {clone,makeLayer} from './core.mjs?v=c05d225929bd2f7c';
+import {canvas,drawLayer,toBlob} from './render.mjs?v=c05d225929bd2f7c';
+import {fitTextBox} from './source-text.mjs?v=c05d225929bd2f7c';
+import {prepareFonts} from './source-fonts.mjs?v=c05d225929bd2f7c';
+import {inlineProgress} from './inline-progress.mjs?v=c05d225929bd2f7c';
 
 const el=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n;};
 const select=(items,value)=>{const n=el('select');for(const item of items){const o=el('option','',item.label);o.value=item.value;o.disabled=!!item.disabled;n.append(o);}n.value=value;return n;};

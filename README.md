@@ -58,6 +58,7 @@ Auto-save stores completed generation candidates as WebP (default quality 80) wi
 
 ## 検証と範囲
 
+- main反映: [ce59e89レビュー4件への対応](docs/REVIEW_CE59E89_FIXES_JA.md)。保存後の編集、バックアップ上限、閉じた加工画面からの遅延適用、ブラウザテストの読込を修正しています。
 - v0.9.0公開後の修正（main）: [v0.9.0監査5件の修正・回帰検証](docs/AUDIT_FIXES_JA.md)。品質1〜100の保存互換性、加工・ペイントの整合、対象レイヤーだけのプレビュー、外部削除ジョブの終了を修正。新規/サイズ変更は最大2048×2048、旧作品の読込・保存互換性は維持しています。
 - リリース時のPython/JavaScriptテストとZIP照合は[リリース記録](docs/releases/v0.9.0.md)を参照してください。
 - [2026-11-09の実Chrome/P-H3検証](docs/PRESERVED_LETTERING_VALIDATION_JA.md)では横書き/縦書きの文字保持と透過PNGを確認しています。**これは以前の検証で、v0.9.0全体の新しい実GPU/実画面確認を意味しません。** 最新のUI変更はChrome操作ツールの接続障害により実画面未確認です。

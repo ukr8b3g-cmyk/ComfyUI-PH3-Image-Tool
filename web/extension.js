@@ -1,4 +1,4 @@
-import {nodeProgress} from './node-progress.mjs?v=37e99894a6ee0379';
+import {nodeProgress} from './node-progress.mjs?v=c05d225929bd2f7c';
 import {app} from '../../../scripts/app.js';
 import {api} from '../../../scripts/api.js';
 
@@ -16,7 +16,7 @@ function install(node,knownType=false){
     let baseline=[String(widget(node,'project_id')?.value||''),Number(widget(node,'revision')?.value||0)];
     try{
       // Keep the launch widget independent of the editor module graph.
-      const [{Client},{openStudio}]=await Promise.all([import('./client.mjs?v=37e99894a6ee0379'),import('./studio.mjs?v=37e99894a6ee0379')]);
+      const [{Client},{openStudio}]=await Promise.all([import('./client.mjs?v=c05d225929bd2f7c'),import('./studio.mjs?v=c05d225929bd2f7c')]);
       const client=new Client({fetcher:(path,opts)=>api.fetchApi(path,opts),url:path=>api.apiURL(path),clientId:api.clientId,progressEvents:api});
       const editor=await openStudio({client,onGenerationJob:(job,graph)=>monitor.queued(job,graph),hostLocale:()=>app.ui?.settings?.getSettingValue?.('Comfy.Locale')||document.documentElement.lang||navigator.language,projectId:baseline[0],inputAsset:node.__ph3Input||null,
         onApply:record=>{

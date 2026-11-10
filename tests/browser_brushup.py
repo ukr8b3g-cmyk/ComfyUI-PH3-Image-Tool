@@ -7,6 +7,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 from playwright.sync_api import sync_playwright
 from browser_smoke import Harness, BRIDGE, bundle_modules, ROOT
+from browser_modules import launch_browser
 
 def main(output):
     output.mkdir(parents=True, exist_ok=True)
@@ -20,12 +21,12 @@ def main(output):
         d.rectangle((215,315,505,330),fill='#c5ac87')
         fixture_path=Path(temp)/'sample.png';fixture.save(fixture_path)
         with sync_playwright() as p:
-            browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+            browser=launch_browser(p)
             page=browser.new_page(viewport={'width':1500,'height':980},accept_downloads=True)
             page.set_default_timeout(7000);page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda e:e.accept())
             page.expose_function('ph3TestRPC',harness.rpc)
             page.set_content('<html><head><meta charset="utf-8"><link data-ph3-tool><style>'+(ROOT/'web/style.css').read_text()+'</style></head><body style="background:#10151c"></body></html>')
-            page.evaluate('async MODULE_URL=>{'+BRIDGE+'}',bundle_modules())
+            page.evaluate('async MODULE_URL=>{'+BRIDGE+'}',bundle_modules(page))
             def snap():return page.evaluate('ph3Editor.snapshot()')
             def view():return page.evaluate('ph3Editor.viewSnapshot()')
             def click(key,scope='.ph3-tool'):page.locator(f'{scope} [data-i18n="{key}"]').first.click()
@@ -85,7 +86,7 @@ def main(output):
             key('Control+0');key('Control+1');assert view()['zoom']==1
             key('Control+0');click('clear','.ph3-left');ready()
             # Layer handles and keyboard handling.
-            click('text','.ph3-left');page.get_by_role('textbox',name='文字',exact=True).fill('PH3 IMAGE TOOL');page.get_by_role('textbox',name='文字',exact=True).press('Tab')
+            click('addText','.ph3-left');page.get_by_role('textbox',name='文字',exact=True).fill('PH3 IMAGE TOOL');page.get_by_role('textbox',name='文字',exact=True).press('Tab')
             layer=active_layer();before_layer=dict(layer);a=doc_screen(layer['x']+layer['w'],layer['y']+layer['h']);drag_points(a,(a[0]+40,a[1]+30));layer=active_layer()
             assert layer['w']>before_layer['w'] and abs(layer['x']-before_layer['x'])<1 and abs(layer['y']-before_layer['y'])<1
             assert abs(layer['w']/layer['h']-before_layer['w']/before_layer['h'])<1e-6

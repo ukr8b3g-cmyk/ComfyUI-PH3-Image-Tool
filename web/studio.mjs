@@ -1,29 +1,29 @@
-import {reconcileJob} from './job-presence.mjs?v=37e99894a6ee0379';
-import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=37e99894a6ee0379';
-import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=37e99894a6ee0379';
-import {brushOverlay} from './brush-overlay.mjs?v=37e99894a6ee0379';
-import {adjustedPixels,strokeCoverage,paintedPixels,localePreference} from './selection-edit.mjs?v=37e99894a6ee0379';
-import {retouchControls} from './retouch-ui.mjs?v=37e99894a6ee0379';
-import {chooseOutputFolder} from './folder-ui.mjs?v=37e99894a6ee0379';
-import {QUICK_COLORS,colorControl} from './color-swatches.mjs?v=37e99894a6ee0379';
-import {openLettering} from './lettering-ui.mjs?v=37e99894a6ee0379';
-import {visibleJobs} from './job-review.mjs?v=37e99894a6ee0379';
-import {sharedProgress} from './inline-progress.mjs?v=37e99894a6ee0379';
-import {fitTextBox,textLayoutSignature} from './source-text.mjs?v=37e99894a6ee0379';
-import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=37e99894a6ee0379';
-import {editorShortcut} from './shortcuts.mjs?v=37e99894a6ee0379';
-import {STAMP_ASSETS} from './source-assets.mjs?v=37e99894a6ee0379';
-import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=37e99894a6ee0379';
-import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=37e99894a6ee0379';
-import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=37e99894a6ee0379';
-import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=37e99894a6ee0379';
-import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=37e99894a6ee0379';
-import {t} from './i18n.mjs?v=37e99894a6ee0379';
-import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=37e99894a6ee0379';
-import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=37e99894a6ee0379';
-import {openProcessing} from './processing-ui.mjs?v=37e99894a6ee0379';
-import {openManga} from './manga-ui.mjs?v=37e99894a6ee0379';
-import {addMangaLayers} from './manga-core.mjs?v=37e99894a6ee0379';
+import {reconcileJob} from './job-presence.mjs?v=c05d225929bd2f7c';
+import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=c05d225929bd2f7c';
+import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=c05d225929bd2f7c';
+import {brushOverlay} from './brush-overlay.mjs?v=c05d225929bd2f7c';
+import {adjustedPixels,strokeCoverage,paintedPixels,localePreference} from './selection-edit.mjs?v=c05d225929bd2f7c';
+import {retouchControls} from './retouch-ui.mjs?v=c05d225929bd2f7c';
+import {chooseOutputFolder} from './folder-ui.mjs?v=c05d225929bd2f7c';
+import {QUICK_COLORS,colorControl} from './color-swatches.mjs?v=c05d225929bd2f7c';
+import {openLettering} from './lettering-ui.mjs?v=c05d225929bd2f7c';
+import {visibleJobs} from './job-review.mjs?v=c05d225929bd2f7c';
+import {sharedProgress} from './inline-progress.mjs?v=c05d225929bd2f7c';
+import {fitTextBox,textLayoutSignature} from './source-text.mjs?v=c05d225929bd2f7c';
+import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=c05d225929bd2f7c';
+import {editorShortcut} from './shortcuts.mjs?v=c05d225929bd2f7c';
+import {STAMP_ASSETS} from './source-assets.mjs?v=c05d225929bd2f7c';
+import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=c05d225929bd2f7c';
+import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=c05d225929bd2f7c';
+import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=c05d225929bd2f7c';
+import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=c05d225929bd2f7c';
+import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=c05d225929bd2f7c';
+import {t} from './i18n.mjs?v=c05d225929bd2f7c';
+import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=c05d225929bd2f7c';
+import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=c05d225929bd2f7c';
+import {openProcessing} from './processing-ui.mjs?v=c05d225929bd2f7c';
+import {openManga} from './manga-ui.mjs?v=c05d225929bd2f7c';
+import {addMangaLayers} from './manga-core.mjs?v=c05d225929bd2f7c';
 
 const styleURL=new URL('./style.css'+new URL(import.meta.url).search,import.meta.url).href;
 const el=(tag,cls='',text=null)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==null)e.textContent=text;return e;};
@@ -206,6 +206,8 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     const snapshot=clone(doc),flat=await exportCanvas(snapshot,cache),image=await client.upload(await toBlob(flat));snapshot.composite_asset=image.asset;
     const next=await client.put('/projects/'+record.id,{revision:record.revision,document:snapshot});
     record=next;doc=clone(next.document);savedText=JSON.stringify(doc);clearTimeout(draftTimer);try{localStorage.removeItem('ph3-tool:draft:'+record.id);}catch{}
+    // Saving replaces layer objects; rebuild closures before accepting the next edit.
+    renderProperties();renderLayers();
     if(apply&&!detached&&onApply)await onApply(record);
     updateToolbar();status(tr('saved'));return next;
   }

@@ -16,6 +16,7 @@ from .schema import (ToolError, identifier, uid, dimensions, validate_document, 
 
 MAX_UPLOAD = 64 * 1024 * 1024
 MAX_ARCHIVE = 256 * 1024 * 1024
+MAX_ARCHIVE_ENTRIES = 4096
 
 class Store:
     def __init__(self, root):
@@ -199,16 +200,25 @@ class Store:
         record = self.read(key)
         self._check_assets(record["document"])
         output = io.BytesIO()
-        total = 0
+        metadata = json.dumps(record["document"], ensure_ascii=False).encode("utf-8")
+        assets = sorted(asset_ids(record["document"]))
+        if len(assets) + 1 > MAX_ARCHIVE_ENTRIES:
+            raise ToolError("ARCHIVE_TOO_LARGE", "Portable project contains too many images")
+        total = len(metadata)
         with zipfile.ZipFile(output, "w", zipfile.ZIP_STORED) as archive:
-            archive.writestr("project.json", json.dumps(record["document"], ensure_ascii=False))
-            for asset in sorted(asset_ids(record["document"])):
+            archive.writestr("project.json", metadata)
+            for asset in assets:
                 data = self._path("assets", asset).read_bytes()
+                if len(data) > MAX_UPLOAD:
+                    raise ToolError("ARCHIVE_TOO_LARGE", "An image exceeds the portable project limit")
                 total += len(data)
                 if total > MAX_ARCHIVE:
                     raise ToolError("ARCHIVE_TOO_LARGE", "Portable project exceeds 256 MiB")
                 archive.writestr(f"assets/{asset}.png", data)
-        return output.getvalue()
+        result = output.getvalue()
+        if len(result) > MAX_ARCHIVE:
+            raise ToolError("ARCHIVE_TOO_LARGE", "Portable project ZIP exceeds 256 MiB")
+        return result
 
     def import_archive(self, data):
         if len(data) > MAX_ARCHIVE:
@@ -217,7 +227,7 @@ class Store:
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 entries = archive.infolist()
                 names = [entry.filename for entry in entries]
-                if len(entries) > 1024 or len(set(names)) != len(names):
+                if len(entries) > MAX_ARCHIVE_ENTRIES or len(set(names)) != len(names):
                     raise ToolError("INVALID_ARCHIVE", "Too many or duplicate archive entries")
                 if sum(entry.file_size for entry in entries) > MAX_ARCHIVE:
                     raise ToolError("ARCHIVE_TOO_LARGE", "Uncompressed project exceeds 256 MiB")

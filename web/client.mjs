@@ -1,4 +1,4 @@
-import {ProgressTracker} from './progress.mjs?v=37e99894a6ee0379';
+import {ProgressTracker} from './progress.mjs?v=c05d225929bd2f7c';
 const BASE='/ph3_image_tool';
 export class Client {
   constructor({fetcher=(...args)=>fetch(...args),url=x=>x,clientId=null,progressEvents=null,webSocketFactory=null}={}){this.fetcher=fetcher;this.url=url;this.clientId=clientId;this.progressEvents=progressEvents;this.webSocketFactory=webSocketFactory;this.progress=new ProgressTracker();this.progressCleanup=null;this.progressSocket=null;this.progressReady=null;this.reconnectTimer=null;this.ownClientId=null;this.disposed=false;}
