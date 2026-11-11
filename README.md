@@ -58,6 +58,7 @@ Auto-save stores completed generation candidates as WebP (default quality 80) wi
 
 ## 検証と範囲
 
+- 未保存の編集があるときは、終了時に「保存して閉じる」「保存せず閉じる」「キャンセル」を選べます。テスト用Chromiumで[終了時の保存確認7項目](docs/verification/close-choices/close-choices.json)と[エディター回帰15項目](docs/verification/close-choices/editor-smoke.json)を確認し、Nodeテスト210件が成功しました。
 - main反映: [ボタンの使用条件とマスクの説明](docs/COMMAND_AVAILABILITY_JA.md) / [選択部分のコピー・貼り付け](docs/PIXEL_CLIPBOARD_JA.md)。使えない操作を理由付きで無効化し、切り抜き済み画像へのマスク再適用が不要なことを説明しています。Node210件、隔離Chromium31項目で確認。
 - main反映: [ce59e89レビュー4件への対応](docs/REVIEW_CE59E89_FIXES_JA.md)。保存後の編集、バックアップ上限、閉じた加工画面からの遅延適用、ブラウザテストの読込を修正しています。
 - v0.9.0公開後の修正（main）: [v0.9.0監査5件の修正・回帰検証](docs/AUDIT_FIXES_JA.md)。品質1〜100の保存互換性、加工・ペイントの整合、対象レイヤーだけのプレビュー、外部削除ジョブの終了を修正。新規/サイズ変更は最大2048×2048、旧作品の読込・保存互換性は維持しています。

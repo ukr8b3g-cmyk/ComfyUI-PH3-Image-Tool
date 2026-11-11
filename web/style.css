@@ -175,6 +175,8 @@
 /* One Close in the header; the footer contains task actions only. */
 .ph3-modal-actions:empty{display:none}
 .ph3-modal.ph3-recovery-modal{width:min(440px,96%);height:auto;min-height:0}
+.ph3-modal.ph3-close-confirmation{width:min(520px,96%);height:auto;min-height:0}
+.ph3-close-confirmation .ph3-modal-header [data-ph3-close]{display:none}
 .ph3-recovery-modal .ph3-modal-header{padding:12px 16px}.ph3-recovery-modal .ph3-modal-header h2{font-size:15px}
 .ph3-recovery-modal .ph3-modal-body{padding:14px 16px}.ph3-recovery-modal .ph3-modal-body p{margin:0}
 .ph3-recovery-modal .ph3-modal-actions{padding:10px 16px;gap:7px}.ph3-recovery-modal .ph3-modal-actions>button{flex:1;padding:6px 9px}

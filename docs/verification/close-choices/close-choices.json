@@ -1,0 +1,13 @@
+{
+  "environment": "Chromium with real project storage",
+  "passed": 7,
+  "checks": [
+    "Clean project closes directly",
+    "Dirty close offers three actions and focuses Cancel; Cancel keeps edits",
+    "Escape opens and cancels dirty close",
+    "Discard clears this draft and reopens the last saved project",
+    "Save failure leaves the editor, draft and close choices available",
+    "Pending save keeps the dialog open and blocks dismissal",
+    "Save and close applies the saved revision and reopens with editable text"
+  ]
+}

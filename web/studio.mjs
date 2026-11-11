@@ -1,32 +1,32 @@
-import {commandState} from './command-state.mjs?v=70d397f187c183a6';
-import {capturePixels,erasedMask,CLIPBOARD_LIMIT} from './pixel-clipboard.mjs?v=70d397f187c183a6';
-import {historySelection} from './core.mjs?v=70d397f187c183a6';
-import {reconcileJob} from './job-presence.mjs?v=70d397f187c183a6';
-import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=70d397f187c183a6';
-import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=70d397f187c183a6';
-import {brushOverlay} from './brush-overlay.mjs?v=70d397f187c183a6';
-import {adjustedPixels,strokeCoverage,paintedPixels,localePreference} from './selection-edit.mjs?v=70d397f187c183a6';
-import {retouchControls} from './retouch-ui.mjs?v=70d397f187c183a6';
-import {chooseOutputFolder} from './folder-ui.mjs?v=70d397f187c183a6';
-import {QUICK_COLORS,colorControl} from './color-swatches.mjs?v=70d397f187c183a6';
-import {openLettering} from './lettering-ui.mjs?v=70d397f187c183a6';
-import {visibleJobs} from './job-review.mjs?v=70d397f187c183a6';
-import {sharedProgress} from './inline-progress.mjs?v=70d397f187c183a6';
-import {fitTextBox,textLayoutSignature} from './source-text.mjs?v=70d397f187c183a6';
-import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=70d397f187c183a6';
-import {editorShortcut} from './shortcuts.mjs?v=70d397f187c183a6';
-import {STAMP_ASSETS} from './source-assets.mjs?v=70d397f187c183a6';
-import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=70d397f187c183a6';
-import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=70d397f187c183a6';
-import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=70d397f187c183a6';
-import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=70d397f187c183a6';
-import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=70d397f187c183a6';
-import {t} from './i18n.mjs?v=70d397f187c183a6';
-import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=70d397f187c183a6';
-import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=70d397f187c183a6';
-import {openProcessing} from './processing-ui.mjs?v=70d397f187c183a6';
-import {openManga} from './manga-ui.mjs?v=70d397f187c183a6';
-import {addMangaLayers} from './manga-core.mjs?v=70d397f187c183a6';
+import {commandState} from './command-state.mjs?v=814feed8b776c5a6';
+import {capturePixels,erasedMask,CLIPBOARD_LIMIT} from './pixel-clipboard.mjs?v=814feed8b776c5a6';
+import {historySelection} from './core.mjs?v=814feed8b776c5a6';
+import {reconcileJob} from './job-presence.mjs?v=814feed8b776c5a6';
+import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=814feed8b776c5a6';
+import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=814feed8b776c5a6';
+import {brushOverlay} from './brush-overlay.mjs?v=814feed8b776c5a6';
+import {adjustedPixels,strokeCoverage,paintedPixels,localePreference} from './selection-edit.mjs?v=814feed8b776c5a6';
+import {retouchControls} from './retouch-ui.mjs?v=814feed8b776c5a6';
+import {chooseOutputFolder} from './folder-ui.mjs?v=814feed8b776c5a6';
+import {QUICK_COLORS,colorControl} from './color-swatches.mjs?v=814feed8b776c5a6';
+import {openLettering} from './lettering-ui.mjs?v=814feed8b776c5a6';
+import {visibleJobs} from './job-review.mjs?v=814feed8b776c5a6';
+import {sharedProgress} from './inline-progress.mjs?v=814feed8b776c5a6';
+import {fitTextBox,textLayoutSignature} from './source-text.mjs?v=814feed8b776c5a6';
+import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=814feed8b776c5a6';
+import {editorShortcut} from './shortcuts.mjs?v=814feed8b776c5a6';
+import {STAMP_ASSETS} from './source-assets.mjs?v=814feed8b776c5a6';
+import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=814feed8b776c5a6';
+import {ensureLayerCapacity,isDecorationLayer,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness} from './core.mjs?v=814feed8b776c5a6';
+import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=814feed8b776c5a6';
+import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=814feed8b776c5a6';
+import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=814feed8b776c5a6';
+import {t} from './i18n.mjs?v=814feed8b776c5a6';
+import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=814feed8b776c5a6';
+import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=814feed8b776c5a6';
+import {openProcessing} from './processing-ui.mjs?v=814feed8b776c5a6';
+import {openManga} from './manga-ui.mjs?v=814feed8b776c5a6';
+import {addMangaLayers} from './manga-core.mjs?v=814feed8b776c5a6';
 
 const styleURL=new URL('./style.css'+new URL(import.meta.url).search,import.meta.url).href;
 const el=(tag,cls='',text=null)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==null)e.textContent=text;return e;};
@@ -43,6 +43,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   let savedText=JSON.stringify(doc),selected=null,tool='move',operation='replace',zoom=1;
   // Capture recovery data before any asynchronous bootstrap work or auto defaults.
   let draftRecovery=readDraftRecovery(record);
+  let writtenDraft=null;
   function readDraftRecovery(saved) {
     const key='ph3-tool:draft:'+saved.id;
     try {
@@ -91,7 +92,9 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     const id=record.id;
     draftTimer=setTimeout(()=>{
       if(closed||draftRecovery||record.id!==id)return;
-      try{localStorage.setItem('ph3-tool:draft:'+id,JSON.stringify({revision:record.revision,document:doc}));}
+      const key='ph3-tool:draft:'+id;
+      const raw=JSON.stringify({revision:record.revision,document:doc});
+      try{localStorage.setItem(key,raw);writtenDraft={key,raw};}
       catch{status('Draft storage unavailable; use Save or Export project.',true);}
     },350);
   }
@@ -134,7 +137,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
             doc=recovered;
             try{await restoreSelection();}catch(error){doc=previous;await restoreSelection();throw error;}
             doc.canvas_revision=Math.max(previous.canvas_revision,doc.canvas_revision)+1;
-            history.clear();draftRecovery=null;resolved=true;finish();syncPrompt();localize();await renderAll();fit();stashDraft();
+            history.clear();writtenDraft={key:pending.key,raw:pending.raw};draftRecovery=null;resolved=true;finish();syncPrompt();localize();await renderAll();fit();stashDraft();
           }
         });suggestModels();}catch(error){fail(error);}
       };
@@ -657,18 +660,19 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   }
   let modalMaximized=false;
   try{modalMaximized=localStorage.getItem('ph3-tool:modal-maximized')==='true';}catch{}
-  function modal(title,{dismissOutside=false,drawer:side=false,maximizable=false,initialMaximized=modalMaximized}={}){
+  function modal(title,{dismissOutside=false,drawer:side=false,maximizable=false,initialMaximized=modalMaximized,canDismiss=()=>true}={}){
     if(side)drawer?.();
     const overlay=el('div','ph3-overlay'),box=el('section','ph3-modal'),heading=el('h2','',title),body=el('div','ph3-modal-body'),actions=el('div','ph3-modal-actions');box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',title);
     const prior=document.activeElement;let ended=false;const finish=()=>{if(ended)return;ended=true;box.dispatchEvent(new Event('ph3-close'));overlay.remove();if(drawer===finish)drawer=null;const currentHeader=[...root.querySelectorAll('.ph3-overlay:not([hidden]) .ph3-modal-header')].at(-1);shared.mount(currentHeader||top,currentHeader?.querySelector('[data-ph3-close]')||progressHome.nextSibling);if(prior?.isConnected)prior.focus();};overlay.ph3Finish=finish;
+    const dismiss=()=>{if(canDismiss())finish();};overlay.ph3Dismiss=dismiss;
     let outsideDown=false;
     overlay.addEventListener('pointerdown',e=>outsideDown=e.target===overlay);
-    overlay.addEventListener('click',e=>{if(dismissOutside&&outsideDown&&e.target===overlay&&!busy)finish();outsideDown=false;});
-    const header=el('header','ph3-modal-header'),topClose=el('button','',tr('close'));topClose.dataset.ph3Close='';topClose.setAttribute('aria-label',tr('close'));topClose.onclick=finish;header.append(heading);if(!maximizable)box.style.resize='none';if(!side&&maximizable){const maximize=el('button','',tr('maximize'));maximize.setAttribute('aria-label',tr('maximize'));const setMaximized=active=>{box.classList.toggle('ph3-maximized',active);maximize.textContent=tr(active?'restoreWindow':'maximize');maximize.setAttribute('aria-label',maximize.textContent);maximize.setAttribute('aria-pressed',String(active));};setMaximized(initialMaximized);maximize.onclick=()=>{modalMaximized=!box.classList.contains('ph3-maximized');setMaximized(modalMaximized);try{localStorage.setItem('ph3-tool:modal-maximized',String(modalMaximized));}catch{}};header.append(maximize);header.ondblclick=e=>{if(e.target===header||e.target===heading)maximize.click();};const observer=new ResizeObserver(()=>box.style.setProperty('--ph3-dialog-height',box.getBoundingClientRect().height+'px'));observer.observe(box);box.addEventListener('ph3-close',()=>observer.disconnect(),{once:true});}header.append(topClose);box.append(header,body,actions);
+    overlay.addEventListener('click',e=>{if(dismissOutside&&outsideDown&&e.target===overlay&&!busy)dismiss();outsideDown=false;});
+    const header=el('header','ph3-modal-header'),topClose=el('button','',tr('close'));topClose.dataset.ph3Close='';topClose.setAttribute('aria-label',tr('close'));topClose.onclick=dismiss;header.append(heading);if(!maximizable)box.style.resize='none';if(!side&&maximizable){const maximize=el('button','',tr('maximize'));maximize.setAttribute('aria-label',tr('maximize'));const setMaximized=active=>{box.classList.toggle('ph3-maximized',active);maximize.textContent=tr(active?'restoreWindow':'maximize');maximize.setAttribute('aria-label',maximize.textContent);maximize.setAttribute('aria-pressed',String(active));};setMaximized(initialMaximized);maximize.onclick=()=>{modalMaximized=!box.classList.contains('ph3-maximized');setMaximized(modalMaximized);try{localStorage.setItem('ph3-tool:modal-maximized',String(modalMaximized));}catch{}};header.append(maximize);header.ondblclick=e=>{if(e.target===header||e.target===heading)maximize.click();};const observer=new ResizeObserver(()=>box.style.setProperty('--ph3-dialog-height',box.getBoundingClientRect().height+'px'));observer.observe(box);box.addEventListener('ph3-close',()=>observer.disconnect(),{once:true});}header.append(topClose);box.append(header,body,actions);
     if(side){overlay.classList.add('ph3-drawer-overlay');box.classList.add('ph3-drawer');drawer=finish;}overlay.append(box);root.append(overlay);shared.mount(header,topClose);box.tabIndex=-1;box.focus();
     box.addEventListener('ph3-background',()=>{overlay.hidden=true;shared.mount(top,progressHome.nextSibling);viewport.focus();});
     box.addEventListener('ph3-foreground',()=>{if(ended)return;overlay.hidden=false;shared.mount(header,topClose);box.focus();});
-    overlay.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();finish();}if(e.key==='Tab'){const all=[...box.querySelectorAll('button,input,select,textarea,[tabindex="0"]')].filter(n=>!n.disabled&&n.getClientRects().length);if(!all.length){e.preventDefault();return;}if(e.shiftKey&&(document.activeElement===all[0]||document.activeElement===box)){e.preventDefault();all.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===all.at(-1)){e.preventDefault();all[0].focus();}}});
+    overlay.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dismiss();}if(e.key==='Tab'){const all=[...box.querySelectorAll('button,input,select,textarea,[tabindex="0"]')].filter(n=>!n.disabled&&n.getClientRects().length);if(!all.length){e.preventDefault();return;}if(e.shiftKey&&(document.activeElement===all[0]||document.activeElement===box)){e.preventDefault();all.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===all.at(-1)){e.preventDefault();all[0].focus();}}});
     return{body,actions,finish,box};
   }
   function optionsSelect(options,value){const select=el('select');for(const [id,label]of options){const option=el('option','',label);option.value=id;select.append(option);}select.value=value;return select;}
@@ -1004,7 +1008,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   },events);
   root.addEventListener('keyup',e=>{if(e.code==='Space')space=false;},events);
   window.addEventListener('blur',()=>{space=false;if(gesture||brushAdjust||pan||viewDrag)cancelGesture();},events);
-  root.addEventListener('cancel',e=>{e.preventDefault();const overlay=root.querySelector('.ph3-overlay:not([hidden])');if(overlay)overlay.ph3Finish?.();else requestClose();},events);
+  root.addEventListener('cancel',e=>{e.preventDefault();const overlay=[...root.querySelectorAll('.ph3-overlay:not([hidden])')].at(-1);if(overlay)overlay.ph3Dismiss?.();else requestClose();},events);
   function help(){const {body}=modal(tr('shortcuts'),{maximizable:true});const table=el('div','ph3-shortcuts');for(const [key,label]of [['Wheel','wheelHelp'],['Space + Drag / Middle drag','panHelp'],['R + Drag / Alt + Wheel','rotateHelp'],['0','resetView'],['Ctrl+0 / Ctrl+1','fitActualHelp'],['Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y','undoRedo'],['Mouse Back / Forward','mouseUndo'],['Delete / Backspace','remove'],['Ctrl+J','duplicate'],['Ctrl+C / Ctrl+V','copyPasteLayers'],['Ctrl+A / Ctrl+D / Ctrl+Shift+I','selectionKeys'],['Ctrl+Shift+D','reselectHelp'],['M / Shift+M / L / W','selectionToolKeys'],['Shift / Alt / Shift+Alt','selectionModifierKeys'],['Ctrl+[ / Ctrl+]','orderKeys'],['Ctrl+Shift+[ / Ctrl+Shift+]','edgeKeys'],['Alt+[ / Alt+]','selectLayerKeys'],['Ctrl+T','transformKeys'],['Ctrl+Shift+E','mergeVisible'],['Ctrl+N / Ctrl+O / Ctrl+S','fileKeys'],['Ctrl++ / Ctrl+−','zoomKeys'],['↑ ↓ ← → / Shift','nudge'],['Shift + Resize','freeResize'],['V M L B E H R T P','toolKeys'],['[ / ]','brushSize'],['Shift+[ / Shift+]','brushHardness'],[tr('brushDragGesture'),'brushDragHelp']]){const row=el('div');row.append(el('kbd','',key),el('span','',tr(label)));table.append(row);}body.append(table,el('p','ph3-small',tr('shortcutScope')),el('p','ph3-small',tr('mouseUndoHelp')));}
   window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue='';}},{signal:abort.signal});
 
@@ -1048,7 +1052,40 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   refDrop.ondrop=e=>{e.preventDefault();e.stopPropagation();refDrop.classList.remove('drag-active');const files=[...e.dataTransfer.files].filter(f=>/^image\//.test(f.type));if(files.length&&!busy)addReference(files).catch(fail);};gen.append(refDrop);
   const jobsBox=el('div');panels.candidates.append(panelDetach('candidates'),jobsBox);
   const layerList=el('div','ph3-layer-list'),actions=el('div','ph3-row');for(const key of ['duplicate','remove','up','down'])actions.append(button(key,()=>layerAction(key)));actions.append(button('mergeVisible',mergeVisible));layerPanel.classList.add('ph3-layer-dock');layerPanel.append(panelDetach('layers'),actions,layerList,button('saveCopy',saveCopy));
-  function requestClose(){if(busy)return false;if(dirty()&&!confirm(tr('warningClose')))return false;root.querySelectorAll('.ph3-overlay').forEach(o=>o.ph3Finish?.());closed=true;clearTimeout(draftTimer);clearTimeout(pollTimer);abort.abort();client.dispose?.();cache.dispose();root.close();root.remove();onClose?.();return true;}
+  let closeConfirmation=null;
+  function finishClose(){
+    closed=true;
+    clearTimeout(draftTimer);clearTimeout(pollTimer);
+    root.querySelectorAll('.ph3-overlay').forEach(o=>o.ph3Finish?.());
+    abort.abort();client.dispose?.();cache.dispose();
+    root.close();root.remove();onClose?.();return true;
+  }
+  function requestClose(){
+    if(closed||busy)return false;
+    if(closeConfirmation){closeConfirmation.focus();return false;}
+    if(!dirty()||draftRecovery)return finishClose();
+
+    const {body,actions,finish,box}=modal(tr('unsavedChanges'),{canDismiss:()=>!busy});
+    box.classList.add('ph3-close-confirmation');
+    const message=el('p','ph3-small error');message.setAttribute('role','alert');message.hidden=true;
+    body.append(el('p','',tr('warningClose')),message);
+    const saveClose=button('saveAndClose',async()=>{
+      message.hidden=true;
+      try{await save();}catch(error){message.textContent=error.message||String(error);message.hidden=false;fail(error);return;}
+      finishClose();
+    },'primary');
+    const discardClose=button('discardAndClose',()=>{
+      const key='ph3-tool:draft:'+record.id;
+      try{if(writtenDraft?.key===key&&localStorage.getItem(key)===writtenDraft.raw)localStorage.removeItem(key);}catch{}
+      finishClose();
+    });discardClose.dataset.tone='red';
+    const cancelClose=button('cancelClose',finish);
+    actions.append(saveClose,discardClose,cancelClose);
+    closeConfirmation=cancelClose;
+    box.addEventListener('ph3-close',()=>{closeConfirmation=null;},{once:true});
+    cancelClose.focus();
+    return false;
+  }
   root.showModal();syncPrompt();localize();showTab('generate');setTool('move');await restoreSelection();await renderAll();fit();status(tr('ready'));for(const key of ['properties','layers','candidates']){const pref=panelPrefs(key);if(pref.docked===false)toggleFloat(key,key==='candidates'?false:pref.visible??key==='layers');}showTab('generate');
   catalog=await client.get('/capabilities').catch(e=>{fail(e);return null;});
   suggestModels();

@@ -1,0 +1,24 @@
+{
+  "environment": "Offline Chromium with real CPU storage and canvas; no ComfyUI or GPU inference",
+  "checks": [
+    "current versioned ES modules open the editor through offline routes",
+    "PNG import retains its image layer",
+    "first mouse-dragged opacity change after Save/Apply affects the current selected layer",
+    "one Undo/Redo reverses only that opacity edit",
+    "first color change after Save/Apply affects the current layer",
+    "four current selection mode buttons are mutually exclusive",
+    "simulated generation adds a candidate layer without replacing existing text or image",
+    "editing during a delayed simulated generation preserves the edit and prevents stale auto-adoption",
+    "close/reopen retains editable text, image and changed properties",
+    "real Export project and Import project buttons roundtrip every editable layer",
+    "imported text stays editable with one Undo/Redo and unchanged sibling layers",
+    "closing the manga filter during original-source upload prevents late adoption",
+    "keeping the filter open still applies one new layer",
+    "256 layers and 1025 images export and re-import through actual browser controls with all asset references intact",
+    "no unhandled browser exceptions"
+  ],
+  "passed": 15,
+  "page_errors": [],
+  "gpu_tested": false,
+  "live_comfyui_tested": false
+}
