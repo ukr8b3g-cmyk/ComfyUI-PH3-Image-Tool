@@ -49,3 +49,14 @@ test('ambiguous duplicate model names are never silently chosen',async()=>{
   assert.equal(result.settings.unet_name,undefined);
   assert.equal(ph3ModelReadiness(result.settings,catalog).ready,false);
 });
+
+test('native defaults find BF16 and W4A8 installations and respect a chosen local file',async()=>{
+  const {NATIVE_IMAGE,suggestInstalledPH3Models}=await import('../web/core.mjs');
+  for(const precision of ['bf16','w4a8']){
+    const name=`minimax/minimax_h3_image_pruned_${precision}.safetensors`;
+    const catalog={diffusion_models:[name,'other.safetensors']};
+    const settings={model_engine:NATIVE_IMAGE};
+    assert.equal(suggestInstalledPH3Models(settings,catalog).settings.h3_image_unet_name,name);
+    assert.equal(suggestInstalledPH3Models({...settings,h3_image_unet_name:'other.safetensors'},catalog).settings.h3_image_unet_name,'other.safetensors');
+  }
+});

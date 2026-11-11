@@ -28,7 +28,9 @@ MODELS={'diffusion_models':['minimax/minimax_h3_fl2va_pruned_int8_convrot.safete
 NODES=set(generation.CORE_NODES)|{'TextGenerateV2','PH3ImageToolAsset','PH3ImageToolResult','PH3ImageToolTextResult'}
 
 class Harness:
-    def __init__(self,root):self.store=storage.Store(root);self.pending={};self.delay=.2;self.graphs=[]
+    def __init__(self,root,models=MODELS,nodes=NODES):
+        self.store=storage.Store(root);self.pending={};self.delay=.2;self.graphs=[]
+        self.models=models;self.nodes=nodes
     def rpc(self,op,path,data=None):
         store=self.store;value=None;binary=None
         try:
@@ -42,7 +44,7 @@ class Harness:
             elif op=='deleteQueued':value={}
             elif op=='archive':binary=store.export(path)
             elif op=='encode':binary=exporting.encode_image(store.image(data['asset']),data)[0]
-            elif path=='/capabilities':value={**MODELS,'storage':str(store.root)}
+            elif path=='/capabilities':value={**self.models,'storage':str(store.root)}
             elif path=='/projects' and op=='get':value=store.projects()
             elif path=='/projects' and op=='post':
                 doc=data.get('document') or schema.default_document(data.get('width',1024),data.get('height',1024))
@@ -58,7 +60,7 @@ class Harness:
             elif path.startswith('/projects/'):
                 bits=path.split('/');key=bits[2]
                 if path.endswith('/prepare'):
-                    job,graph=generation.prepare_job(store,key,data,MODELS,NODES);value={'job':job,'prompt':graph}
+                    job,graph=generation.prepare_job(store,key,data,self.models,self.nodes);value={'job':job,'prompt':graph}
                 elif path.endswith('/jobs'):value=store.jobs(key)
                 elif op=='get':value=store.read(key)
                 elif op=='put':value=store.save(key,data['document'],data['revision'])

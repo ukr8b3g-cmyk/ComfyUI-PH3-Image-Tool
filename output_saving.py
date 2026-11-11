@@ -21,7 +21,8 @@ def options(settings):
     return result
 
 def save_candidates(store,job,results,output_root=None):
-    config=job['request'].get('output_save',{'enabled':False,'directory':''})
+    request=job['request']
+    config=request.get('output_save',{'enabled':False,'directory':''})
     config=options({'save_generated_images':config['enabled'],'save_image_directory':config['directory'],'export_quality':config.get('quality',80)/100,'output_location':config.get('location','')})
     if not config['enabled']:return results
     if output_root is None:
@@ -30,8 +31,13 @@ def save_candidates(store,job,results,output_root=None):
     root=Path(output_root).resolve();directory=(root/config['directory']).resolve()
     if not directory.is_relative_to(root):raise ToolError('INVALID_OUTPUT','Output subfolder escapes the output directory')
     directory.mkdir(parents=True,exist_ok=True)
+    source = store.image(request['source_asset']) if request.get('mode') == 'selection' else None
     for index,result in enumerate(results):
         image=store.image(result['asset']);stem=f"PH3-Image-Tool_{job['id']}_{index+1:02d}"
+        if source is not None:
+            composite = source.copy()
+            composite.alpha_composite(image, dest=(result['x'], result['y']))
+            image = composite
         for counter in range(10000):
             path=directory/(stem+(f'_{counter}' if counter else '')+'.webp')
             try:stream=path.open('xb')

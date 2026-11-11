@@ -29,6 +29,22 @@ class OutputTests(unittest.TestCase):
     with self.assertRaises(Exception):generation.capture_images(store,job['id'],[Image.new('RGB',(8,8))])
    done=store.job(job['id']);self.assertEqual(done['status'],'succeeded');self.assertEqual(len(done['results']),1);self.assertIn('save failed',done['error'])
    self.assertEqual(blocked.read_text(),'keep')
+ def test_selection_auto_save_writes_full_canvas_with_placed_result(self):
+  with tempfile.TemporaryDirectory() as t:
+   store=storage.Store(Path(t)/'store');rec=store.create(document(64,48))
+   source=Image.new('RGBA',(64,48),(40,180,30,255));source.putpixel((0,0),(0,0,0,0))
+   mask=Image.new('L',(16,16),255);mask.putpixel((1,1),0)
+   job=store.create_job(rec['id'],{'mode':'selection','region':[24,16,16,16],
+      'source_asset':store.put_image(source)['asset'],'mask_asset':store.put_image(mask)['asset'],
+      'output_save':{'enabled':True,'directory':'','quality':80}})
+   out=Path(t)/'output';paths=types.SimpleNamespace(get_output_directory=lambda:str(out))
+   with patch.dict(sys.modules,{'folder_paths':paths}):
+    result=generation.capture_images(store,job['id'],[Image.new('RGB',(32,32),'red')])['results'][0]
+   self.assertEqual(store.image(result['asset']).size,(16,16))
+   with Image.open(out/result['saved_image']) as saved:
+    self.assertEqual(saved.size,source.size);self.assertEqual(saved.getpixel((0,0))[3],0)
+    self.assertGreater(saved.getpixel((10,10))[1],150)
+    self.assertGreater(saved.getpixel((32,24))[0],200)
  def test_existing_files_are_never_overwritten(self):
   with tempfile.TemporaryDirectory() as t:
    store=storage.Store(Path(t)/'store');asset=store.put_image(Image.new('RGB',(8,8)))['asset'];job={'id':'job','request':{'output_save':{'enabled':True,'directory':'','quality':80}}}

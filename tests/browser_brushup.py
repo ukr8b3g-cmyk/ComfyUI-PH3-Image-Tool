@@ -39,6 +39,9 @@ def main(output):
                 return r['x']+r['width']/2+v['x']+dx*math.cos(a)-dy*math.sin(a),r['y']+r['height']/2+v['y']+dx*math.sin(a)+dy*math.cos(a)
             def active_layer():return snap()['layers'][-1]
             def set_num(name,value):
+                transform=page.locator('.ph3-panel[data-panel=properties] details.ph3-transform')
+                if name in ('X','Y','W','H','回転') and not transform.evaluate('(details)=>details.open'):
+                    transform.locator('summary').click()
                 box=page.locator('.ph3-panel[data-panel=properties]').get_by_role('spinbutton',name=name,exact=True);box.fill(str(value));box.press('Tab');page.wait_for_timeout(40)
             def drag_points(a,b,button='left'):
                 page.mouse.move(*a);page.mouse.down(button=button);page.mouse.move(*b,steps=8);page.mouse.up(button=button);page.wait_for_timeout(80)
@@ -106,15 +109,15 @@ def main(output):
             side('forward',16);assert len(snap()['layers'])==n-1;side('back',8);assert len(snap()['layers'])==n
             checks.append('Delete, Ctrl+Z, and delivered mouse Back/Forward events perform Undo/Redo')
             # Undo reselects none, select text again through Layers.
-            page.locator('.ph3-layer-title').first.click();click('properties','.ph3-tabs')
+            click('layers','.ph3-tabs');page.locator('.ph3-layer-title').first.click();click('properties','.ph3-tabs')
             text=page.get_by_role('textbox',name='文字',exact=True);text.fill('ABC');text.press('Home');text.press('Delete');text.press('Tab');assert active_layer()['text']=='BC' and len(snap()['layers'])==n
             checks.append('Delete inside text input edits text, not the selected layer')
-            page.locator('.ph3-layer-title').first.click();key('ArrowRight');x=active_layer()['x'];key('Shift+ArrowRight');assert abs(active_layer()['x']-x-10)<.01
-            key('Control+d');assert len(snap()['layers'])==n+1;key('Delete');assert len(snap()['layers'])==n
-            checks.append('Arrow nudges and Ctrl+D duplicate work without corrupting existing layers')
+            click('layers','.ph3-tabs');page.locator('.ph3-layer-title').first.click();key('ArrowRight');x=active_layer()['x'];key('Shift+ArrowRight');assert abs(active_layer()['x']-x-10)<.01
+            key('Control+j');assert len(snap()['layers'])==n+1;key('Delete');assert len(snap()['layers'])==n
+            checks.append('Arrow nudges and Ctrl+J duplicate work without corrupting existing layers')
             # Processing works at native source size despite layer transform.
-            page.locator('.ph3-layer-title').last.click();click('properties','.ph3-tabs');set_num('W',360);set_num('H',240);set_num('回転',17)
-            source_layer=snap()['layers'][0];count=len(snap()['layers']);click('comic','.ph3-left');page.locator('.ph3-style-card[data-preset=xdog]').click()
+            click('layers','.ph3-tabs');page.locator('.ph3-layer-title').last.click();click('properties','.ph3-tabs');set_num('W',360);set_num('H',240);set_num('回転',17)
+            source_layer=snap()['layers'][0];count=len(snap()['layers']);click('comic','.ph3-left');click('comicFilter','.ph3-modal');page.locator('.ph3-style-card[data-preset=xdog]').click()
             page.locator('.ph3-modal-actions .primary').wait_for(state='visible');page.wait_for_function('!document.querySelector(".ph3-processing .ph3-modal-actions .primary").disabled')
             preview0=page.locator('.ph3-process-canvas').nth(1).evaluate('(c)=>c.toDataURL()')
             page.get_by_role('spinbutton',name='線の濃さ',exact=True).fill('2');page.get_by_role('spinbutton',name='線の濃さ',exact=True).press('Tab')
@@ -122,15 +125,16 @@ def main(output):
             page.screenshot(path=str(output/'comic-preview.png'))
             assert len(snap()['layers'])==count;close_modal();assert len(snap()['layers'])==count
             checks.append('Native comic/XDoG preview and controls are non-destructive; Cancel retains the source')
-            click('comic','.ph3-left');page.locator('.ph3-style-card[data-preset=grayscale]').click();page.get_by_role('button',name='新しいレイヤーとして適用',exact=True).click();done()
+            click('comic','.ph3-left');click('comicFilter','.ph3-modal');page.locator('.ph3-style-card[data-preset=grayscale]').click();page.get_by_role('button',name='新しいレイヤーとして適用',exact=True).click();done()
             page.wait_for_function(f'ph3Editor.snapshot().layers.length==={count+1}')
             applied=snap()['layers'][1];processed=harness.store.image(applied['asset'])
             assert processed.size==(720,480) and (applied['w'],applied['h'],applied['rotation'])==(source_layer['w'],source_layer['h'],17)
             assert not snap()['layers'][0]['visible'] and snap()['layers'][0]['asset']==source_asset
             checks.append('Comic Apply processes 720×480 source, preserves layer transform and the hidden original')
-            click('comic','.ph3-left');assert page.get_by_label('変換プリセット',exact=True).input_value()=='grayscale';close_modal()
+            click('comic','.ph3-left');click('comicFilter','.ph3-modal');assert page.get_by_label('変換プリセット',exact=True).input_value()=='grayscale';close_modal()
             # BG source color sample with object-fit:contain letterboxing.
             click('cutout','.ph3-left');page.wait_for_function('!document.querySelector(".ph3-processing .ph3-modal-actions .primary").disabled')
+            page.get_by_label('背景削除方式',exact=True).select_option('color')
             before_canvas=page.locator('.ph3-process-canvas').first;r=before_canvas.bounding_box();intrinsic=before_canvas.evaluate('(c)=>({w:c.width,h:c.height})');scale=min((r['width']-2)/intrinsic['w'],(r['height']-2)/intrinsic['h'])
             ix=r['x']+(r['width']-intrinsic['w']*scale)/2;iy=r['y']+(r['height']-intrinsic['h']*scale)/2
             page.mouse.click(ix+5*scale,iy+5*scale);page.wait_for_function('!document.querySelector(".ph3-processing .ph3-modal-actions .primary").disabled')
@@ -140,7 +144,7 @@ def main(output):
             bg_result=snap()['layers'][2];cut=harness.store.image(bg_result['asset']);assert cut.getpixel((0,0))[3]==0 and cut.getpixel((360,200))[3]>200 and snap()['transparent'] is True
             checks.append('Background picker maps letterboxed preview correctly; cutout/edge preview and full-size alpha apply')
             # Make a clean useful screenshot before export (only image + text).
-            page.locator('.ph3-layer-title').first.click();click('properties','.ph3-tabs');set_num('回転',0);set_num('X',210);set_num('Y',355);set_num('W',380);set_num('H',75)
+            click('layers','.ph3-tabs');page.locator('.ph3-layer-title').first.click();click('properties','.ph3-tabs');set_num('回転',0);set_num('X',210);set_num('Y',355);set_num('W',380);set_num('H',75)
             page.get_by_role('textbox',name='文字',exact=True).fill('PH3 IMAGE TOOL');page.get_by_role('textbox',name='文字',exact=True).press('Tab')
             set_num('文字サイズ',30);page.screenshot(path=str(output/'editor.png'))
             # Encoding is done by Pillow using preview-identical byte data.
@@ -150,7 +154,8 @@ def main(output):
                 page.wait_for_function('!document.querySelector(".ph3-export-modal .primary").disabled')
                 with page.expect_download() as download:page.get_by_role('button',name='この設定で書き出す',exact=True).click()
                 dest=output/name;download.value.save_as(str(dest));done();return Image.open(dest),dest
-            png,pngpath=export_download('export-alpha.png');assert png.mode=='RGBA' and png.size==(720,480) and png.getpixel((0,0))[3]==0
+            page.locator('[data-format=png]').click()
+            png,pngpath=export_download('export-alpha.png');assert png.format=='PNG' and png.mode=='RGBA' and png.size==(720,480) and png.getpixel((0,0))[3]==0
             checks.append('PNG download preserves native dimensions and alpha, excludes checkerboard')
             click('export','.ph3-top');page.locator('[data-format=webp]').click();page.get_by_label('WebPを可逆圧縮にする',exact=True).check()
             webp,webppath=export_download('export-lossless.webp');assert webp.convert('RGBA').tobytes()==png.convert('RGBA').tobytes()

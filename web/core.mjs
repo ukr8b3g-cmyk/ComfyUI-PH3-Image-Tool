@@ -134,13 +134,29 @@ const MODEL_CATEGORIES = Object.freeze({
   unet_name: 'diffusion_models', clip_name: 'text_encoders',
   vae_name: 'vae', lora_name: 'loras', enhancer_name: 'text_encoders',
 });
+export const NATIVE_IMAGE = 'minimax_h3_image';
+const NATIVE_IMAGE_PREFERENCES = Object.freeze({
+  h3_image_unet_name: [
+    'minimax_h3_image_pruned_int8_convrot.safetensors',
+    'minimax_h3_image_pruned_w4a8.safetensors',
+    'minimax_h3_image_pruned_bf16.safetensors',
+  ],
+  h3_image_clip_name: ['qwen3vl_32b_minimax_h3_int8_convrot.safetensors', 'qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors'],
+  h3_image_vae_name: ['minimax_h3_image_vae_fp16.safetensors'],
+});
+const NATIVE_IMAGE_CATEGORIES = Object.freeze({
+  h3_image_unet_name: 'diffusion_models', h3_image_clip_name: 'text_encoders', h3_image_vae_name: 'vae',
+});
 const baseName = value => String(value||'').replaceAll('\\','/').split('/').pop().toLowerCase();
 export function suggestInstalledPH3Models(settings, catalog) {
   const next = {...settings}, selected = [];
-  for (const [field, category] of Object.entries(MODEL_CATEGORIES)) {
+  const native = settings?.model_engine === NATIVE_IMAGE;
+  const preferences = native ? NATIVE_IMAGE_PREFERENCES : PH3_MODEL_PREFERENCES;
+  const categories = native ? NATIVE_IMAGE_CATEGORIES : MODEL_CATEGORIES;
+  for (const [field, category] of Object.entries(categories)) {
     const available = Array.isArray(catalog?.[category]) ? catalog[category] : [];
     if (next[field]) continue; // Never change an explicit choice.
-    for (const name of PH3_MODEL_PREFERENCES[field]) {
+    for (const name of preferences[field]) {
       const matches = available.filter(item => baseName(item) === name);
       if (matches.length === 1) {
         next[field] = matches[0]; selected.push(field); break;
@@ -151,14 +167,21 @@ export function suggestInstalledPH3Models(settings, catalog) {
   }
   return {settings: next, selected};
 }
+export function imageModelMissingNodes(settings, catalog) {
+  if (settings?.model_engine === NATIVE_IMAGE) {
+    return catalog?.native_image_missing_nodes ?? ['MiniMaxH3ImageConditioning'];
+  }
+  return catalog?.missing_nodes ?? [];
+}
 export function ph3ModelReadiness(settings, catalog) {
   const missing = [];
-  for (const [field, category] of Object.entries(MODEL_CATEGORIES)) {
+  const categories = settings?.model_engine === NATIVE_IMAGE ? NATIVE_IMAGE_CATEGORIES : MODEL_CATEGORIES;
+  for (const [field, category] of Object.entries(categories)) {
     if (field === 'enhancer_name') continue;
     const choices = Array.isArray(catalog?.[category]) ? catalog[category] : [];
     if (!settings?.[field] || !choices.includes(settings[field])) missing.push(field);
   }
-  return {missing, ready: missing.length === 0 && !(catalog?.missing_nodes||[]).length};
+  return {missing, ready: missing.length === 0 && imageModelMissingNodes(settings, catalog).length === 0};
 }
 
 // Layer arrays are back-to-front; the UI displays them in reverse.

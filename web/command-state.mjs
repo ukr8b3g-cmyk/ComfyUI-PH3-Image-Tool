@@ -1,3 +1,5 @@
+import {NATIVE_IMAGE} from './core.mjs?v=18a51c11ff11998e';
+
 // UI eligibility only. Command handlers retain their validation and race guards.
 export function commandState(key,{doc,selected,hasSelection=false,clipboard=null,history={},modelsReady=true,enhancerAvailable=true,mode='new',inputAsset=null}){
  const layers=doc.layers,index=layers.findIndex(l=>l.id===selected),layer=layers[index],visible=layers.filter(l=>l.visible),images=visible.filter(l=>l.type==='image'),image=layer?.type==='image'?layer:images.length===1?images[0]:null;
@@ -19,7 +21,8 @@ export function commandState(key,{doc,selected,hasSelection=false,clipboard=null
  case 'cutPixels':reason=unlock||(!layer.visible?'needVisibleImage':hasSelection&&layer.type!=='image'?'needImage':null);break;
  case 'copyMerged':reason=!visible.length?'needVisibleLayers':null;break;
  case 'pastePixels':reason=!room?'layerCapacity':!clipboard?'noInternalClipboard':null;break;
- case 'changeSelectionColor':case 'retouchbrightness_contrast':case 'retouchcurves':case 'retouchhue_saturation':case 'fillSelection':case 'deleteSelection':case 'copySelection':reason=editable||(!room?'layerCapacity':null);break;
+ case 'changeSelectionColor':case 'retouchbrightness_contrast':case 'retouchcurves':case 'retouchhue_saturation':case 'fillSelection':case 'copySelection':reason=editable||(!room?'layerCapacity':null);break;
+ case 'deleteSelection':reason=editable||selection;break;
  case 'generateSelection':reason=editable||selection||(!modelsReady?'setupFirst':null);break;
  case 'letteringSelection':reason=selection||(!room?'layerCapacity':null);break;
  case 'image':case 'addText':case 'bubble':case 'speed':case 'frame':case 'sourceStamps':case 'aiLettering':reason=!room?'layerCapacity':null;break;
@@ -28,7 +31,14 @@ export function commandState(key,{doc,selected,hasSelection=false,clipboard=null
  case 'undo':reason=!history.past?.length?'nothingUndo':null;break;
  case 'redo':reason=!history.future?.length?'nothingRedo':null;break;
  case 'generate':reason=!modelsReady?'setupFirst':mode==='selection'?selection||(!sourceImages.length?'needImage':null):mode==='full'&&!sourceImages.length?'needImage':null;break;
- case 'enhance':reason=!doc.prompt?.original?.trim()?'needPrompt':!modelsReady||!enhancerAvailable?'setupFirst':null;break;
+ case 'enhance':
+  if(!doc.prompt?.original?.trim())reason='needPrompt';
+  else if(doc.settings?.model_engine===NATIVE_IMAGE){
+   if(!enhancerAvailable)reason='choosePromptEnhancer';
+   else if(mode==='selection'&&!hasSelection)reason='needSelection';
+   else if(mode!=='new'&&!sourceImages.length)reason='needImage';
+  }else if(!modelsReady||!enhancerAvailable)reason='setupFirst';
+  break;
  default:return null;
  }
  return {disabled:!!reason,reason:reason||null};

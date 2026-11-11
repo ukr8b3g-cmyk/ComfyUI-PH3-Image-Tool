@@ -28,6 +28,12 @@
 @media(prefers-reduced-motion:reduce){.ph3-tool *{transition:none!important;animation:none!important}}
 /* Keep image-processing entry points visible; only the upper tool palette scrolls. */
 .ph3-left{overflow:hidden;padding:0;gap:0}.ph3-left-scroller{flex:1;min-height:0;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:7px}.ph3-left-scroller>button{flex:none}.ph3-process-group{flex:none;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding:8px 10px 10px;background:var(--panel)}.ph3-process-group>.ph3-section-title{margin:0 0 2px}.ph3-process-group button{font-size:12px}.ph3-tool-grid button{min-height:48px}.ph3-decoration-grid button{min-height:69px}.ph3-visual-launch canvas{height:43px}
+.ph3-view-tools,.ph3-brush-size{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ph3-view-tools .ph3-icon{width:14px;height:14px}
+.ph3-viewbar .ph3-brush-size input[type=range]{width:76px;min-width:0;margin:0}
+.ph3-viewbar .ph3-brush-size input[type=number]{width:52px;min-width:0;padding:4px;text-align:right}
+.ph3-brush-size span{font-size:11px;color:var(--muted)}
+.ph3-field-section{padding:6px 0}.ph3-field-section>summary{cursor:pointer;color:var(--accent);padding:4px 0}
 
 .ph3-layer-dock > .ph3-row { flex-wrap:wrap; }
 .ph3-layer-dock > .ph3-row button { flex:0 1 auto; }

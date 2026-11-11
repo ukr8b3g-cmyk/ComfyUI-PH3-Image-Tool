@@ -10,7 +10,7 @@ import unittest
 import zipfile
 import numpy as np
 from PIL import Image, ImageDraw
-from support import schema as s, storage as st, generation as g, processing as p, document, MODELS, NODE_NAMES
+from support import schema as s, storage as st, generation as g, processing as p, document, MODELS, NODE_NAMES, NATIVE_MODELS
 
 
 class SchemaTests(unittest.TestCase):
@@ -121,9 +121,51 @@ class GenerationTests(unittest.TestCase):
     def test_new_graph_has_no_source_or_reference(self):
         job,graph=self.prepare('new');self.assertNotIn('images.image_1',graph['6']['inputs'])
         self.assertFalse(job['request']['references'])
+    def test_native_image_graph_uses_distilled_sampler_and_its_own_models(self):
+        doc = self.record['document']
+        doc['settings'].update(model_engine=g.NATIVE_IMAGE,
+                               h3_image_unet_name=NATIVE_MODELS['diffusion_models'][0],
+                               h3_image_clip_name=NATIVE_MODELS['text_encoders'][0],
+                               h3_image_vae_name=NATIVE_MODELS['vae'][0])
+        self.record = self.store.save(self.record['id'], doc, self.record['revision'])
+        nodes = set(g.NATIVE_NODES) | {'PH3ImageToolAsset', 'PH3ImageToolResult'}
+        job, graph = self.prepare('new', models=NATIVE_MODELS, nodes=nodes)
+        self.assertEqual(graph['6']['class_type'], 'MiniMaxH3ImageConditioning')
+        self.assertNotIn('images.image_1', graph['6']['inputs'])
+        self.assertNotIn('lora_name', job['request']['config'])
+        sampler = graph['11']
+        self.assertEqual(sampler['class_type'], 'KSampler')
+        self.assertEqual([sampler['inputs'][key] for key in ('steps', 'cfg', 'sampler_name', 'scheduler')],
+                         [6, 1.0, 'euler', 'simple'])
+        self.assertEqual(sampler['inputs']['latent_image'], ['6', 1])
+        job, graph = self.prepare('selection', models=NATIVE_MODELS, nodes=nodes)
+        self.assertTrue(job['request']['mask_asset'])
+        self.assertGreater(job['request']['generation_size'][0], job['request']['region'][2])
+        self.assertLessEqual(math.prod(job['request']['generation_size']), 1_000_000)
+        self.assertEqual(graph['6']['inputs']['images.image_1'], ['20', 0])
+        self.assertTrue(graph['6']['inputs']['prompt'].startswith('Edit <Picture 1>. '))
+        self.assertEqual(graph['6']['inputs']['vae'], ['5', 0])
+        with self.assertRaisesRegex(s.ToolError, 'MiniMaxH3ImageConditioning'):
+            self.prepare(models=NATIVE_MODELS, nodes=nodes - {'MiniMaxH3ImageConditioning'})
     def test_text_enhance_does_not_generate_image(self):
         job,graph=self.prepare('enhance');names={x['class_type'] for x in graph.values()}
         self.assertIn('TextGenerateV2',names);self.assertNotIn('SamplerCustomAdvanced',names);self.assertNotIn('UNETLoader',names)
+    def test_native_prompt_enhancer_uses_its_own_model_and_expanded_caption(self):
+        doc = self.record['document']
+        enhancer = NATIVE_MODELS['text_encoders'][1]
+        doc['settings'].update(model_engine=g.NATIVE_IMAGE, h3_image_enhancer_name=enhancer)
+        self.record = self.store.save(self.record['id'], doc, self.record['revision'])
+        payload = {'mode': 'enhance', 'revision': self.record['revision'], 'source_asset': self.info['asset']}
+        nodes = set(g.ENHANCER_NODES) | {'JsonExtractString'}
+        _, graph = g.prepare_job(self.store, self.record['id'], {**payload, 'enhance_scope': 'new'}, NATIVE_MODELS, nodes)
+        self.assertEqual(graph['1']['inputs']['clip_name'], enhancer)
+        self.assertNotIn('images.image1', graph['2']['inputs'])
+        self.assertEqual(graph['3']['inputs'], {'json_string': ['2', 0], 'key': 'expanded_caption'})
+        self.assertEqual(graph['90']['inputs']['text'], ['3', 0])
+        job, graph = g.prepare_job(self.store, self.record['id'], {**payload, 'enhance_scope': 'selection'}, NATIVE_MODELS, nodes)
+        self.assertEqual(graph['2']['inputs']['images.image1'], ['20', 0])
+        self.assertLess(job['request']['region'][2], doc['width'])
+        self.assertIn('editing the first image', graph['2']['inputs']['prompt'])
     def test_reference_numbering_matches_model(self):
         doc=self.record['document'];doc['references']=[{'asset':self.info['asset'],'role':'outfit'}]
         self.record=self.store.save(self.record['id'],doc,0)

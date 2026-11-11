@@ -165,6 +165,8 @@ def validate_document(value):
     prompt = doc.get("prompt")
     if not isinstance(settings, dict) or not isinstance(prompt, dict):
         raise ToolError("INVALID_DOCUMENT", "Missing settings or prompt")
+    if settings.get("model_engine", "ph3") not in ("ph3", "minimax_h3_image"):
+        raise ToolError("INVALID_MODEL_ENGINE", "Unknown image model engine")
     number(settings.get("ph3_lora_strength", 1.0), -10, 10, "P-H3 LoRA strength")
     extra_loras(settings)
     if settings.get("locale_mode","auto") not in {"auto","ja","en"}:raise ToolError("INVALID_LOCALE","Invalid language preference")

@@ -6,6 +6,10 @@ A single-image P-H3 generation and layered editor for ComfyUI. Generate, edit se
 
 ## インストール・更新
 
+MiniMax-H3-Imageを使う場合は、**ComfyUI v0.45.0以上**が必要です。
+
+MiniMax-H3-Image requires **ComfyUI v0.45.0 or later**.
+
 [Releases](https://github.com/ukr8b3g-cmyk/ComfyUI-PH3-Image-Tool/releases)からZIPを取得し、中の`ComfyUI-PH3-Image-Tool`フォルダーを`ComfyUI/custom_nodes/`へ配置します。Gitで導入する場合:
 
 ```sh

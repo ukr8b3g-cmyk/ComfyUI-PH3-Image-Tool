@@ -2,7 +2,7 @@
 from __future__ import annotations
 import math
 from PIL import Image, ImageChops, ImageFilter
-from .schema import ToolError, SIGMAS, number, dimensions, extra_loras
+from .schema import ToolError, SIGMAS, MAX_SIDE, number, dimensions, extra_loras
 from .manga_presets import PRESETS as MANGA_PRESETS
 from . import lettering
 from .manga import MANGA_PROMPT, options as manga_options, store_finish, available as manga_available
@@ -11,11 +11,17 @@ CORE_NODES = ("UNETLoader", "CLIPLoader", "VAELoader", "LoraLoaderModelOnly",
               "MiniMaxH3SigmaShift", "PH3ImageConditioning", "ManualSigmas",
               "BasicGuider", "RandomNoise", "KSamplerSelect", "SamplerCustomAdvanced", "VAEDecode")
 MODEL_FIELDS = {"unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras"}
+NATIVE_IMAGE = "minimax_h3_image"
+NATIVE_SAMPLING_DEFAULTS = {"sampler_name": "euler", "scheduler": "simple", "steps": 6, "cfg": 1.0, "denoise": 1.0}
+NATIVE_NODES = ("UNETLoader", "CLIPLoader", "VAELoader", "MiniMaxH3ImageConditioning",
+                "ConditioningZeroOut", "KSampler", "VAEDecode")
+ENHANCER_NODES = ("CLIPLoader", "TextGenerateV2", "PH3ImageToolTextResult", "PH3ImageToolAsset")
 
 
-def fit_generation(width, height, megapixels=1.0):
+def fit_generation(width, height, megapixels=1.0, *, upscale=False):
     number(megapixels, 0.25, 8.5, "max_megapixels")
-    scale = min(1.0, math.sqrt(megapixels * 1_000_000 / (width * height)))
+    scale = math.sqrt(megapixels * 1_000_000 / (width * height))
+    scale = min(scale, MAX_SIDE / max(width, height) if upscale else 1.0)
     # Both axes use the native 32-pixel grid. The full crop is mapped back, never center-cropped.
     w = max(32, int(width * scale / 32) * 32)
     h = max(32, int(height * scale / 32) * 32)
@@ -41,12 +47,34 @@ def checked_sigmas(value):
 
 
 def model_config(settings, available):
-    config = {}
+    native = settings.get("model_engine") == NATIVE_IMAGE
+    config = {"model_engine": NATIVE_IMAGE} if native else {}
     for key, category in MODEL_FIELDS.items():
-        value = settings.get(key, "")
+        if native and key == "lora_name":
+            continue
+        field = f"h3_image_{key}" if native else key
+        value = settings.get(field, "")
         if value not in available.get(category, []):
-            raise ToolError("MISSING_MODEL", f"Select an installed {key}; no model was downloaded or substituted")
+            raise ToolError("MISSING_MODEL", f"Select an installed {field}; no model was downloaded or substituted")
         config[key] = value
+    raw_seed = str(settings.get("seed", "42"))
+    if not raw_seed.isdecimal() or int(raw_seed) > 2**53 - 1:
+        raise ToolError("INVALID_SEED", "Seed must be 0–9007199254740991 (exact browser integer range)")
+    config["seed"] = int(raw_seed)
+    if native:
+        config["sampling"] = {
+            key: settings.get(f"h3_image_{key}", default) for key, default in NATIVE_SAMPLING_DEFAULTS.items()
+        }
+        sampling = config["sampling"]
+        if sampling["sampler_name"] not in available.get("samplers", ["euler"]):
+            raise ToolError("MISSING_SAMPLER", "Selected sampler is unavailable")
+        if sampling["scheduler"] not in available.get("schedulers", ["simple"]):
+            raise ToolError("MISSING_SCHEDULER", "Selected scheduler is unavailable")
+        sampling["steps"] = number(sampling["steps"], 1, 10000, "Steps", integer=True)
+        sampling["cfg"] = number(sampling["cfg"], 0, 100, "CFG")
+        sampling["denoise"] = number(sampling["denoise"], 0, 1, "Denoise")
+        return config
+
     config["ph3_lora_strength"] = number(settings.get("ph3_lora_strength", 1.0), -10, 10, "P-H3 LoRA strength")
     config["extra_loras"] = []
     for slot in extra_loras(settings):
@@ -60,10 +88,6 @@ def model_config(settings, available):
     if config["sampler"] not in available.get("samplers", ["er_sde", "euler"]):
         raise ToolError("MISSING_SAMPLER", "Selected sampler is unavailable")
     config["sigmas"] = checked_sigmas(settings.get("sigmas", SIGMAS))
-    raw_seed = str(settings.get("seed", "42"))
-    if not raw_seed.isdecimal() or int(raw_seed) > 2**53 - 1:
-        raise ToolError("INVALID_SEED", "Seed must be 0–9007199254740991 (exact browser integer range)")
-    config["seed"] = int(raw_seed)
     return config
 
 
@@ -76,15 +100,24 @@ def prepare_job(store, project_id, payload, available, node_names):
     if mode not in {"new", "full", "selection", "enhance", "manga", "lettering"}:
         raise ToolError("INVALID_MODE", "Unknown generation mode")
     enhance = mode == "enhance"
-    required = ["CLIPLoader", "TextGenerateV2", "PH3ImageToolTextResult", "PH3ImageToolAsset"] if enhance else list(CORE_NODES) + ["PH3ImageToolResult", "PH3ImageToolAsset"]
+    settings = doc["settings"]
+    native = settings.get("model_engine") == NATIVE_IMAGE
+    native_enhance = enhance and native
+    model_nodes = NATIVE_NODES if native else CORE_NODES
+    required = ENHANCER_NODES if enhance else (*model_nodes, "PH3ImageToolResult", "PH3ImageToolAsset")
+    if native_enhance:
+        required = (*required, "JsonExtractString")
     missing = [name for name in required if name not in node_names]
     if missing:
         raise ToolError("MISSING_NODES", "Update ComfyUI; missing nodes: " + ", ".join(missing))
-    settings = doc["settings"]
     if enhance:
-        if settings.get("enhancer_name") not in available.get("text_encoders", []):
-            raise ToolError("MISSING_ENHANCER", "Select an installed P-H3 prompt upsampler")
-        config = {"enhancer_name": settings["enhancer_name"]}
+        field = "h3_image_enhancer_name" if native_enhance else "enhancer_name"
+        name = settings.get(field)
+        if name not in available.get("text_encoders", []):
+            raise ToolError("MISSING_ENHANCER", "Select an installed prompt enhancer")
+        config = {"enhancer_name": name}
+        if native_enhance:
+            config["model_engine"] = NATIVE_IMAGE
     else:
         config = model_config(settings, available)
     if mode == "lettering":
@@ -107,14 +140,21 @@ def prepare_job(store, project_id, payload, available, node_names):
         raise ToolError("EMPTY_PROMPT", "Enter an instruction before generating")
     width, height = doc["width"], doc["height"]
     source_asset = payload.get("source_asset")
+    scope = mode
+    if native_enhance:
+        scope = payload.get("enhance_scope", "full" if source_asset else "new")
+        if scope not in ("new", "full", "selection"):
+            raise ToolError("INVALID_MODE", "Unknown prompt enhancement scope")
+        if scope == "new":
+            source_asset = None
     crop_asset = None
     selected_mask = None
     region = [0, 0, width, height]
-    if mode in {"full", "selection", "manga"} or (enhance and source_asset):
+    if scope in {"full", "selection", "manga"} or (enhance and source_asset):
         source = store.image(source_asset)
         if source.size != (width, height):
             raise ToolError("SOURCE_SIZE", "Source snapshot must match the document canvas")
-        if mode == "selection":
+        if scope == "selection":
             mask = store.image(doc.get("selection_asset")).getchannel("R")
             if mask.size != source.size:
                 raise ToolError("MASK_SIZE", "Selection mask must match the document canvas")
@@ -129,13 +169,17 @@ def prepare_job(store, project_id, payload, available, node_names):
             right, bottom = min(width, right + pad), min(height, bottom + pad)
             region = [left, top, right - left, bottom - top]
             # Feather inward: no generated alpha is permitted outside the original selection.
-            softened = ImageChops.multiply(mask, mask.filter(ImageFilter.GaussianBlur(feather))) if feather else mask
-            selected_mask = store.put_image(softened.crop((left, top, right, bottom)))["asset"]
+            if not enhance:
+                softened = ImageChops.multiply(mask, mask.filter(ImageFilter.GaussianBlur(feather))) if feather else mask
+                selected_mask = store.put_image(softened.crop((left, top, right, bottom)))["asset"]
             source = source.crop((left, top, right, bottom))
         crop_asset = store.put_image(source)["asset"]
     elif mode != "new" and not enhance:
         raise ToolError("MISSING_SOURCE", "An image source is required")
-    gen_width, gen_height = fit_generation(region[2], region[3], settings.get("max_megapixels", 1.0))
+    # A tiny selection can produce too few image tokens for the native model.
+    # Render the crop at the chosen generation budget and place it back at its original size.
+    gen_width, gen_height = fit_generation(region[2], region[3], settings.get("max_megapixels", 1.0),
+                                           upscale=native and mode == "selection")
     refs = [] if mode == "new" or (enhance and not crop_asset) else doc.get("references", [])
     instruction = prompt
     if refs:
@@ -169,9 +213,9 @@ def prepare_job(store, project_id, payload, available, node_names):
 def build_graph(job):
     request, graph = job["request"], {}
     config = request["config"]
-    def add(key, name, **inputs):
-        graph[key] = {"class_type": name, "inputs": inputs}
-        return [key, 0]
+    def add(node_id, name, **inputs):
+        graph[node_id] = {"class_type": name, "inputs": inputs}
+        return [node_id, 0]
     images = []
     if request.get("crop_asset"):
         images.append(add("20", "PH3ImageToolAsset", asset_id=request["crop_asset"]))
@@ -181,30 +225,57 @@ def build_graph(job):
         clip = add("1", "CLIPLoader", clip_name=config["enhancer_name"], type="minimax", device="default")
         inputs = {"clip": clip, "prompt": request["instruction"], "max_length": 1536,
                   "sampling_mode": "off", "thinking": True, "use_default_template": True, "mtp": "auto"}
+        native = config.get("model_engine") == NATIVE_IMAGE
+        if native:
+            editing = bool(request.get("crop_asset"))
+            task = ("Write a detailed instruction for editing the first image. Preserve its framing and everything "
+                    "unrelated to the requested change. Refer to additional images in their input order."
+                    if editing else "Write a detailed visual description for generating the requested image.")
+            inputs.update({"system_prompt": 'Return a single JSON object with an "expanded_caption" string. '
+                           "Preserve requested words and visual details.",
+                           "prompt": task + "\n\nUser request:\n" + request["instruction"],
+                           "max_length": 8196 if editing else 8192,
+                           "sampling_mode": "on", "sampling_mode.temperature": 1.0, "sampling_mode.top_k": 20,
+                           "sampling_mode.top_p": 0.95, "sampling_mode.min_p": 0.0,
+                           "sampling_mode.repetition_penalty": 1.0, "sampling_mode.presence_penalty": 0.0,
+                           "sampling_mode.seed": 0})
         for index, image in enumerate(images):
             inputs[f"images.image{index+1}"] = image
         text = add("2", "TextGenerateV2", **inputs)
+        if native:
+            text = add("3", "JsonExtractString", json_string=text, key="expanded_caption")
         add("90", "PH3ImageToolTextResult", text=text, job_id=job["id"])
         return graph
+    native = config.get("model_engine") == NATIVE_IMAGE
     model = add("1", "UNETLoader", unet_name=config["unet_name"], weight_dtype="default")
-    model = add("2", "LoraLoaderModelOnly", model=model, lora_name=config["lora_name"], strength_model=config.get("ph3_lora_strength", 1.0))
-    for index, slot in enumerate(config.get("extra_loras", [])):
-        model = add(str(30 + index), "LoraLoaderModelOnly", model=model,
-                    lora_name=slot["name"], strength_model=slot["strength"])
-    model = add("3", "MiniMaxH3SigmaShift", model=model, shift_video=1.0, shift_audio=1.0)
+    if not native:
+        model = add("2", "LoraLoaderModelOnly", model=model, lora_name=config["lora_name"], strength_model=config.get("ph3_lora_strength", 1.0))
+        for index, slot in enumerate(config.get("extra_loras", [])):
+            model = add(str(30 + index), "LoraLoaderModelOnly", model=model,
+                        lora_name=slot["name"], strength_model=slot["strength"])
+        model = add("3", "MiniMaxH3SigmaShift", model=model, shift_video=1.0, shift_audio=1.0)
     clip = add("4", "CLIPLoader", clip_name=config["clip_name"], type="minimax", device="default")
     vae = add("5", "VAELoader", vae_name=config["vae_name"])
-    cond_inputs = {"clip": clip, "vae": vae, "prompt": request["instruction"],
-                   "width": request["generation_size"][0], "height": request["generation_size"][1]}
+    instruction = request["instruction"]
+    if native and request.get("crop_asset") and not instruction.lstrip().lower().startswith("edit <picture 1>"):
+        instruction = "Edit <Picture 1>. " + instruction
+    width, height = request["generation_size"]
+    cond_inputs = {"clip": clip, "vae": vae, "prompt": instruction, "width": width, "height": height}
     for index, image in enumerate(images):
         cond_inputs[f"images.image_{index+1}"] = image
-    condition = add("6", "PH3ImageConditioning", **cond_inputs)
-    guider = add("7", "BasicGuider", model=model, conditioning=condition)
-    noise = add("8", "RandomNoise", noise_seed=config["seed"])
-    sampler = add("9", "KSamplerSelect", sampler_name=config["sampler"])
-    sigmas = add("10", "ManualSigmas", sigmas=config["sigmas"])
-    samples = add("11", "SamplerCustomAdvanced", noise=noise, guider=guider, sampler=sampler,
-                  sigmas=sigmas, latent_image=["6", 1])
+    condition = add("6", "MiniMaxH3ImageConditioning" if native else "PH3ImageConditioning", **cond_inputs)
+    if native:
+        negative = add("7", "ConditioningZeroOut", conditioning=condition)
+        sampling = {**NATIVE_SAMPLING_DEFAULTS, **config.get("sampling", {})}
+        samples = add("11", "KSampler", model=model, seed=config["seed"], positive=condition,
+                      negative=negative, latent_image=["6", 1], **sampling)
+    else:
+        guider = add("7", "BasicGuider", model=model, conditioning=condition)
+        noise = add("8", "RandomNoise", noise_seed=config["seed"])
+        sampler = add("9", "KSamplerSelect", sampler_name=config["sampler"])
+        sigmas = add("10", "ManualSigmas", sigmas=config["sigmas"])
+        samples = add("11", "SamplerCustomAdvanced", noise=noise, guider=guider, sampler=sampler,
+                      sigmas=sigmas, latent_image=["6", 1])
     decoded = add("12", "VAEDecode", samples=samples, vae=vae)
     add("90", "PH3ImageToolResult", images=decoded, job_id=job["id"])
     return graph

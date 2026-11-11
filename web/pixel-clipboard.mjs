@@ -1,5 +1,5 @@
-import {canvas,drawLayer,exportCanvas,toBlob,layerSelectionMask} from './render.mjs?v=814feed8b776c5a6';
-import {maskBounds,readMask,maskCanvas} from './selection.mjs?v=814feed8b776c5a6';
+import {canvas,drawLayer,exportCanvas,toBlob,layerSelectionMask} from './render.mjs?v=18a51c11ff11998e';
+import {maskBounds,readMask,maskCanvas} from './selection.mjs?v=18a51c11ff11998e';
 export const CLIPBOARD_LIMIT=64*1024*1024;
 // Render in document coordinates: the layer mask and selection coverage each
 // apply once. Placement is baked into the cropped pixels, never reapplied.
@@ -14,9 +14,15 @@ export async function capturePixels(doc,layer,selection,cache,{merged=false}={})
  const blob=await toBlob(out);if(blob.size>CLIPBOARD_LIMIT)throw Error('Clipboard image exceeds 64 MiB');
  return {kind:'pixels',blob,x,y,w,h};
 }
-export async function erasedMask(doc,layer,selection,cache){
+export async function erasedMask(doc,layer,selection,cache,{repeatable=false}={}){
  const source=await cache.get(layer.asset),coverage=readMask(layerSelectionMask(layer,selection,doc.width,doc.height,source.width,source.height),source.width,source.height);
  const old=layer.mask_asset?readMask(await cache.get(layer.mask_asset),source.width,source.height):new Uint8ClampedArray(source.width*source.height).fill(255);
- for(let i=0;i<old.length;i++)old[i]=Math.round(old[i]*(1-coverage[i]/255));
+ let changed=false;
+ for(let i=0;i<old.length;i++){
+  const next=repeatable?Math.min(old[i],255-coverage[i]):Math.round(old[i]*(1-coverage[i]/255));
+  changed ||= next!==old[i];
+  old[i]=next;
+ }
+ if(repeatable&&!changed)return null;
  return toBlob(maskCanvas(old,source.width,source.height));
 }

@@ -21,6 +21,12 @@ processing = load("processing")
 MODELS = {"diffusion_models": ["h3.safetensors"], "text_encoders": ["ph3.safetensors", "up.safetensors"],
           "vae": ["vae.safetensors"], "loras": ["ph3_lora.safetensors"], "samplers": ["er_sde", "euler"]}
 NODE_NAMES = set(generation.CORE_NODES) | {"TextGenerateV2", "PH3ImageToolAsset", "PH3ImageToolResult", "PH3ImageToolTextResult"}
+NATIVE_MODELS = {
+    "diffusion_models": [r"minimax\minimax_h3_image_pruned_int8_convrot.safetensors"],
+    "text_encoders": ["qwen3vl_32b_minimax_h3_int8_convrot.safetensors", "qwen3.5_9b_w4a8_gptq.safetensors"],
+    "vae": ["minimax_h3_image_vae_fp16.safetensors"],
+    "native_image_missing_nodes": [],
+}
 
 def document(w=128, h=96):
     doc = schema.default_document(w,h)

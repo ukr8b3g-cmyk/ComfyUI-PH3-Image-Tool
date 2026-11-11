@@ -23,7 +23,7 @@ def main(output):
    def ready():page.wait_for_function('!document.querySelector(".ph3-top [data-i18n=save]").disabled')
    def select_region():
     click('layers','.ph3-tabs');page.locator('.ph3-layer-title').last.click();page.locator('[data-tool=rect]').click();r=page.locator('.ph3-canvas').bounding_box()
-    page.mouse.move(r['x']+r['width']/6,r['y']+r['height']*12/64);page.mouse.down();page.mouse.move(r['x']+r['width']/2,r['y']+r['height']*40/64,steps=8);page.mouse.up()
+    page.mouse.move(r['x']+r['width']*16.5/96,r['y']+r['height']*12.5/64);page.mouse.down();page.mouse.move(r['x']+r['width']*47.5/96,r['y']+r['height']*39.5/64,steps=8);page.mouse.up()
     page.wait_for_function('Boolean(window.ph3Editor.snapshot().selection_asset)');ready();page.locator('.ph3-viewport').focus()
    def undo():click('undo','.ph3-top');ready()
    def redo():click('redo','.ph3-top');ready()
