@@ -1,10 +1,10 @@
-import {ensureCutoutModel} from './cutout-model.mjs?v=18a51c11ff11998e';
-import {canvas,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=18a51c11ff11998e';
-import {maskBounds} from './selection.mjs?v=18a51c11ff11998e';
-import {COMIC_DEFAULTS,COMIC_STYLES,comicAsync,processComic} from './comic-engine.mjs?v=18a51c11ff11998e';
-import {cutoutAsync} from './edge-refine.mjs?v=18a51c11ff11998e';
-import {COMIC} from './presets.mjs?v=18a51c11ff11998e';
-import {autoColorCutout,refineCutout} from './cutout-auto.mjs?v=18a51c11ff11998e';
+import {ensureCutoutModel} from './cutout-model.mjs?v=fbc4d3ea3800d2fc';
+import {canvas,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=fbc4d3ea3800d2fc';
+import {maskBounds} from './selection.mjs?v=fbc4d3ea3800d2fc';
+import {COMIC_DEFAULTS,COMIC_STYLES,comicAsync,processComic} from './comic-engine.mjs?v=fbc4d3ea3800d2fc';
+import {cutoutAsync} from './edge-refine.mjs?v=fbc4d3ea3800d2fc';
+import {COMIC} from './presets.mjs?v=fbc4d3ea3800d2fc';
+import {autoColorCutout,refineCutout} from './cutout-auto.mjs?v=fbc4d3ea3800d2fc';
 const el=(tag,cls='',text='')=>{const e=document.createElement(tag);e.className=cls;if(text)e.textContent=text;return e;};
 const scaled=(source,max=640)=>{const f=Math.min(1,max/Math.max(source.width,source.height)),c=canvas(Math.max(1,Math.round(source.width*f)),Math.max(1,Math.round(source.height*f)));c.getContext('2d').drawImage(source,0,0,c.width,c.height);return c;};
 const data=c=>c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);

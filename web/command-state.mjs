@@ -1,4 +1,4 @@
-import {NATIVE_IMAGE} from './core.mjs?v=18a51c11ff11998e';
+import {NATIVE_IMAGE} from './core.mjs?v=fbc4d3ea3800d2fc';
 
 // UI eligibility only. Command handlers retain their validation and race guards.
 export function commandState(key,{doc,selected,hasSelection=false,clipboard=null,history={},modelsReady=true,enhancerAvailable=true,mode='new',inputAsset=null}){

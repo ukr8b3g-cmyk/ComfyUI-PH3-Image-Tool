@@ -1,4 +1,4 @@
-import {isInQueue} from './job-cancel.mjs?v=18a51c11ff11998e';
+import {isInQueue} from './job-cancel.mjs?v=fbc4d3ea3800d2fc';
 export const EXTERNAL_QUEUE_REMOVED='Queue entry removed externally';
 
 // One monitor per Client is shared by all UI watchers. A missing entry is not

@@ -1,4 +1,4 @@
-import {clone,uid,makeLayer,ensureLayerCapacity,imageInsertionIndex,isDecorationLayer} from './core.mjs?v=18a51c11ff11998e';
+import {clone,uid,makeLayer,ensureLayerCapacity,imageInsertionIndex,isDecorationLayer} from './core.mjs?v=fbc4d3ea3800d2fc';
 export const MANGA_DEFAULTS=Object.freeze({screen_lines:200,white_point:.8,black_point:.3,light_tone:.18,dark_tone:.42,gradation:1,white_lines:.4});
 export const MANGA_ROLES=['paper','tone','ink','white'];
 export function addMangaLayers(doc,result,{sourceId=null,sourceSignature=null,names={},generation=null,preserveExisting=false}={}) {

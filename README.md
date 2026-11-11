@@ -1,14 +1,19 @@
 # ComfyUI-PH3-Image-Tool v0.9.0
 
-P-H3による1枚画像の生成と、文字・吹き出し・画像を重ねて編集するComfyUIカスタムノードです。ノードの **Open PH3 Image Tool** から同じ編集画面で作業します。
+P-H3 ImageまたはMiniMax-H3-Imageによる1枚画像の生成と、文字・吹き出し・画像を重ねて編集するComfyUIカスタムノードです。ノードの **Open PH3 Image Tool** から同じ編集画面で作業します。
 
-A single-image P-H3 generation and layered editor for ComfyUI. Generate, edit selected regions, add editable text and speech bubbles, and export the composition in one workspace.
+A single-image generation and layered editor for ComfyUI with P-H3 Image and MiniMax-H3-Image. Generate, edit selected regions, add editable text and speech bubbles, and export the composition in one workspace.
 
 ## インストール・更新
 
-MiniMax-H3-Imageを使う場合は、**ComfyUI v0.45.0以上**が必要です。
+使う生成モデルに応じて、ComfyUI本体を以下のバージョン以上にしてください。
 
-MiniMax-H3-Image requires **ComfyUI v0.45.0 or later**.
+Use the following minimum ComfyUI version for your selected model.
+
+| 生成モデル / Generation model | 最低ComfyUIバージョン / Minimum version | モデル配布先 / Model downloads |
+|---|---|---|
+| **P-H3 Image** | [v0.44.0](https://github.com/Comfy-Org/ComfyUI/releases/tag/v0.44.0) | [MiniMax-H3 FL2VAベース / FL2VA base](https://huggingface.co/Comfy-Org/MiniMax-H3/tree/main/diffusion_models)、[P-H3用LoRA・テキストエンコーダー・VAE / P-H3 LoRA, text encoder and VAE](https://huggingface.co/PrunaAI/P-H3-Image-Comfy) |
+| **MiniMax-H3-Image** | [v0.45.0](https://github.com/Comfy-Org/ComfyUI/releases/tag/v0.45.0) | [画像モデル・VAE / Image model and VAE](https://huggingface.co/Comfy-Org/MiniMax-H3-Image)、[Qwen3-VLテキストエンコーダー / Qwen3-VL text encoder](https://huggingface.co/Comfy-Org/MiniMax-H3/tree/main/text_encoders) |
 
 [Releases](https://github.com/ukr8b3g-cmyk/ComfyUI-PH3-Image-Tool/releases)からZIPを取得し、中の`ComfyUI-PH3-Image-Tool`フォルダーを`ComfyUI/custom_nodes/`へ配置します。Gitで導入する場合:
 
@@ -27,11 +32,11 @@ Install the ZIP's inner folder under `ComfyUI/custom_nodes/`, or clone the repos
 
 1. ノード検索で **PH3 Image Tool** を追加するか、[ワークフロー例](examples/PH3_Image_Tool.json)を読み込みます。
 2. キューを実行する前にノードの **Open PH3 Image Tool** を開きます。
-3. **設定 → P-H3モデル** で導入済みのH3モデル、P-H3テキストエンコーダー、VAE、Image LoRAを選びます。追加LoRAは2枠、初期OFF、強度調整付きです。生成モデルの自動取得は行いません。
+3. **設定 → 画像モデル → 生成モデル** で **P-H3 Image** または **MiniMax-H3-Image** を選び、モデル本体・テキストエンコーダー・VAEを指定します。P-H3 ImageではImage LoRAも指定します。追加LoRAは2枠、初期OFF、強度調整付きです。生成モデルの自動取得は行いません。
 4. 画像を読み込むか、新規キャンバスから生成します。候補を確認して新しいレイヤーとして適用します。
 5. **保存・ノードへ適用** は再編集可能な作品とノード出力を保存します。**画像書出し** は見た目の合成結果、**プロジェクト書出し** は画像と編集状態を含む`.ph3tool`です。
 
-Open the editor before queueing the outer workflow. Choose installed P-H3 components in Settings. Review generated candidates before adoption. Save / Apply to Node, Export image and Export project are separate operations.
+Open the editor before queueing the outer workflow. In **Settings → Image models → Generation model**, choose **P-H3 Image** or **MiniMax-H3-Image** and select the installed model, text encoder and VAE. For P-H3 Image, also select the Image LoRA. Review generated candidates before adoption. Save / Apply to Node, Export image and Export project are separate operations.
 
 ## v0.9.0でできること
 

@@ -1,4 +1,4 @@
-import {renderStack} from './retouch-core.mjs?v=18a51c11ff11998e';
+import {renderStack} from './retouch-core.mjs?v=fbc4d3ea3800d2fc';
 
 export function adjustedPixels(source,mask,type,settings){
   if(type==='fill'||type==='delete'){
