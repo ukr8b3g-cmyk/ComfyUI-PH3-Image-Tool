@@ -1,5 +1,5 @@
-import {canvas,drawLayer} from './render.mjs?v=fbc4d3ea3800d2fc';
-import {makeLayer} from './core.mjs?v=fbc4d3ea3800d2fc';
+import {canvas,drawLayer} from './render.mjs?v=59a8d35b929e86cd';
+import {makeLayer} from './core.mjs?v=59a8d35b929e86cd';
 const paths={
  editMenu:'M4 5h16 M4 12h16 M4 19h16',copyPixels:'M8 3h13v15H8z M3 7v14h13',copyMerged:'M8 3h13v15H8z M3 7v14h13 M11 7h7 M11 11h7',cutPixels:'M4 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6 M4 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6 M7 8l14 12 M7 16 21 4',pastePixels:'M8 4H4v18h16V4h-4 M8 2h8v5H8z',duplicatePixels:'M8 3h13v15H8z M3 7v14h13 M11 10h7 M14.5 6.5v7',
  aiLettering:'M3 4h12 M9 4v17 M5 21h8 M19 3v6 M16 6h6 M19 14v6 M16 17h6',
@@ -19,7 +19,7 @@ const paths={
  hand:'M8 12V5a2 2 0 0 1 4 0v7 V3a2 2 0 0 1 4 0v9 V6a2 2 0 0 1 4 0v10c0 8-10 9-13 4l-5-7a2 2 0 0 1 3-2l3 3',rotateView:'M4 9a9 9 0 1 1 0 6 M4 3v6h6',
  fit:'M3 9V3h6 M15 3h6v6 M21 15v6h-6 M9 21H3v-6',clear:'M4 4l16 16 M20 4 4 20',invert:'M12 2a10 10 0 0 1 0 20V2 M12 2a10 10 0 0 0 0 20',
 };
-export function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('ph3-icon');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[name]||paths.image);if(['rect','ellipse','lasso'].includes(name))path.setAttribute('stroke-dasharray','2 2');svg.append(path);if(['brush','erase'].includes(name)){const outline=document.createElementNS(svg.namespaceURI,'rect');for(const[k,v]of Object.entries({x:1,y:1,width:22,height:22,fill:'none','stroke-dasharray':'2 3','stroke-width':1}))outline.setAttribute(k,v);svg.append(outline);}return svg;}
+export function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('ph3-icon');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[name==='pixelEraser'?'erase':name]||paths.image);if(['rect','ellipse','lasso'].includes(name))path.setAttribute('stroke-dasharray','2 2');svg.append(path);if(['brush','erase'].includes(name)){const outline=document.createElementNS(svg.namespaceURI,'rect');for(const[k,v]of Object.entries({x:1,y:1,width:22,height:22,fill:'none','stroke-dasharray':'2 3','stroke-width':1}))outline.setAttribute(k,v);svg.append(outline);}return svg;}
 export function layerThumbnail(layer,rasters,w=88,h=64){
  const c=canvas(w,h),ctx=c.getContext('2d');ctx.fillStyle='#dce4eb';ctx.fillRect(0,0,w,h);ctx.fillStyle='#c4ced8';for(let y=0;y<h;y+=8)for(let x=0;x<w;x+=8)if(((x+y)/8)%2===0)ctx.fillRect(x,y,8,8);
  if(!layer)return c;

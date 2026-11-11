@@ -1,5 +1,5 @@
-import {canvas,drawLayer,exportCanvas,toBlob,layerSelectionMask} from './render.mjs?v=fbc4d3ea3800d2fc';
-import {maskBounds,readMask,maskCanvas} from './selection.mjs?v=fbc4d3ea3800d2fc';
+import {canvas,drawLayer,exportCanvas,toBlob,layerSelectionMask} from './render.mjs?v=59a8d35b929e86cd';
+import {maskBounds,readMask,maskCanvas} from './selection.mjs?v=59a8d35b929e86cd';
 export const CLIPBOARD_LIMIT=64*1024*1024;
 // Render in document coordinates: the layer mask and selection coverage each
 // apply once. Placement is baked into the cropped pixels, never reapplied.

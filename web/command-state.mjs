@@ -1,4 +1,4 @@
-import {NATIVE_IMAGE} from './core.mjs?v=fbc4d3ea3800d2fc';
+import {NATIVE_IMAGE} from './core.mjs?v=59a8d35b929e86cd';
 
 // UI eligibility only. Command handlers retain their validation and race guards.
 export function commandState(key,{doc,selected,hasSelection=false,clipboard=null,history={},modelsReady=true,enhancerAvailable=true,mode='new',inputAsset=null}){
@@ -23,6 +23,7 @@ export function commandState(key,{doc,selected,hasSelection=false,clipboard=null
  case 'pastePixels':reason=!room?'layerCapacity':!clipboard?'noInternalClipboard':null;break;
  case 'changeSelectionColor':case 'retouchbrightness_contrast':case 'retouchcurves':case 'retouchhue_saturation':case 'fillSelection':case 'copySelection':reason=editable||(!room?'layerCapacity':null);break;
  case 'deleteSelection':reason=editable||selection;break;
+ case 'pixelEraser':reason=choose||(layer.type==='image'?editable:'needImage');break;
  case 'generateSelection':reason=editable||selection||(!modelsReady?'setupFirst':null);break;
  case 'letteringSelection':reason=selection||(!room?'layerCapacity':null);break;
  case 'image':case 'addText':case 'bubble':case 'speed':case 'frame':case 'sourceStamps':case 'aiLettering':reason=!room?'layerCapacity':null;break;

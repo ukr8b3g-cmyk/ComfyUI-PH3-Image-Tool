@@ -1,8 +1,8 @@
-import {clone,makeLayer} from './core.mjs?v=fbc4d3ea3800d2fc';
-import {canvas,drawLayer,toBlob} from './render.mjs?v=fbc4d3ea3800d2fc';
-import {fitTextBox} from './source-text.mjs?v=fbc4d3ea3800d2fc';
-import {prepareFonts} from './source-fonts.mjs?v=fbc4d3ea3800d2fc';
-import {inlineProgress} from './inline-progress.mjs?v=fbc4d3ea3800d2fc';
+import {clone,makeLayer} from './core.mjs?v=59a8d35b929e86cd';
+import {canvas,drawLayer,toBlob} from './render.mjs?v=59a8d35b929e86cd';
+import {fitTextBox} from './source-text.mjs?v=59a8d35b929e86cd';
+import {prepareFonts} from './source-fonts.mjs?v=59a8d35b929e86cd';
+import {inlineProgress} from './inline-progress.mjs?v=59a8d35b929e86cd';
 
 const el=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n;};
 const select=(items,value)=>{const n=el('select');for(const item of items){const o=el('option','',item.label);o.value=item.value;o.disabled=!!item.disabled;n.append(o);}n.value=value;return n;};

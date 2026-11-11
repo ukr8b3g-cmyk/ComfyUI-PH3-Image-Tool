@@ -1,4 +1,4 @@
-import {buildCurveLut,normalizeCurvePoints} from './retouch-core.mjs?v=fbc4d3ea3800d2fc';
+import {buildCurveLut,normalizeCurvePoints} from './retouch-core.mjs?v=59a8d35b929e86cd';
 
 export function retouchControls({parent,session,field,sliderField,button,tr,preview,apply,cancel}){
   const heading=document.createElement('h3');heading.textContent=tr('retouch'+session.type);parent.append(heading);
