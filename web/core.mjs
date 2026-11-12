@@ -166,9 +166,10 @@ const NATIVE_IMAGE_PREFERENCES = Object.freeze({
 });
 const NATIVE_IMAGE_CATEGORIES = Object.freeze({
   h3_image_unet_name: 'diffusion_models', h3_image_clip_name: 'text_encoders', h3_image_vae_name: 'vae',
+  h3_image_enhancer_name: 'text_encoders',
 });
 const baseName = value => String(value||'').replaceAll('\\','/').split('/').pop().toLowerCase();
-export function suggestInstalledPH3Models(settings, catalog) {
+export function suggestInstalledPH3Models(settings, catalog, workflowModels) {
   const next = {...settings}, selected = [];
   const native = settings?.model_engine === NATIVE_IMAGE;
   const preferences = native ? NATIVE_IMAGE_PREFERENCES : PH3_MODEL_PREFERENCES;
@@ -184,7 +185,10 @@ export function suggestInstalledPH3Models(settings, catalog) {
       if (matches.length === 1) { next[field] = matches[0]; selected.push(field); }
       continue;
     }
-    for (const name of preferences[field]) {
+    const requested = workflowModels?.[field];
+    const names = [...(preferences[field] || [])];
+    if (typeof requested === 'string' && requested) names.unshift(baseName(requested));
+    for (const name of names) {
       const matches = available.filter(item => baseName(item) === name);
       if (matches.length === 1) {
         next[field] = matches[0]; selected.push(field); break;
@@ -205,7 +209,7 @@ export function ph3ModelReadiness(settings, catalog) {
   const missing = [];
   const categories = settings?.model_engine === NATIVE_IMAGE ? NATIVE_IMAGE_CATEGORIES : MODEL_CATEGORIES;
   for (const [field, category] of Object.entries(categories)) {
-    if (field === 'enhancer_name') continue;
+    if (field === 'enhancer_name' || field === 'h3_image_enhancer_name') continue;
     const choices = Array.isArray(catalog?.[category]) ? catalog[category] : [];
     if (!settings?.[field] || !choices.includes(settings[field])) missing.push(field);
   }

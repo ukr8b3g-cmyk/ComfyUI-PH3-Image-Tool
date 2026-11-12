@@ -1,6 +1,6 @@
 import {commandState} from './command-state.mjs?v=01bc95baa1764cb1';
 import {capturePixels,erasedMask,CLIPBOARD_LIMIT} from './pixel-clipboard.mjs?v=01bc95baa1764cb1';
-import {historySelection,CANVAS_BACKGROUND_LAYER,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=3b4e61fa41e592c3';
+import {historySelection,CANVAS_BACKGROUND_LAYER,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=5428a988a04eb553';
 import {reconcileJob} from './job-presence.mjs?v=01bc95baa1764cb1';
 import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=01bc95baa1764cb1';
 import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=01bc95baa1764cb1';
@@ -17,7 +17,7 @@ import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=01bc95baa1764c
 import {editorShortcut} from './shortcuts.mjs?v=01bc95baa1764cb1';
 import {STAMP_ASSETS} from './source-assets.mjs?v=01bc95baa1764cb1';
 import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=01bc95baa1764cb1';
-import {ensureLayerCapacity,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness,imageModelMissingNodes,NATIVE_IMAGE} from './core.mjs?v=3b4e61fa41e592c3';
+import {ensureLayerCapacity,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness,imageModelMissingNodes,NATIVE_IMAGE} from './core.mjs?v=5428a988a04eb553';
 import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=01bc95baa1764cb1';
 import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=01bc95baa1764cb1';
 import {BACKGROUND_PATTERNS,newBackgroundPattern,drawCanvasBackground} from './canvas-background.mjs?v=01bc95baa1764cb1';
@@ -36,7 +36,7 @@ const el=(tag,cls='',text=null)=>{const e=document.createElement(tag);if(cls)e.c
 function download(blob,name){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function filePicker(accept,multiple=false){return new Promise(resolve=>{const input=document.createElement('input');input.type='file';input.accept=accept;input.multiple=multiple;input.onchange=()=>resolve([...input.files]);input.oncancel=()=>resolve([]);input.click();});}
 
-export async function openStudio({client,projectId='',inputAsset=null,onApply=null,onClose=null,hostLocale=null,onGenerationJob=null,initialModelEngine=null}) {
+export async function openStudio({client,projectId='',inputAsset=null,onApply=null,onClose=null,hostLocale=null,onGenerationJob=null,initialModelEngine=null,initialModelFiles=null}) {
   if(!document.querySelector('link[data-ph3-tool]')){const link=el('link');link.rel='stylesheet';link.href=styleURL;link.dataset.ph3Tool='1';await new Promise((resolve,reject)=>{link.onload=resolve;link.onerror=()=>{link.remove();reject(Error('Editor styles could not be loaded'));};document.head.append(link);});}
   let record=projectId?await client.get('/projects/'+projectId):await client.post('/projects',{});
   let doc=clone(record.document);
@@ -109,10 +109,10 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       catch{status('Draft storage unavailable; use Save or Export project.',true);}
     },350);
   }
-  function suggestModels(){
+  function suggestModels(workflowModels){
     if(!catalog||draftRecovery||closed)return;
     if(!doc.settings.output_preferences_version)commit(d=>{d.settings.export_format='webp';if(d.settings.export_quality==null||d.settings.export_quality===.92)d.settings.export_quality=.8;d.settings.save_generated_images??=true;d.settings.output_preferences_version=1;},{canvasChange:false,refresh:false});
-    const suggested=suggestInstalledPH3Models(doc.settings,catalog);
+    const suggested=suggestInstalledPH3Models(doc.settings,catalog,workflowModels);
     const replacedEncoder=doc.settings.h3_image_clip_name&&suggested.selected.includes('h3_image_clip_name');
     if(suggested.selected.length)commit(d=>{d.settings=suggested.settings;},{canvasChange:false,refresh:false});
     else refreshCommandStates();
@@ -972,8 +972,18 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     ph3Controls.dataset.model='ph3';nativeControls.dataset.model=NATIVE_IMAGE;body.append(ph3Controls,nativeControls);
     const modelSelects=new Map();
     function modelField(parent,key,label,category,placeholder='choose'){
-      const choices=[['',tr(placeholder)],...(catalog[category]||[]).map(name=>[name,name])];
-      if(draft[key]&&!choices.some(([name])=>name===draft[key]))choices.push([draft[key],draft[key]]);
+      const files=[...(catalog[category]||[])];
+      if(draft[key]&&!files.includes(draft[key]))files.push(draft[key]);
+      const display=name=>category==='diffusion_models'?name.replace(/^minimax[\\/]/i,''):name;
+      const counts=new Map();
+      for(const name of files){
+        const text=display(name).toLowerCase();
+        counts.set(text,(counts.get(text)||0)+1);
+      }
+      const choices=[['',tr(placeholder)],...files.map(name=>{
+        const text=display(name);
+        return [name,counts.get(text.toLowerCase())>1?name:text];
+      })];
       const select=optionsSelect(choices,draft[key]||'');
       select.onchange=()=>{draft[key]=select.value;modelStatus.textContent=modelSummary(draft);};
       field(parent,label,select,true);modelSelects.set(key,select);
@@ -1505,7 +1515,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   }
   fit();status(tr('ready'));
   catalog=await client.get('/capabilities').catch(e=>{fail(e);return null;});
-  suggestModels();
+  suggestModels(projectId ? null : initialModelFiles);
   await loadJobs().catch(fail);
   if(!closed)offerDraftRecovery();
   return {focus:()=>root.focus(),close:requestClose,updateInput:value=>inputAsset=value,detach:()=>{detached=true;status(tr('detached'));},

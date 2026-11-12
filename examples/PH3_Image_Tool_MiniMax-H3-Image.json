@@ -47,7 +47,13 @@
       ],
       "properties": {
         "Node name for S&R": "PH3ImageTool",
-        "ph3_model_engine": "minimax_h3_image"
+        "ph3_model_engine": "minimax_h3_image",
+        "ph3_model_files": {
+          "h3_image_unet_name": "minimax_h3_image_pruned_int8_convrot.safetensors",
+          "h3_image_clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+          "h3_image_vae_name": "minimax_h3_image_vae_fp16.safetensors",
+          "h3_image_enhancer_name": "p-h3-image_prompt_upsampler_w4a8.safetensors"
+        }
       },
       "widgets_values": [
         "",
