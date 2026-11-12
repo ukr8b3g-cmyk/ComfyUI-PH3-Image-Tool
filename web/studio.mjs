@@ -1,6 +1,6 @@
 import {commandState} from './command-state.mjs?v=01bc95baa1764cb1';
 import {capturePixels,erasedMask,CLIPBOARD_LIMIT} from './pixel-clipboard.mjs?v=01bc95baa1764cb1';
-import {historySelection,CANVAS_BACKGROUND_LAYER,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=01bc95baa1764cb1';
+import {historySelection,CANVAS_BACKGROUND_LAYER,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=3b4e61fa41e592c3';
 import {reconcileJob} from './job-presence.mjs?v=01bc95baa1764cb1';
 import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=01bc95baa1764cb1';
 import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=01bc95baa1764cb1';
@@ -17,7 +17,7 @@ import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=01bc95baa1764c
 import {editorShortcut} from './shortcuts.mjs?v=01bc95baa1764cb1';
 import {STAMP_ASSETS} from './source-assets.mjs?v=01bc95baa1764cb1';
 import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=01bc95baa1764cb1';
-import {ensureLayerCapacity,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness,imageModelMissingNodes,NATIVE_IMAGE} from './core.mjs?v=01bc95baa1764cb1';
+import {ensureLayerCapacity,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness,imageModelMissingNodes,NATIVE_IMAGE} from './core.mjs?v=3b4e61fa41e592c3';
 import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=01bc95baa1764cb1';
 import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=01bc95baa1764cb1';
 import {BACKGROUND_PATTERNS,newBackgroundPattern,drawCanvasBackground} from './canvas-background.mjs?v=01bc95baa1764cb1';

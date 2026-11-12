@@ -102,9 +102,75 @@ const client={get:async p=>(await call('get',p)).value,post:async(p,d)=>(await c
  queueState:async()=>(await call('queueState','')).value,deleteQueued:async id=>(await call('deleteQueued',id)).value};
 window.ph3Client=client;
 const {openStudio}=await import(MODULE_URL);
-window.ph3Editor=await openStudio({client,onApply:r=>window.ph3Applied=r});
+window.ph3Editor=await openStudio({client,projectId:window.ph3TestProject,onApply:r=>window.ph3Applied=r});
 window.ph3Open=async id=>{window.ph3Editor=await openStudio({client,projectId:id,onApply:r=>window.ph3Applied=r});};
 '''
+
+def check_selection_adoption(browser, root, errors):
+    harness = Harness(root)
+    store = harness.store
+    source = Image.new('RGBA', (128, 128), (100, 100, 100, 255))
+    source_asset = store.put_image(source)['asset']
+    mask = Image.new('L', source.size)
+    ImageDraw.Draw(mask).rectangle((24, 24, 103, 103), fill=255)
+    mask.putpixel((30, 60), 128)
+    doc = schema.default_document(*source.size)
+    doc['settings'].update(locale_mode='en', auto_apply=False, feather=0, save_generated_images=False,
+                           unet_name=MODELS['diffusion_models'][0], clip_name=MODELS['text_encoders'][0],
+                           vae_name=MODELS['vae'][0], lora_name=MODELS['loras'][0])
+    doc['layers'] = [dict(id=schema.uid(), type='image', asset=source_asset,
+                          x=0, y=0, w=128, h=128, visible=True, opacity=1)]
+    doc['selection_asset'] = store.put_image(mask)['asset']
+    doc['prompt']['original'] = 'Add a red shape'
+    css = (ROOT / 'web' / 'style.css').read_text(encoding='utf-8')
+    for legacy in (False, True):
+        project = store.create(doc)
+        job, _ = generation.prepare_job(store, project['id'],
+            {'mode': 'selection', 'source_asset': source_asset, 'revision': project['revision']}, MODELS, NODES)
+        x, y, w, h = job['request']['region']
+        raw = Image.new('RGB', (w, h), (110, 110, 110))
+        ImageDraw.Draw(raw).rectangle((27-x, 54-y, 82-x, 78-y), fill=(210, 0, 0))
+        finished = generation.capture_images(store, job['id'], [raw])
+        result = finished['results'][0]
+        expected = source.copy()
+        expected.alpha_composite(store.image(result['asset']), (x, y))
+        assert expected.getpixel((40, 40)) == (100, 100, 100, 255)
+        assert expected.getpixel((30, 60)) == (155, 50, 50, 255)
+        if legacy:
+            result.pop('layer_asset')
+            store.finish_job(job['id'], results=[result])
+        page = browser.new_page(viewport={'width': 1440, 'height': 1000}, locale='en-US')
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.expose_function('ph3TestRPC', harness.rpc)
+        page.set_content('<meta charset="utf-8"><link data-ph3-tool><style>' + css + '</style>')
+        page.evaluate('id=>window.ph3TestProject=id', project['id'])
+        page.evaluate('async MODULE_URL=>{' + BRIDGE + '}', bundle_modules(page))
+        page.locator('[data-tab=candidates]').click()
+        page.locator('.ph3-card button[data-i18n=apply]').click()
+        page.wait_for_function('ph3Editor.snapshot().layers.length===2')
+        layer = page.evaluate('ph3Editor.snapshot().layers[1]')
+        assert layer['asset'] == result.get('layer_asset', result['asset'])
+        assert layer['mask_asset'] == (None if legacy else job['request']['mask_asset'])
+        assert layer['generation']['raw_asset'] == result['raw_asset']
+        page.locator('.ph3-top [data-i18n=undo]').click()
+        page.wait_for_function('ph3Editor.snapshot().layers.length===1')
+        page.locator('.ph3-top [data-i18n=redo]').click()
+        page.wait_for_function('ph3Editor.snapshot().layers.length===2')
+        page.evaluate('window.ph3Applied=null')
+        page.locator('.ph3-top [data-i18n=save]').click()
+        page.wait_for_function('!!window.ph3Applied')
+        saved = store.read(project['id'])['document']
+        actual = store.image(saved['composite_asset'])
+        assert actual.getpixel((40, 40)) == expected.getpixel((40, 40))
+        assert actual.getpixel((30, 60)) == expected.getpixel((30, 60))
+        assert actual.tobytes() == expected.tobytes()
+        page.locator('.ph3-top [data-i18n=close]').click()
+        page.locator('.ph3-tool[open]').wait_for(state='hidden')
+        page.evaluate('id=>ph3Open(id)', project['id'])
+        page.wait_for_function('ph3Editor.snapshot().layers.length===2')
+        assert page.evaluate('ph3Editor.snapshot().layers[1]') == layer
+        page.close()
+    return 'new and legacy selection candidates preserve corrected RGB and one mask through apply, Undo/Redo and save/reopen'
 
 
 def main(output):
@@ -179,6 +245,7 @@ def main(output):
             with page.expect_file_chooser() as fc:click('importProject','.ph3-modal')
             fc.value.set_files(str(boundary_export));ready();page.wait_for_function('!document.querySelector(".ph3-overlay")');assert snap()['layers']==boundary_saved['layers'];assert schema.asset_ids(snap())==schema.asset_ids(boundary_saved);assert len(schema.asset_ids(snap()))==1025;checks.append('256 layers and 1025 images export and re-import through actual browser controls with all asset references intact')
             page.screenshot(path=str(output/'boundary-reimported.png'));(output/'boundary-roundtrip.json').write_text(json.dumps({'layers':256,'assets':len(schema.asset_ids(snap())),'export_bytes':boundary_export.stat().st_size,'layer_json_equal':True,'asset_ids_equal':True},indent=2),encoding='utf8')
+            checks.append(check_selection_adoption(browser,Path(temp)/'selection-store',errors))
             assert not errors,errors;checks.append('no unhandled browser exceptions');browser.close()
     result={'environment':'Offline Chromium with real CPU storage and canvas; no ComfyUI or GPU inference','checks':checks,'passed':len(checks),'page_errors':errors,'gpu_tested':False,'live_comfyui_tested':False}
     (output/'browser-results.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf8');print(json.dumps(result,ensure_ascii=False,indent=2))

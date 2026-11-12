@@ -292,9 +292,14 @@ class GenerationTests(unittest.TestCase):
         draw.rectangle((48-x, 42-y, 54-x, 49-y), fill=recolored)
         result = g.capture_images(self.store, job['id'], [raw])['results'][0]
         patch = self.store.image(result['asset'])
+        editable = self.store.image(result['layer_asset'])
         self.assertEqual(self.store.image(result['raw_asset']).convert('RGB').tobytes(), raw.tobytes())
+        self.assertEqual(editable.size, patch.size)
+        self.assertEqual(editable.getchannel('A').getextrema(), (255, 255))
         self.assertEqual(patch.getchannel('A').tobytes(),
                          self.store.image(job['request']['mask_asset']).getchannel('R').tobytes())
+        editable.putalpha(self.store.image(job['request']['mask_asset']).getchannel('R'))
+        self.assertEqual(editable.tobytes(), patch.tobytes())
         composite = self.source.copy()
         composite.alpha_composite(patch, (x, y))
         self.assertEqual(composite.getpixel((40, 30)), (*green, 255))

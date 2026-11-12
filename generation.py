@@ -431,12 +431,17 @@ def capture_images(store, job_id, images):
             results.append(result)
             continue
         patch = image.convert("RGBA").resize((width, height), Image.Resampling.LANCZOS)
+        layer_asset = None
         if request.get("mask_asset"):
             mask = store.image(request["mask_asset"]).getchannel("R")
             if mask.size != patch.size:
                 raise ToolError("MASK_SIZE", "Stored selection mask does not match the generation region")
             if source_crop is not None:
                 patch = restore_selection_colors(source_crop, patch, mask)
+            if request["mode"] == "selection":
+                # The editor applies the editable mask to the corrected RGB.
+                # The preview and auto-save use the masked copy below.
+                layer_asset = store.put_image(patch.convert("RGB"))["asset"]
             patch.putalpha(mask)
         if request['mode'] == 'manga':
             patch.putalpha(store.image(request['source_asset']).getchannel('A'))
@@ -444,6 +449,8 @@ def capture_images(store, job_id, images):
             result = store_finish(store, patch, request['manga_settings'], generated)
         else:
             result = store.put_image(patch)
+        if layer_asset:
+            result["layer_asset"] = layer_asset
         result.update(raw_asset=raw, x=x, y=y, w=width, h=height)
         results.append(result)
     from .output_saving import save_candidates

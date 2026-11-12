@@ -7,7 +7,17 @@ test('new edit after undo discards redo branch',()=>{const h=new History();const
 test('history byte budget prevents unlimited metadata copies',()=>{const h=new History(100,300);for(let i=0;i<20;i++)h.record({...doc(),title:'a'.repeat(100)});assert.equal(h.past.length,0);});
 test('rotated coordinate roundtrip',()=>{const l=makeLayer('image',100,100,{x:20,y:30,w:80,h:40,rotation:47});const p={x:13,y:22};const r=localPoint(l,worldPoint(l,p));assert.ok(Math.abs(r.x-p.x)<1e-8);assert.ok(Math.abs(r.y-p.y)<1e-8);});
 test('stale generation refused after undo revision advances',()=>{const d=doc(),job={project_id:'x',request:{canvas_revision:1,canvas:[128,96]}};assert.equal(candidateMatches(d,job,'x'),true);assert.equal(candidateMatches({...d,canvas_revision:2},job,'x'),false);assert.equal(candidateMatches(d,job,'other'),false);});
-test('candidate layer keeps raw image and separate selection mask',()=>{const job={id:'job',request:{mode:'selection',mask_asset:'m',prompt:'apple',config:{seed:42},region:[1,2,3,4]},results:[{asset:'patch',raw_asset:'raw',x:1,y:2,w:3,h:4}]};const layer=layerFromCandidate(doc(),job);assert.equal(layer.asset,'raw');assert.equal(layer.mask_asset,'m');assert.equal(layer.x,1);});
+test('selection adoption preserves corrected colors, one mask and raw provenance',()=>{
+ const job={id:'job',request:{mode:'selection',mask_asset:'m',prompt:'apple',config:{seed:42},region:[1,2,3,4]},
+   results:[{asset:'masked-preview',layer_asset:'corrected-rgb',raw_asset:'raw',x:1,y:2,w:3,h:4}]};
+ const layer=layerFromCandidate(doc(),job);
+ assert.equal(layer.asset,'corrected-rgb');assert.equal(layer.mask_asset,'m');assert.equal(layer.x,1);
+ assert.equal(layer.generation.raw_asset,'raw');assert.equal(layer.generation.mask_asset,'m');
+ delete job.results[0].layer_asset;
+ const legacy=layerFromCandidate(doc(),job);
+ assert.equal(legacy.asset,'masked-preview');assert.equal(legacy.mask_asset,null);
+ assert.equal(legacy.generation.raw_asset,'raw');assert.equal(legacy.generation.mask_asset,'m');
+});
 test('seed rejects silent integer precision loss',()=>{assert.equal(safeSeed('691899913323484'),'691899913323484');assert.throws(()=>safeSeed('18446744073709551615'));assert.throws(()=>safeSeed('-1'));assert.ok(Number.isSafeInteger(Number(randomSeed())));});
 test('canvas size limits',()=>{checkSize(2912,2912);assert.throws(()=>checkSize(8192,8192));assert.throws(()=>checkSize(0,1));});
 test('new and resized canvases stop at 2048 without invalidating legacy dimensions',()=>{checkNewSize(2048,2048);assert.throws(()=>checkNewSize(2049,1),/2048/);assert.throws(()=>checkNewSize(1,2049),/2048/);checkSize(2049,1);});
