@@ -1,5 +1,5 @@
 {
-  "id": "6e3e2e32-3450-4c68-a248-4dd316b50d13",
+  "id": "1e2e6f39-e74e-4924-91bc-5397e4b3a845",
   "revision": 0,
   "last_node_id": 3,
   "last_link_id": 1,
@@ -46,7 +46,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "PH3ImageTool"
+        "Node name for S&R": "PH3ImageTool",
+        "ph3_model_engine": "ph3"
       },
       "widgets_values": [
         "",
@@ -100,7 +101,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "1. Open PH3 Image Tool before queueing. Import an image or create a canvas.\n2. Select installed P-H3 models in Settings. Generate inside the editor; generation uses the normal ComfyUI queue.\n3. Adopt results, then Save / Apply to Node. Save this ComfyUI workflow too.\n4. Queue this workflow to send the committed RGB image to SaveImage. Use editor PNG export for alpha.\nOptional: connect an IMAGE upstream and execute once, then use Import input in the editor.\nRC: live ComfyUI/GPU/Windows acceptance testing remains required."
+        "P-H3 Image  |  ComfyUI v0.44.0 or newer\n1. Open PH3 Image Tool before queueing. Import an image or create a canvas.\n2. In Settings > Image models, choose your installed diffusion model, text encoder and VAE. Also select the P-H3 Image LoRA.\n3. Generate in the editor, adopt a candidate, then Save / Apply to Node. Save this workflow too.\n4. Queue this workflow for RGB output through Save Image. Use the editor PNG export for transparency."
       ]
     }
   ],

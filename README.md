@@ -30,21 +30,21 @@ Install the ZIP's inner folder under `ComfyUI/custom_nodes/`, or clone the repos
 
 ## 最初の操作
 
-1. ノード検索で **PH3 Image Tool** を追加するか、[ワークフロー例](examples/PH3_Image_Tool.json)を読み込みます。
+1. ノード検索で **PH3 Image Tool** を追加するか、[P-H3 Image用](examples/PH3_Image_Tool_P-H3_Image.json) または [MiniMax-H3-Image用](examples/PH3_Image_Tool_MiniMax-H3-Image.json) のワークフローを読み込みます。
 2. キューを実行する前にノードの **Open PH3 Image Tool** を開きます。
 3. **設定 → 画像モデル → 生成モデル** で **P-H3 Image** または **MiniMax-H3-Image** を選び、モデル本体・テキストエンコーダー・VAEを指定します。P-H3 ImageではImage LoRAも指定します。追加LoRAは2枠、初期OFF、強度調整付きです。生成モデルの自動取得は行いません。
 4. 画像を読み込むか、新規キャンバスから生成します。候補を確認して新しいレイヤーとして適用します。
 5. **保存・ノードへ適用** は再編集可能な作品とノード出力を保存します。**画像書出し** は見た目の合成結果、**プロジェクト書出し** は画像と編集状態を含む`.ph3tool`です。
 
-Open the editor before queueing the outer workflow. In **Settings → Image models → Generation model**, choose **P-H3 Image** or **MiniMax-H3-Image** and select the installed model, text encoder and VAE. For P-H3 Image, also select the Image LoRA. Review generated candidates before adoption. Save / Apply to Node, Export image and Export project are separate operations.
+Load the [P-H3 Image](examples/PH3_Image_Tool_P-H3_Image.json) or [MiniMax-H3-Image](examples/PH3_Image_Tool_MiniMax-H3-Image.json) workflow. Open the editor before queueing the outer workflow. In **Settings → Image models → Generation model**, choose **P-H3 Image** or **MiniMax-H3-Image** and select the installed model, text encoder and VAE. For P-H3 Image, also select the Image LoRA. Review generated candidates before adoption. Save / Apply to Node, Export image and Export project are separate operations.
 
 ### プロンプト補助 / Prompt enhancer
 
-**P-H3 Image、MiniMax-H3-Imageのどちらでも、まず `p-h3-image_prompt_upsampler_w4a8.safetensors` を推奨します。** `ComfyUI/models/text_encoders/` に置き、**設定 → 画像モデル → プロンプト補助（任意）** で選択します。[Pruna AIの配布ページ](https://huggingface.co/PrunaAI/P-H3-Image-Comfy#prompt-upsampler)
+**P-H3 Imageでは `p-h3-image_prompt_upsampler_w4a8.safetensors` を推奨します。** 同じファイルをMiniMax-H3-Imageでも使えます。ファイルを `ComfyUI/models/text_encoders/` に置き、**設定 → 画像モデル → プロンプト補助（任意）** で選択します。[Pruna AIの配布ページ](https://huggingface.co/PrunaAI/P-H3-Image-Comfy#prompt-upsampler)
 
-同じ指示と切り出し画像を使ったローカルの部分編集では、`qwen3.5_9b_w4a8_gptq.safetensors` と仕上がりの差が小さく、補助文の作成はP-H3版の方が短時間でした。ジョブ作成から完了までの比較例は、P-H3版が約7秒と22秒、GPTQ版が約35秒です。
+MiniMax-H3-Imageでは `qwen3.5_9b_w4a8_gptq.safetensors` も選べます。同じ入力で両方から補助文を取得でき、ローカルの比較では処理時間の順序が測定回によって変わりました。まずは導入済みの方を使い、待ち時間や補助文の内容を見て選んでください。
 
-**Recommended for either generation model:** `p-h3-image_prompt_upsampler_w4a8.safetensors`. Put it in `ComfyUI/models/text_encoders/` and select it under **Settings → Image models → Prompt enhancer (optional)**. In our local selection-edit comparison, the two enhancers gave similar results, and the P-H3 enhancer finished the prompt sooner.
+**Recommended for P-H3 Image:** `p-h3-image_prompt_upsampler_w4a8.safetensors`. MiniMax-H3-Image can use the same file or `qwen3.5_9b_w4a8_gptq.safetensors`. Put the file in `ComfyUI/models/text_encoders/` and select it under **Settings → Image models → Prompt enhancer (optional)**. Both enhancers returned usable prompts for the same selection edit, and their relative speed varied across local runs.
 
 ## v0.9.1でできること
 

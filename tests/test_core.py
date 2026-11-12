@@ -197,6 +197,7 @@ class GenerationTests(unittest.TestCase):
                 self.assertEqual(graph['1']['inputs']['clip_name'], enhancer)
                 self.assertEqual(graph['3']['inputs'], {'json_string': ['2', 0], 'key': 'expanded_caption'})
                 self.assertEqual(graph['90']['inputs']['text'], ['3', 0])
+                self.assertEqual(graph['90']['inputs']['raw_text'], ['2', 0])
                 self.assertIsNone(request['mask_asset'])
                 prompts.add(inputs['prompt'])
                 if scope == 'new':
@@ -251,6 +252,7 @@ class GenerationTests(unittest.TestCase):
                 self.assertEqual(request['enhance_scope'], scope)
                 self.assertIsNone(request['mask_asset'])
                 self.assertEqual(graph['2']['class_type'], legacy_graph['2']['class_type'])
+                self.assertNotIn('raw_text', graph['90']['inputs'])
                 self.assertEqual('images.image1' in graph['2']['inputs'], scope != 'new')
                 if scope == 'selection':
                     self.assertLess(request['region'][2], self.source.width)

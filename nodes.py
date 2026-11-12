@@ -1,10 +1,11 @@
 """Small asset / result nodes around the unmodified ComfyUI sampling graph."""
 from __future__ import annotations
+import re
 import numpy as np
 import torch
 from PIL import Image
 from .runtime import get_store
-from .generation import capture_images
+from .generation import NATIVE_IMAGE, capture_images
 from .schema import ToolError
 
 
@@ -106,10 +107,37 @@ class PH3ImageToolResult:
         return {"ui": {"ph3_job": [job["id"]]}, "result": ()}
 
 
+VISUAL_CAPTION_SECTIONS = ("subject_definitions", "summary", "retention_analysis", "detailed_description")
+CAPTION_SECTION_HEADER = re.compile(
+    r"^(" + "|".join((*VISUAL_CAPTION_SECTIONS, "overall_soundscape", "non_diegetic_music")) + r"):[ \t]*",
+    re.IGNORECASE | re.MULTILINE,
+)
+MAX_ENHANCED_TEXT = 16000
+
+
+def recover_visual_caption(raw_text):
+    """Read the visual sections when an enhancer follows its own template instead of JSON."""
+    if not isinstance(raw_text, str) or len(raw_text) > MAX_ENHANCED_TEXT:
+        return ""
+    raw_text = raw_text.strip()
+    headers = list(CAPTION_SECTION_HEADER.finditer(raw_text))
+    if not headers or headers[0].start() != 0:
+        return ""
+    sections = {}
+    for index, header in enumerate(headers):
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(raw_text)
+        sections[header.group(1).lower()] = raw_text[header.end():end].strip()
+    if not sections.get("summary") or not sections.get("detailed_description"):
+        return ""
+    sections["summary"] = sections["summary"].removeprefix("[keyframe completion]").strip()
+    return "\n\n".join(sections[name] for name in VISUAL_CAPTION_SECTIONS if sections.get(name))
+
+
 class PH3ImageToolTextResult:
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {"text": ("STRING", {"forceInput": True}), "job_id": ("STRING", {"default": ""})}}
+        return {"required": {"text": ("STRING", {"forceInput": True}), "job_id": ("STRING", {"default": ""})},
+                "optional": {"raw_text": ("STRING", {"forceInput": True})}}
     RETURN_TYPES = ()
     FUNCTION = "capture"
     CATEGORY = "image/PH3 Image Tool/internal"
@@ -117,11 +145,14 @@ class PH3ImageToolTextResult:
     @classmethod
     def IS_CHANGED(cls, **kwargs):
         return float("nan")
-    def capture(self, text, job_id):
+    def capture(self, text, job_id, raw_text=None):
         store = get_store()
-        if store.job(job_id)["request"]["mode"] != "enhance":
+        request = store.job(job_id)["request"]
+        if request["mode"] != "enhance":
             raise ValueError("Text result cannot finish an image request")
-        if not str(text).strip() or len(str(text)) > 16000:
+        if not str(text).strip() and request.get("config", {}).get("model_engine") == NATIVE_IMAGE:
+            text = recover_visual_caption(raw_text)
+        if not str(text).strip() or len(str(text)) > MAX_ENHANCED_TEXT:
             raise ValueError("Prompt upsampler returned empty or oversized text")
         store.finish_job(job_id, text=text)
         return {"ui": {"ph3_job": [job_id]}, "result": ()}

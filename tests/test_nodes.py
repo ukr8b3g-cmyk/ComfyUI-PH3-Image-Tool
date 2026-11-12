@@ -42,4 +42,27 @@ class NodeTests(unittest.TestCase):
         with self.assertRaises(ValueError):nodes.PH3ImageToolTextResult().capture(' ',job['id'])
         self.assertEqual(self.store.job(job['id'])['status'],'prepared')
 
+    def test_native_enhancer_recovers_visual_sections_when_json_is_empty(self):
+        project=self.store.create(document())
+        raw=("subject_definitions:\n<Subject 1> is the red mug in <Picture 1>.\n\n"
+             "summary:\n[keyframe completion] The mug is cobalt blue.\n\n"
+             "retention_analysis:\nThe white interior and position are preserved.\n\n"
+             'detailed_description:\nThe mug reads "ビクッ!!".\n\n'
+             "overall_soundscape:\nSilence.\n\nnon_diegetic_music:\nNone.")
+        request={"mode":"enhance","config":{"model_engine":generation.NATIVE_IMAGE}}
+        expected=("<Subject 1> is the red mug in <Picture 1>.\n\nThe mug is cobalt blue.\n\n"
+                  'The white interior and position are preserved.\n\nThe mug reads "ビクッ!!".')
+        node=nodes.PH3ImageToolTextResult()
+        for parsed,source,caption in (("",raw,expected),("Use the JSON caption",raw,"Use the JSON caption")):
+            with self.subTest(parsed=parsed):
+                job=self.store.create_job(project['id'],request)
+                node.capture(parsed,job['id'],raw_text=source)
+                self.assertEqual(self.store.job(job['id'])['text'],caption)
+        for invalid in ("", '{"caption":"Wrong key"}', "summary:\nA blue mug.", raw+"x"*16000):
+            with self.subTest(invalid=invalid[:40]):
+                job=self.store.create_job(project['id'],request)
+                with self.assertRaises(ValueError):
+                    node.capture("",job['id'],raw_text=invalid)
+                self.assertEqual(self.store.job(job['id'])['status'],'prepared')
+
 if __name__=='__main__':unittest.main()

@@ -36,10 +36,11 @@ const el=(tag,cls='',text=null)=>{const e=document.createElement(tag);if(cls)e.c
 function download(blob,name){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function filePicker(accept,multiple=false){return new Promise(resolve=>{const input=document.createElement('input');input.type='file';input.accept=accept;input.multiple=multiple;input.onchange=()=>resolve([...input.files]);input.oncancel=()=>resolve([]);input.click();});}
 
-export async function openStudio({client,projectId='',inputAsset=null,onApply=null,onClose=null,hostLocale=null,onGenerationJob=null}) {
+export async function openStudio({client,projectId='',inputAsset=null,onApply=null,onClose=null,hostLocale=null,onGenerationJob=null,initialModelEngine=null}) {
   if(!document.querySelector('link[data-ph3-tool]')){const link=el('link');link.rel='stylesheet';link.href=styleURL;link.dataset.ph3Tool='1';await new Promise((resolve,reject)=>{link.onload=resolve;link.onerror=()=>{link.remove();reject(Error('Editor styles could not be loaded'));};document.head.append(link);});}
   let record=projectId?await client.get('/projects/'+projectId):await client.post('/projects',{});
   let doc=clone(record.document);
+  if(!projectId&&[NATIVE_IMAGE,'ph3'].includes(initialModelEngine))doc.settings.model_engine=initialModelEngine;
   const hostLanguage=()=>{const value=typeof hostLocale==='function'?hostLocale():hostLocale;return value&&value!=='auto'?value:document.documentElement.lang||navigator.language;};
   const syncLocale=()=>doc.settings.locale=localePreference(doc.settings,hostLanguage());syncLocale();
   let retouchSession=null,paintPreview=null,brushAdjust=null;

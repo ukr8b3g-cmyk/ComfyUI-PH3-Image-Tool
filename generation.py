@@ -307,9 +307,11 @@ def build_graph(job):
         for index, image in enumerate(images):
             inputs[f"images.image{index+1}"] = image
         text = add("2", "TextGenerateV2", **inputs)
+        result_inputs = {"text": text, "job_id": job["id"]}
         if native:
-            text = add("3", "JsonExtractString", json_string=text, key="expanded_caption")
-        add("90", "PH3ImageToolTextResult", text=text, job_id=job["id"])
+            result_inputs["text"] = add("3", "JsonExtractString", json_string=text, key="expanded_caption")
+            result_inputs["raw_text"] = text
+        add("90", "PH3ImageToolTextResult", **result_inputs)
         return graph
     native = config.get("model_engine") == NATIVE_IMAGE
     model = add("1", "UNETLoader", unet_name=config["unet_name"], weight_dtype="default")
