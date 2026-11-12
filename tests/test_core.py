@@ -16,6 +16,17 @@ from support import schema as s, storage as st, generation as g, processing as p
 class SchemaTests(unittest.TestCase):
     def test_default_roundtrip(self):
         doc=document();self.assertEqual(s.validate_document(doc),doc)
+    def test_canvas_background_recipe_is_optional_and_bounded(self):
+        doc = document()
+        self.assertNotIn('background_pattern', s.validate_document(doc))
+        pattern = {'type': 'halftone', 'color': '#334455', 'size': 4,
+                   'spacing': 12, 'angle': 15, 'strength': 80}
+        doc['background_pattern'] = pattern
+        self.assertEqual(s.validate_document(doc)['background_pattern'], pattern)
+        for invalid in ({'type': []}, {**pattern, 'spacing': 0}, {**pattern, 'size': 4096},
+                        {**pattern, 'color': 'not a color'}):
+            with self.subTest(invalid=invalid), self.assertRaises(s.ToolError):
+                s.validate_document({**doc, 'background_pattern': invalid})
     def test_reject_wrong_version(self):
         doc=document();doc['version']=99
         with self.assertRaises(s.ToolError):s.validate_document(doc)
@@ -150,22 +161,102 @@ class GenerationTests(unittest.TestCase):
     def test_text_enhance_does_not_generate_image(self):
         job,graph=self.prepare('enhance');names={x['class_type'] for x in graph.values()}
         self.assertIn('TextGenerateV2',names);self.assertNotIn('SamplerCustomAdvanced',names);self.assertNotIn('UNETLoader',names)
+    def test_native_reference_limits_use_rounded_vae_dimensions(self):
+        g.check_native_reference((256, 32), 'canvas')
+        g.check_native_reference((256, 64), 'canvas')
+        for size, expected in [((32, 257), (1024, 8224)), ((4608, 2048), (4608, 2048))]:
+            with self.subTest(size=size):
+                with self.assertRaises(s.ToolError) as ctx:
+                    g.check_native_reference(size, 'canvas')
+                self.assertEqual(ctx.exception.code, 'NATIVE_REFERENCE_TOO_LARGE')
+                details = ctx.exception.details
+                self.assertEqual((details['width'], details['height']), expected)
+
     def test_native_prompt_enhancer_uses_its_own_model_and_expanded_caption(self):
         doc = self.record['document']
+        original = '看板には「ビクッ!!」と書く。\n文字は横書き。'
+        doc['prompt'].update(original=original, ai='Previous AI text', source='ai')
+        color = self.store.put_image(Image.new('RGB', (32, 32), 'blue'))['asset']
+        outfit = self.store.put_image(Image.new('RGB', (32, 32), 'red'))['asset']
+        doc['references'] = [{'asset': color, 'role': 'color only'}, {'asset': outfit, 'role': 'outfit only'}]
         enhancer = NATIVE_MODELS['text_encoders'][1]
         doc['settings'].update(model_engine=g.NATIVE_IMAGE, h3_image_enhancer_name=enhancer)
         self.record = self.store.save(self.record['id'], doc, self.record['revision'])
         payload = {'mode': 'enhance', 'revision': self.record['revision'], 'source_asset': self.info['asset']}
         nodes = set(g.ENHANCER_NODES) | {'JsonExtractString'}
-        _, graph = g.prepare_job(self.store, self.record['id'], {**payload, 'enhance_scope': 'new'}, NATIVE_MODELS, nodes)
-        self.assertEqual(graph['1']['inputs']['clip_name'], enhancer)
-        self.assertNotIn('images.image1', graph['2']['inputs'])
-        self.assertEqual(graph['3']['inputs'], {'json_string': ['2', 0], 'key': 'expanded_caption'})
-        self.assertEqual(graph['90']['inputs']['text'], ['3', 0])
-        job, graph = g.prepare_job(self.store, self.record['id'], {**payload, 'enhance_scope': 'selection'}, NATIVE_MODELS, nodes)
-        self.assertEqual(graph['2']['inputs']['images.image1'], ['20', 0])
-        self.assertLess(job['request']['region'][2], doc['width'])
-        self.assertIn('editing the first image', graph['2']['inputs']['prompt'])
+        prompts = set()
+        for scope in ('new', 'full', 'selection'):
+            with self.subTest(scope=scope):
+                job, graph = g.prepare_job(self.store, self.record['id'], {**payload, 'enhance_scope': scope}, NATIVE_MODELS, nodes)
+                request = job['request']
+                inputs = graph['2']['inputs']
+                self.assertEqual(request['enhance_scope'], scope)
+                self.assertEqual(request['original_prompt'], original)
+                self.assertIn(original, inputs['prompt'])
+                self.assertNotIn('Previous AI text', inputs['prompt'])
+                self.assertEqual(graph['1']['inputs']['clip_name'], enhancer)
+                self.assertEqual(graph['3']['inputs'], {'json_string': ['2', 0], 'key': 'expanded_caption'})
+                self.assertEqual(graph['90']['inputs']['text'], ['3', 0])
+                self.assertIsNone(request['mask_asset'])
+                prompts.add(inputs['prompt'])
+                if scope == 'new':
+                    self.assertFalse(request['references'])
+                    self.assertFalse(any(key.startswith('images.') for key in inputs))
+                    self.assertNotIn('<Picture', inputs['prompt'])
+                    continue
+                assets = [graph[inputs[f'images.image{i}'][0]]['inputs']['asset_id'] for i in range(1, 4)]
+                self.assertEqual(assets, [request['crop_asset'], color, outfit])
+                self.assertIn('<Picture 2> as a reference for color only', inputs['prompt'])
+                self.assertIn('<Picture 3> as a reference for outfit only', inputs['prompt'])
+                if scope == 'selection':
+                    self.assertLess(request['region'][2], doc['width'])
+                    self.assertIn('source crop', inputs['prompt'])
+                    self.assertIn('unless the requested edit changes it', inputs['prompt'])
+                else:
+                    self.assertEqual(request['crop_asset'], self.info['asset'])
+                    legacy = {**job, 'request': {key: value for key, value in request.items() if key != 'enhance_scope'}}
+                    self.assertEqual(g.build_graph(legacy), graph)
+        self.assertEqual(len(prompts), 3)
+
+    def test_native_selection_preserves_requested_change_for_either_prompt_source(self):
+        doc = self.record['document']
+        doc['settings'].update(model_engine=g.NATIVE_IMAGE,
+                               h3_image_unet_name=NATIVE_MODELS['diffusion_models'][0],
+                               h3_image_clip_name=NATIVE_MODELS['text_encoders'][0],
+                               h3_image_vae_name=NATIVE_MODELS['vae'][0])
+        doc['prompt'].update(original='Change the light to red.', ai='The subject is lit by soft red light.')
+        nodes = set(g.NATIVE_NODES) | {'PH3ImageToolAsset', 'PH3ImageToolResult'}
+        for source in ('original', 'ai'):
+            with self.subTest(source=source):
+                doc['prompt']['source'] = source
+                self.record = self.store.save(self.record['id'], doc, self.record['revision'])
+                job, graph = self.prepare(models=NATIVE_MODELS, nodes=nodes)
+                instruction = graph['6']['inputs']['prompt']
+                self.assertEqual(job['request']['original_prompt'], doc['prompt']['original'])
+                self.assertIn(doc['prompt'][source], instruction)
+                self.assertIn('local adjustments', instruction)
+                self.assertIn('Where the edit leaves the image unchanged, match the original colors', instruction)
+                self.assertNotIn('Keep the original viewpoint, framing, lighting', instruction)
+                self.assertTrue(job['request']['mask_asset'])
+
+    def test_p_h3_enhancement_uses_explicit_scope_and_keeps_legacy_default(self):
+        payload = {'mode': 'enhance', 'revision': self.record['revision'], 'source_asset': self.info['asset']}
+        legacy, legacy_graph = g.prepare_job(self.store, self.record['id'], payload, MODELS, NODE_NAMES)
+        self.assertEqual(legacy['request']['crop_asset'], self.info['asset'])
+        self.assertNotIn('enhance_scope', legacy['request'])
+        for scope in ('new', 'full', 'selection'):
+            with self.subTest(scope=scope):
+                job, graph = g.prepare_job(self.store, self.record['id'], {**payload, 'enhance_scope': scope}, MODELS, NODE_NAMES)
+                request = job['request']
+                self.assertEqual(request['enhance_scope'], scope)
+                self.assertIsNone(request['mask_asset'])
+                self.assertEqual(graph['2']['class_type'], legacy_graph['2']['class_type'])
+                self.assertEqual('images.image1' in graph['2']['inputs'], scope != 'new')
+                if scope == 'selection':
+                    self.assertLess(request['region'][2], self.source.width)
+                else:
+                    self.assertEqual(request['crop_asset'], self.info['asset'] if scope == 'full' else None)
+
     def test_reference_numbering_matches_model(self):
         doc=self.record['document'];doc['references']=[{'asset':self.info['asset'],'role':'outfit'}]
         self.record=self.store.save(self.record['id'],doc,0)
@@ -185,6 +276,51 @@ class GenerationTests(unittest.TestCase):
         self.assertTrue(self.store.image(done['request']['mask_asset']))
         self.assertNotEqual(done['results'][0]['asset'],done['results'][0]['raw_asset'])
         self.assertEqual(self.store.read(self.record['id']),self.record)
+    def test_selection_matches_surrounding_color_without_recoloring_the_edit(self):
+        green = (24, 167, 132)
+        self.source = Image.new('RGBA', self.source.size, (*green, 255))
+        self.info = self.store.put_image(self.source)
+        job, _ = self.prepare()
+        x, y, w, h = job['request']['region']
+        raw = Image.new('RGB', (w, h), (28, 161, 134))
+        edited = (210, 24, 42)
+        recolored = (24, 150, 132)
+        draw = ImageDraw.Draw(raw)
+        draw.ellipse((43-x, 29-y, 55-x, 39-y), fill=edited)
+        draw.rectangle((48-x, 42-y, 54-x, 49-y), fill=recolored)
+        result = g.capture_images(self.store, job['id'], [raw])['results'][0]
+        patch = self.store.image(result['asset'])
+        self.assertEqual(self.store.image(result['raw_asset']).convert('RGB').tobytes(), raw.tobytes())
+        self.assertEqual(patch.getchannel('A').tobytes(),
+                         self.store.image(job['request']['mask_asset']).getchannel('R').tobytes())
+        composite = self.source.copy()
+        composite.alpha_composite(patch, (x, y))
+        self.assertEqual(composite.getpixel((40, 30)), (*green, 255))
+        self.assertEqual(composite.getpixel((49, 34)), (*edited, 255))
+        self.assertEqual(composite.getpixel((51, 46)), (*recolored, 255))
+        outside = np.asarray(self.mask) == 0
+        np.testing.assert_array_equal(np.asarray(composite)[outside], np.asarray(self.source)[outside])
+    def test_selection_keeps_small_requested_color_change_without_a_distinct_edit(self):
+        self.source = Image.new('RGBA', self.source.size, (24, 167, 132, 255))
+        self.info = self.store.put_image(self.source)
+        job, _ = self.prepare()
+        x, y, w, h = job['request']['region']
+        raw = Image.new('RGB', (w, h), (28, 161, 134))
+        result = g.capture_images(self.store, job['id'], [raw])['results'][0]
+        self.assertEqual(self.store.image(result['asset']).getpixel((50-x, 38-y)), (28, 161, 134, 255))
+    def test_selection_does_not_match_colors_from_transparent_context(self):
+        self.source = Image.new('RGBA', self.source.size, (24, 167, 132, 0))
+        ImageDraw.Draw(self.source).rectangle((35, 20, 65, 55), fill=(24, 167, 132, 255))
+        self.info = self.store.put_image(self.source)
+        job, _ = self.prepare()
+        x, y, w, h = job['request']['region']
+        raw = Image.new('RGB', (w, h), (28, 161, 134))
+        ImageDraw.Draw(raw).ellipse((43-x, 29-y, 55-x, 39-y), fill=(210, 24, 42))
+        result = g.capture_images(self.store, job['id'], [raw])['results'][0]
+        patch = self.store.image(result['asset'])
+        self.assertEqual(patch.getpixel((51-x, 46-y))[:3], (28, 161, 134))
+        self.assertEqual(patch.getchannel('A').tobytes(),
+                         self.store.image(job['request']['mask_asset']).getchannel('R').tobytes())
     def test_missing_model_rejected(self):
         bad={**MODELS,'loras':[]}
         with self.assertRaises(s.ToolError):self.prepare(models=bad)

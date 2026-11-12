@@ -16,11 +16,19 @@ ASSET_RE = re.compile(r"^[0-9a-f]{64}$")
 ID_RE = re.compile(r"^[0-9a-f]{32}$")
 KINDS = {"image", "text", "bubble", "sfx", "symbol", "speed", "frame"}
 COLORS = re.compile(r"^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$")
+BACKGROUND_PATTERN_FIELDS = {
+    "linear-gradient": {"angle": (-180, 180)},
+    "radial-gradient": {"centerX": (0, 100), "centerY": (0, 100), "radius": (1, 150)},
+    "halftone": {"size": (1, 256), "spacing": (1, 256), "angle": (-180, 180), "strength": (0, 100)},
+    "parallel-lines": {"size": (1, 256), "spacing": (1, 256), "angle": (-180, 180), "strength": (0, 100)},
+    "checker": {"size": (1, 256), "angle": (-180, 180), "strength": (0, 100)},
+}
 SIGMAS = "1.0, 0.984753, 0.967905, 0.951688, 0.925372, 0.881923, 0.810083, 0.528718, 0.0"
 
 class ToolError(ValueError):
-    def __init__(self, code: str, message: str, status: int = 400):
+    def __init__(self, code: str, message: str, status: int = 400, *, details=None):
         self.code, self.status = code, status
+        self.details = details
         super().__init__(message)
 
 
@@ -120,6 +128,15 @@ def validate_document(value):
         raise ToolError("INVALID_COLOR", "Invalid background color")
     if not isinstance(doc.get("transparent"), bool):
         raise ToolError("INVALID_DOCUMENT", "transparent must be boolean")
+    pattern = doc.get("background_pattern")
+    if pattern is not None:
+        kind = pattern.get("type") if isinstance(pattern, dict) else None
+        if not isinstance(kind, str) or kind not in BACKGROUND_PATTERN_FIELDS:
+            raise ToolError("INVALID_BACKGROUND", "Unknown canvas background pattern")
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(pattern.get("color", ""))):
+            raise ToolError("INVALID_COLOR", "Invalid canvas pattern color")
+        for key, (low, high) in BACKGROUND_PATTERN_FIELDS[kind].items():
+            number(pattern.get(key), low, high, "Background " + key, integer=True)
     layers = doc.get("layers")
     if not isinstance(layers, list) or len(layers) > MAX_LAYERS:
         raise ToolError("LAYER_LIMIT", "At most 256 layers are supported")

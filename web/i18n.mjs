@@ -134,7 +134,7 @@ comicMenuHelp:["白黒仕上げか、設定した画像モデルでの漫画化�
   undo:['元に戻す','Undo'],redo:['やり直す','Redo'],fit:['全体表示','Fit'],actual:['100%','100%'],image:['画像を追加','Add image'],input:['入力画像を取り込み','Import node input'],
   applied:['採用済み','Applied'],stamp:['スタンプ画像','Image stamp'],
   text:['文字','Text'],bubble:['吹き出し','Bubble'],sfx:['オノマトペ','SFX'],symbol:['シンボル','Symbol'],speed:['集中線','Focus lines'],frame:['フレーム','Frame'],
-  move:['移動・変形 (V)','Move / transform (V)'],rect:['矩形選択 (M)','Rectangle (M)'],ellipse:['楕円選択','Ellipse'],lasso:['投げ縄 (L)','Lasso'],brush:['選択ブラシ (B)','Selection brush (B)'],erase:['選択範囲を削る (E)','Selection eraser (E)'],
+  move:['移動・変形 (V)','Move / transform (V)'],rect:['矩形選択 (M)','Rectangle (M)'],ellipse:['楕円選択','Ellipse'],lasso:['投げ縄 (L)','Lasso'],brush:['選択ブラシ (B)','Selection brush (B)'],erase:['選択範囲を削る (Shift+E)','Selection eraser (Shift+E)'],
   aiBrush:['AIブラシ','AI brush'],aiBrushHelp:['塗った箇所を部分生成の対象にします。指示文を入力して生成してください。[ / ] でブラシサイズを調整できます。','Brush over the areas to edit, enter an instruction, and generate. Use [ / ] to resize the brush.'],
   aiBrushSize:['AIブラシサイズ','AI brush size'],paintBrushSize:['描画ブラシサイズ','Paint brush size'],
   replace:['置き換え','Replace'],add:['追加','Add'],subtract:['除外','Subtract'],intersect:['共通部分','Intersect'],selection:['選択範囲','Selection'],clear:['選択解除','Deselect'],invert:['反転','Invert'],
@@ -143,6 +143,8 @@ comicMenuHelp:["白黒仕上げか、設定した画像モデルでの漫画化�
   name:['名前','Name'],rotation:['回転','Rotation'],opacity:['不透明度','Opacity'],font:['フォント','Font'],fontSize:['文字サイズ','Font size'],bold:['太字','Bold'],vertical:['縦書き','Vertical'],fill:['色','Fill'],stroke:['輪郭色','Outline'],lineWidth:['輪郭幅','Outline width'],
   tailX:['尻尾 X','Tail X'],tailY:['尻尾 Y','Tail Y'],lineCount:['線の数','Line count'],gap:['中央の空白','Center gap'],
   generate:['画像を生成','Generate image'],mode:['生成範囲','Generation mode'],newImage:['白紙から生成','New image'],full:['画像全体を編集','Edit entire image'],partial:['選択範囲を編集','Edit selection'],
+  generationAuto:['自動','Auto'],
+  scopeSelection:['選択範囲','Selection'],scopeFull:['画像全体','Entire image'],scopeNew:['新規','New image'],
   original:['原文','Original'],ai:['AI文','AI text'],enhance:['AI文を生成','Generate AI text'],prompt:['指示文','Instruction'],promptPlaceholder:['例：手のひらの上に赤いリンゴを一つ置く','Example: Place a red apple on the open palm.'],
   references:['参照画像','References'],addReference:['参照を追加','Add reference'],referenceRole:['用途（人物・衣装・小物など）','Role (character, outfit, object…)'],
   candidates:['生成候補・履歴','Candidates / history'],apply:['レイヤーに採用','Add as layer'],importStale:['現在の画面へ手動取り込み','Import into current canvas'],useText:['AI文を採用','Use AI text'],stale:['開始時から画像が変わったため自動採用しません。','Canvas changed; automatic application was blocked.'],
@@ -165,6 +167,14 @@ comicMenuHelp:["白黒仕上げか、設定した画像モデルでの漫画化�
   noPromptEnhancer:['使わない','Off'],choosePromptEnhancer:['「設定」でプロンプト補助のモデルとComfyUIの対応状況を確認してください。','Check the prompt enhancer model and ComfyUI support in Settings.'],
   nativeComicFilter:['MiniMax H3漫画フィルター','MiniMax H3 manga filter'],nativeMangaGenerate:['MiniMax H3で漫画化して仕上げ','Redraw with MiniMax H3 and finish'],
   width:['幅','Width'],height:['高さ','Height'],background:['背景色','Background'],transparent:['キャンバス下地を透明にする','Transparent canvas base'],title:['作品名','Title'],
+  canvasBackground:['キャンバス背景','Canvas Background'],backgroundType:['背景の種類','Background type'],
+  backgroundTransparent:['透明にする','Transparent'],
+  showCanvasBackground:['キャンバス背景を表示','Show Canvas Background'],hideCanvasBackground:['キャンバス背景を隠す','Hide Canvas Background'],
+  backgroundSolid:['単色','Solid color'],backgroundLinear:['線形グラデーション','Linear gradient'],backgroundRadial:['放射グラデーション','Radial gradient'],
+  backgroundHalftone:['網点','Halftone'],backgroundLines:['平行線','Parallel lines'],backgroundEndColor:['終了色','End color'],backgroundPatternColor:['パターン色','Pattern color'],
+  backgroundAngle:['角度','Angle'],backgroundSize:['サイズ (px)','Size (px)'],backgroundSpacing:['間隔 (px)','Spacing (px)'],
+  backgroundStrength:['パターンの不透明度 (%)','Pattern opacity (%)'],backgroundCenterX:['中心 X (%)','Center X (%)'],backgroundCenterY:['中心 Y (%)','Center Y (%)'],backgroundRadius:['半径 (%)','Radius (%)'],
+  exportCanvasBackground:['表示中のキャンバス背景を使います。','Uses the visible canvas background.'],
   autoApply:['画像が変わっていなければ結果を自動採用','Auto-apply when canvas is unchanged'],includeText:['文字・装飾もAI入力へ含める','Include text / decorations in AI input'],
   historyLimit:['Undo保持数','Undo limit'],format:['書出し形式','Export format'],quality:['JPEG/WebP品質','JPEG/WebP quality'],context:['生成に見せる周辺余白','Context padding'],feather:['境界ぼかし（内側）','Feather (inside selection)'],brushSize:['選択ブラシサイズ','Selection brush size'],
   megapixels:['生成時の最大MP','Maximum generation MP'],unet:['画像モデル','Diffusion model'],clip:['テキストエンコーダー','Text encoder'],vae:['VAE','VAE'],lora:['LoRA','LoRA'],upsampler:['プロンプト補助（任意）','Prompt enhancer (optional)'],
@@ -184,15 +194,25 @@ comicMenuHelp:["白黒仕上げか、設定した画像モデルでの漫画化�
   zoomPercent:['表示倍率 (%)','View zoom (%)'],zoomIn:['拡大','Zoom in'],zoomOut:['縮小','Zoom out'],selectionOperation:['選択の合成方式','Selection operation'],viewOnly:['表示だけを変更します。画像・出力には影響しません。','View only. Does not change image pixels or exports.'],
   canvasHint:['ホイール：拡大縮小 · Space／中ボタンドラッグ：移動 · R：表示回転 · 0：表示リセット · Delete：削除','Wheel: zoom · Space / middle drag: pan · R: rotate view · 0: reset · Delete: remove layer'],
   wheelHelp:['カーソル位置を中心に拡大・縮小','Zoom about the pointer'],panHelp:['キャンバス表示を移動','Pan the canvas view'],rotateHelp:['表示だけを回転（画像は変更しません）','Rotate view only, not the image'],fitActualHelp:['全体表示 / 100%','Fit / actual pixels'],undoRedo:['元に戻す / やり直す','Undo / redo'],mouseUndo:['マウス戻る／進むをUndo／Redoに使う','Mouse Back / Forward → Undo / Redo'],mouseUndoHelp:['マウス側の割当やブラウザーによってはサイドボタンを受信できないことがあります。Ctrl+Z / Ctrl+Yは併用できます。文字入力中のUndoやDeleteは文字の編集を優先します。','Some mouse drivers or browsers intercept side buttons. Ctrl+Z / Ctrl+Y remain available. While typing, Undo and Delete edit the text.'],
-  duplicateCopy:['複製 / レイヤーをコピー / 貼付','Duplicate / copy layer / paste'],nudge:['選択レイヤーを1px移動（Shiftで10px）','Move selected layer 1 px (10 px with Shift)'],freeResize:['角ハンドルの縦横比固定を解除','Free corner resize instead of aspect lock'],toolKeys:['移動・矩形・投げ縄・選択ブラシ・選択を削る・手・回転・文字・描画(P)','Move, rectangle, lasso, selection brush, subtract selection, hand, rotate, text, paint (P)'],
+  duplicateCopy:['複製 / レイヤーをコピー / 貼付','Duplicate / copy layer / paste'],nudge:['選択レイヤーを1px移動（Shiftで10px）','Move selected layer 1 px (10 px with Shift)'],freeResize:['角ハンドルの縦横比固定を解除','Free corner resize instead of aspect lock'],toolKeys:['移動・矩形・投げ縄・選択ブラシ・手・回転・文字・描画(P)','Move, rectangle, lasso, selection brush, hand, rotate, text, paint (P)'],
   searchStyles:['名前でスタイルを検索','Search styles'],textStyles:['文字スタイル','Text styles'],italic:['斜体','Italic'],textColor:['文字色','Text color'],centerX:['注目中心 X','Focus center X'],centerY:['注目中心 Y','Focus center Y'],
   before:['処理前','Before'],after:['処理後','After'],preview:['プレビューを更新','Update preview'],previewHint:['プレビューを確認してから適用してください。','Review the preview before applying.'],previewPending:['プレビュー更新待ち…','Preview pending…'],previewReady:['プレビュー更新済み。元画像はまだ変更していません。','Preview ready. The source has not changed.'],processingFull:['原寸画像を処理しています…','Processing original-resolution image…'],applyResult:['新しいレイヤーとして適用','Apply as a new layer'],processingNote:['縮小プレビューです。適用時は元画像の解像度で処理し、元レイヤーを残します。表示用の下地色は保存画像に含まれません。','Reduced preview. Apply processes native-resolution pixels and retains the source layer. Preview backdrop colors are not exported.'],
   advancedLines:['線画の詳細設定','Advanced line controls'],brightness:['明るさ','Brightness'],contrast:['コントラスト','Contrast'],gamma:['ガンマ','Gamma'],lineStrength:['線の濃さ','Line strength'],toneStrength:['網点・ディザ量','Screentone amount'],posterLevels:['階調数','Tone levels'],sigma:['線の太さ σ','Line width σ'],epsilon:['細部・白抜け ε','Detail ε'],phi:['線の硬さ φ','Line hardness φ'],smoothRadius:['平滑化','Smoothing'],
   checker:['市松模様','Checkerboard'],white:['白','White'],black:['黒','Black'],green:['緑','Green'],clickBackground:['左の「処理前」画像で消したい背景色をクリックできます。選択範囲方式は選択した部分を残します。','Click the background color in the Before image. Selection mode keeps the selected area.'],matteRemoval:['白／黒フチの除去','Remove matte fringe'],defringe:['内側の色でフチを補正','Defringe with interior colors'],edgeWidth:['補正するフチ幅 (px)','Edge width (px)'],decontaminate:['フチの色にじみ補正','Color decontamination'],shrink:['輪郭を内側へ (px)','Contract edge (px)'],edgeFeather:['内側ぼかし (px)','Inside feather (px)'],cutoutCanvasTransparent:['キャンバスの下地も透明にする','Also make the canvas base transparent'],aiPreviewExplicit:['AI背景削除は「プレビューを更新」を押すと実行します。','Click Update preview to run AI cutout.'],
   exportPreview:['書き出しプレビュー','Export preview'],downloadImage:['この設定で書き出す','Export with these settings'],exported:['画像を書き出しました','Image exported'],encoding:['書き出しサイズを計算中…','Encoding to measure file size…'],qualityPercent:['品質 (1–100)','Quality (1–100)'],pngCompression:['PNG圧縮レベル (0–9)','PNG compression (0–9)'],webpLossless:['WebPを可逆圧縮にする','Lossless WebP'],preserveAlpha:['透過を維持（PNG / WebP）','Preserve alpha (PNG / WebP)'],matteColor:['透過を使わない場合の下地色','Matte color when flattening'],
   pngLosslessHelp:['PNGは常に可逆圧縮です。圧縮レベルは容量・処理量の設定で、画質は変わりません。','PNG is always lossless. Compression level affects size and processing, not image quality.'],webpLosslessHelp:['可逆WebPでは画質は変わりません。品質値は圧縮の処理量として使われます。','Lossless WebP keeps image quality. The quality value controls compression effort.'],lossyHelp:['品質を下げると容量を抑えられますが、細部は変わります。','Lower quality can reduce size but changes fine detail.'],jpegHelp:['JPEGは透過に対応しないため、指定の下地色に合成して保存します。','JPEG cannot preserve transparency; transparent areas use the selected matte color.'],
-  transparentHelp:['透明は「キャンバスの下地を塗らない」という意味です。画像に描かれた背景は消えません。その背景を消すには「背景削除」を使います。市松模様は透明部分の表示で、画像には書き出されません。','Transparency leaves the canvas base unpainted. It does not erase a background already inside an image; use Remove background for that. Checkerboard is a preview only, not exported.'],
+  transparentHelp:['透明にするとキャンバスの下地を描きません。画像自体の背景を消すには「背景削除」を使います。透明部分を示すプレビュー用の市松模様は書き出されません。','Transparency leaves the canvas base unpainted. Use Remove background to erase a background inside an image. The checkerboard used to preview transparent areas is not exported.'],
   modelReady:['モデルの準備完了','Model files ready'],
+  unlockLayer:['レイヤーのロックを解除','Unlock layer'],
+  lockLayer:['レイヤーをロック','Lock layer'],
+  modelEncoderReplaced:['未検出のテキストエンコーダーを導入済みのモデルに切り替えました。','Switched the missing text encoder to an installed model.'],
+  nativeReferenceSelection:['選択範囲','Selection crop'],
+  nativeReferenceCanvas:['元画像','Source image'],
+  nativeReferenceAdditional:['参照画像 {index}','Reference image {index}'],
+  nativeReferenceLettering:['AI効果文字の参照画像','Lettering reference'],
+  nativeReferenceTooLarge:['{source}の変換後サイズは {width} × {height} px で、MiniMax-H3-Imageの参照上限（長辺 {max_side} px・{mp} MP）を超えます。','{source} would resize to {width} × {height} px, exceeding the MiniMax-H3-Image reference limit of {max_side} px on the long side and {mp} MP.'],
+  nativeReferenceSelectionHelp:['選択範囲を広げるか、設定の「生成に見せる周辺余白」を増やしてください。','Widen the selection or increase Context padding in Settings.'],
+  nativeReferenceImageHelp:['縦横比が極端でない画像を使うか、画像に余白を足してください。','Use an image with a less extreme aspect ratio or add padding.'],
 "sourceSfx":["効果音素材", "SFX assets"],
 "sourceStamps":["スタンプ素材", "Stamp assets"],
 "chooseFont":["フォント選択", "Choose font"],
@@ -263,7 +283,7 @@ retouchPreviewHelp:["キャンバスにプレビュー中です。適用する�
 applyRetouch:["調整を適用", "Apply adjustment"],
 cancelRetouch:["キャンセル", "Cancel"],
 paint:["描画ブラシ (P)", "Paint brush (P)"],
-pixelEraser:["消しゴム", "Eraser"],
+pixelEraser:["消しゴム (E)", "Eraser (E)"],
 pixelEraserHelp:["選んだ画像・ペイントレイヤーをドラッグして透明にします。選択範囲がある場合は、その内側だけ消します。", "Drag to erase pixels on the selected image or paint layer. An active selection limits the area you can erase."],
 eraserSize:["消しゴムサイズ", "Eraser size"],
 paintHelp:["透明のペイントレイヤーへ描きます。選択範囲がある場合は内側だけに描きます。", "Paint on a transparent layer, constrained to the active selection."],
@@ -312,3 +332,11 @@ maskLayerHelp:["選択範囲の内側を残し、外側をマスクで隠しま�
 clearLayerMaskHelp:["追加したレイヤーマスクを外します。元画像の画素を削除したり、貼り付け済みの透明部分を復元する操作ではありません。", "Remove an attached layer mask. This does not restore pixels already made transparent in a pasted image."],
 };
 export const t=(locale,key)=>pairs[key]?.[locale==='en'?1:0]??key;
+
+export function nativeReferenceError(tr,details){
+  const label={selection:'nativeReferenceSelection',canvas:'nativeReferenceCanvas',additional:'nativeReferenceAdditional',lettering:'nativeReferenceLettering'};
+  const source=tr(label[details.source]).replace('{index}',details.index);
+  const values={...details,source,mp:details.max_pixels/1_000_000};
+  const message=tr('nativeReferenceTooLarge').replace(/\{(\w+)\}/g,(_,key)=>values[key]);
+  return message+' '+tr(details.source==='selection'?'nativeReferenceSelectionHelp':'nativeReferenceImageHelp');
+}

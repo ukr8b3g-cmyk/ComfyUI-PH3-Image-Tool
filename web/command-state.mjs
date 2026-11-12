@@ -1,11 +1,13 @@
-import {NATIVE_IMAGE} from './core.mjs?v=59a8d35b929e86cd';
+import {NATIVE_IMAGE,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=01bc95baa1764cb1';
 
 // UI eligibility only. Command handlers retain their validation and race guards.
 export function commandState(key,{doc,selected,hasSelection=false,clipboard=null,history={},modelsReady=true,enhancerAvailable=true,mode='new',inputAsset=null}){
  const layers=doc.layers,index=layers.findIndex(l=>l.id===selected),layer=layers[index],visible=layers.filter(l=>l.visible),images=visible.filter(l=>l.type==='image'),image=layer?.type==='image'?layer:images.length===1?images[0]:null;
  const room=layers.length<256,editable=!image?'needImage':image.locked?'lockedHint':!image.visible?'needVisibleImage':null;
- const sourceImages=images.filter(l=>doc.settings?.include_text||!(l.decoration===true||l.generation?.mode==='lettering'));
+ const hasSource=hasGenerationSource(doc),scope=resolveGenerationMode(mode,hasSource,hasSelection);
  const choose=!layer?'needLayer':null,unlock=choose||(layer.locked?'lockedHint':null),selection=hasSelection?null:'needSelection';
+ const missingSource=scope==='new'||hasSource?null:'needImage';
+ const generationScopeError=(scope==='selection'?selection:null)||missingSource;
  let reason;
  switch(key){
  case 'maskLayer':reason=editable||selection;break;
@@ -24,21 +26,19 @@ export function commandState(key,{doc,selected,hasSelection=false,clipboard=null
  case 'changeSelectionColor':case 'retouchbrightness_contrast':case 'retouchcurves':case 'retouchhue_saturation':case 'fillSelection':case 'copySelection':reason=editable||(!room?'layerCapacity':null);break;
  case 'deleteSelection':reason=editable||selection;break;
  case 'pixelEraser':reason=choose||(layer.type==='image'?editable:'needImage');break;
- case 'generateSelection':reason=editable||selection||(!modelsReady?'setupFirst':null);break;
+ case 'generateSelection':reason=!modelsReady?'setupFirst':selection||(!hasSource?'needImage':null);break;
  case 'letteringSelection':reason=selection||(!room?'layerCapacity':null);break;
  case 'image':case 'addText':case 'bubble':case 'speed':case 'frame':case 'sourceStamps':case 'aiLettering':reason=!room?'layerCapacity':null;break;
  case 'input':reason=!inputAsset?'noNodeInput':!room?'layerCapacity':null;break;
  case 'addReference':reason=(doc.references?.length||0)>=7?'referenceCapacity':null;break;
  case 'undo':reason=!history.past?.length?'nothingUndo':null;break;
  case 'redo':reason=!history.future?.length?'nothingRedo':null;break;
- case 'generate':reason=!modelsReady?'setupFirst':mode==='selection'?selection||(!sourceImages.length?'needImage':null):mode==='full'&&!sourceImages.length?'needImage':null;break;
+ case 'generate':reason=!modelsReady?'setupFirst':generationScopeError;break;
  case 'enhance':
   if(!doc.prompt?.original?.trim())reason='needPrompt';
-  else if(doc.settings?.model_engine===NATIVE_IMAGE){
-   if(!enhancerAvailable)reason='choosePromptEnhancer';
-   else if(mode==='selection'&&!hasSelection)reason='needSelection';
-   else if(mode!=='new'&&!sourceImages.length)reason='needImage';
-  }else if(!modelsReady||!enhancerAvailable)reason='setupFirst';
+  else if(doc.settings?.model_engine===NATIVE_IMAGE&&!enhancerAvailable)reason='choosePromptEnhancer';
+  else if(doc.settings?.model_engine!==NATIVE_IMAGE&&(!modelsReady||!enhancerAvailable))reason='setupFirst';
+  else reason=generationScopeError;
   break;
  default:return null;
  }

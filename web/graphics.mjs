@@ -1,11 +1,13 @@
-import {canvas,drawLayer} from './render.mjs?v=59a8d35b929e86cd';
-import {makeLayer} from './core.mjs?v=59a8d35b929e86cd';
+import {canvas,drawLayer} from './render.mjs?v=01bc95baa1764cb1';
+import {makeLayer} from './core.mjs?v=01bc95baa1764cb1';
 const paths={
  editMenu:'M4 5h16 M4 12h16 M4 19h16',copyPixels:'M8 3h13v15H8z M3 7v14h13',copyMerged:'M8 3h13v15H8z M3 7v14h13 M11 7h7 M11 11h7',cutPixels:'M4 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6 M4 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6 M7 8l14 12 M7 16 21 4',pastePixels:'M8 4H4v18h16V4h-4 M8 2h8v5H8z',duplicatePixels:'M8 3h13v15H8z M3 7v14h13 M11 10h7 M14.5 6.5v7',
  aiLettering:'M3 4h12 M9 4v17 M5 21h8 M19 3v6 M16 6h6 M19 14v6 M16 17h6',
  aiBrush:'m10 9 6-6 4 4-6 6z M10 9l-2 5 3 3 3-4 M8 14c-4-1-4 3-6 6 5 1 8 0 9-3 M6 2v6 M3 5h6 M20 14v6 M17 17h6',
  wand:'m4 20 12-12 3 3L7 23z M5 3v6 M2 6h6 M16 1v4 M14 3h4 M21 15v6 M18 18h6',colorRange:'M12 3a9 9 0 1 0 9 9 M12 7a5 5 0 1 0 5 5 M12 10a2 2 0 1 0 2 2 M16 2l6 6-7 7-6-6z',
  dockPanel:'M3 3h18v18H3z M15 3v18 M5 12h7 M9 9l3 3-3 3',
+ lockLayer:'M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4 M12 15v2',
+ unlockLayer:'M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0 M12 15v2',
 
  candidates:'M4 4h16v16H4z M7 8h10 M7 12h10 M7 16h6',newProject:'M4 3h10l6 6v12H4z M14 3v6h6 M8 14h8 M12 10v8',openProject:'M2 6h8l2 3h10l-3 12H2z M2 9V4h8l2 2h8v3',portable:'M4 3h16v18H4z M10 3v9l2 2 2-2V3 M10 18h4',close:'M5 5l14 14 M19 5 5 19',actual:'M5 6h2v12 M12 6h2v12 M18 6h2v12',resetView:'M5 8a8 8 0 1 1-1 7 M5 2v6h6',generate:'M12 3v4 M12 17v4 M3 12h4 M17 12h4 M5 5l3 3 M16 16l3 3 M5 19l3-3 M16 8l3-3 M12 8l4 4-4 4-4-4z',enhance:'m4 20 12-12 4 4L8 24z M17 2v4 M22 6h-4 M6 5v5 M3 8h6',engine:'M7 7h10v10H7z M9 2v5 M15 2v5 M9 17v5 M15 17v5 M2 9h5 M2 15h5 M17 9h5 M17 15h5',addReference:'M3 5h14v14H3z M17 3h5 M19.5 .5v5 M3 15l5-5 4 4 3-2 2 2',saveCopy:'M8 3h13v15H8z M3 7v14h13',properties:'M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M10 15v6',layers:'m12 2 10 6-10 6L2 8z M2 12l10 6 10-6 M2 16l10 6 10-6',
 

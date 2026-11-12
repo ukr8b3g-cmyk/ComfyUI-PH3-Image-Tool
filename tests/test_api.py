@@ -4,15 +4,16 @@ import unittest
 from aiohttp import web, FormData
 from aiohttp.test_utils import TestClient, TestServer
 from PIL import Image
-from support import load,storage,document,MODELS,NODE_NAMES
+from support import load,storage,document,MODELS,NODE_NAMES,NATIVE_MODELS,generation,schema
 
 api=load('api')
 
 class APITests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.store=storage.Store(self.tmp.name);routes=web.RouteTableDef()
-        catalog={**MODELS,'missing_nodes':[],'cutout':{}}
-        api.register_routes(routes,lambda:self.store,lambda:catalog,lambda:NODE_NAMES)
+        self.catalog={**MODELS,'missing_nodes':[],'cutout':{}}
+        self.nodes=NODE_NAMES.copy()
+        api.register_routes(routes,lambda:self.store,lambda:self.catalog,lambda:self.nodes)
         app=web.Application(client_max_size=260*1024*1024);app.add_routes(routes);self.client=TestClient(TestServer(app));await self.client.start_server()
     async def asyncTearDown(self):await self.client.close();self.tmp.cleanup()
     async def create(self):
@@ -51,6 +52,50 @@ class APITests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(r.status,200);prepared=await r.json();self.assertIn('prompt',prepared)
         job=prepared['job'];r=await self.client.post('/ph3_image_tool/jobs/'+job['id']+'/state',json={'prompt_id':'abc-123','status':'queued'})
         self.assertEqual(r.status,200);self.assertEqual((await r.json())['status'],'queued')
+    async def test_native_oversize_references_return_a_reason_without_creating_jobs(self):
+        self.catalog.update(NATIVE_MODELS)
+        self.nodes.update(generation.NATIVE_NODES)
+        thin = self.store.put_image(Image.new('RGB', (128, 1), 'red'))['asset']
+        base = self.store.put_image(Image.new('RGB', (128, 96), 'white'))['asset']
+        mask = Image.new('L', (128, 96), 0)
+        mask.paste(255, (0, 48, 128, 49))
+        selection = self.store.put_image(mask)['asset']
+        image_layer = schema.uid()
+        for mode, source, expected in [('selection', base, 'selection'),
+                                       ('full', base, 'additional'),
+                                       ('lettering', thin, 'lettering')]:
+            with self.subTest(mode=mode):
+                doc = document()
+                doc['settings'].update(model_engine=generation.NATIVE_IMAGE,
+                    h3_image_unet_name=NATIVE_MODELS['diffusion_models'][0],
+                    h3_image_clip_name=NATIVE_MODELS['text_encoders'][0],
+                    h3_image_vae_name=NATIVE_MODELS['vae'][0], context=0, feather=0)
+                request = {'mode': mode, 'revision': 0, 'source_asset': source}
+                if mode == 'selection':
+                    doc['selection_asset'] = selection
+                if mode == 'full':
+                    doc['references'] = [{'asset': base, 'role': 'appearance'}, {'asset': thin, 'role': 'appearance'}]
+                if mode == 'lettering':
+                    doc['layers'] = [{'id': image_layer, 'type': 'image', 'asset': thin, 'x': 0, 'y': 0, 'w': 128, 'h': 1}]
+                    request.update(lettering={'text': 'ビクッ!!', 'use_reference': True, 'reference_kind': 'layer'},
+                                   reference_layer_id=image_layer)
+                record = self.store.create(doc)
+                url = '/ph3_image_tool/projects/'+record['id']
+                response = await self.client.post(url+'/prepare', json=request)
+                self.assertEqual(response.status, 400)
+                error = (await response.json())['error']
+                self.assertEqual(error['code'], 'NATIVE_REFERENCE_TOO_LARGE')
+                self.assertEqual(error['details']['source'], expected)
+                self.assertEqual(error['details']['index'], 2 if expected == 'additional' else None)
+                self.assertEqual((error['details']['width'], error['details']['height']), (131072, 1024))
+                self.assertEqual(self.store.jobs(record['id']), [])
+                if mode == 'selection':
+                    doc['settings']['context'] = .25
+                    saved = self.store.save(record['id'], doc, 0)
+                    response = await self.client.post(url+'/prepare', json={**request, 'revision': saved['revision']})
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual((await response.json())['prompt']['6']['class_type'], 'MiniMaxH3ImageConditioning')
+
     async def test_explicit_image_export(self):
         info=self.store.put_image(Image.new('RGBA',(24,20),(255,0,0,0)))
         for kind,mime in [('png','image/png'),('webp','image/webp'),('jpeg','image/jpeg')]:

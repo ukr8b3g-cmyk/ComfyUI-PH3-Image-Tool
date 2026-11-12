@@ -20,6 +20,7 @@ All of these ports are from **ukr8b3g-cmyk/Speech-Bubble-Comic-Editor-App**, MIT
 |---|---|---|
 | `web/comic-engine.mjs` | `web/comic-converter.js` | `a4aede4019d19ef66f0c840456d3e4ff8d71f676` |
 | `web/edge-refine.mjs` | `web/background-removal-edge.js` | `f8cd2c7cefb1c1128998fdbafbaa7eced493c3bf` |
+| `web/canvas-background.mjs` | `web/canvas-background-patterns.js` | `c655cbcf3bafe4be40242bb33837715a7e54a595` |
 | `web/shape-library.mjs`: classic oval body | `web/assets/shapes/classic-oval.svg` | `42024ddf70d4d6dd39979ba61f9e0add8343ebb8` |
 | `web/shape-library.mjs`: thinking-cloud body | `web/assets/shapes/thought-cloud.svg` | `c1bc7b1b214c4e610df2c4c93fd623e18451a8bd` |
 

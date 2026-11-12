@@ -87,6 +87,8 @@ def bundle_modules(page):
 
 BRIDGE='''
 const assets=new Map(),memory=new Map();
+// The shared regression fixtures use an explicitly docked layout.
+if(!window.ph3TestDefaultPanels)memory.set('ph3-tool:panel:layers',JSON.stringify({docked:true}));
 Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},configurable:true});
 async function call(op,path,data=null){const r=await window.ph3TestRPC(op,path,data);if(r.error)throw Error(r.error);for(const [k,v]of Object.entries(r.assets||{}))assets.set(k,v);return r;}
 const bytes64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s);};

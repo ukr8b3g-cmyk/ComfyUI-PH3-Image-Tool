@@ -2,6 +2,7 @@
 export const VERSION = 1;
 export const MAX_PIXELS = 16777216;
 export const MAX_LAYERS = 256;
+export const CANVAS_BACKGROUND_LAYER = 'canvas-background';
 export function ensureLayerCapacity(doc, count=1) {
   if (!Number.isInteger(count) || count < 0) throw Error('Invalid layer count');
   if (doc.layers.length + count > MAX_LAYERS) throw Error('Layer limit: 256');
@@ -9,6 +10,15 @@ export function ensureLayerCapacity(doc, count=1) {
 // Raster stamps and AI lettering are decoration even though their type is image.
 export function isDecorationLayer(layer) {
   return layer.type !== 'image' || layer.decoration === true || layer.generation?.mode === 'lettering';
+}
+export function hasGenerationSource(doc) {
+  return doc.layers.some(layer => layer.visible && layer.type === 'image' &&
+    (doc.settings?.include_text || !isDecorationLayer(layer)));
+}
+export function resolveGenerationMode(mode, hasSource, hasSelection) {
+  if (mode !== 'auto') return mode;
+  if (!hasSource) return 'new';
+  return hasSelection ? 'selection' : 'full';
 }
 export function imageInsertionIndex(doc) {
   const first = doc.layers.findIndex(isDecorationLayer);
@@ -18,7 +28,7 @@ export const clone = value => JSON.parse(JSON.stringify(value));
 export function historySelection(before,after,selected){
  const old=new Map(before.layers.map(l=>[l.id,JSON.stringify(l)]));
  const changed=after.layers.filter(l=>old.get(l.id)!==JSON.stringify(l));
- return changed.at(-1)?.id||(after.layers.some(l=>l.id===selected)?selected:after.layers.at(-1)?.id)||null;
+ return changed.at(-1)?.id||(selected===CANVAS_BACKGROUND_LAYER||after.layers.some(l=>l.id===selected)?selected:after.layers.at(-1)?.id)||null;
 }
 export const uid = () => {const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('');};
 export const clamp = (n, low, high) => Math.min(high, Math.max(low, Number(n) || 0));
@@ -104,7 +114,7 @@ export function safeSeed(text) {
   return String(seed);
 }
 export function randomSeed(){const v=new Uint32Array(2);crypto.getRandomValues(v);return String((v[0]&0x1fffff)*4294967296+v[1]);}
-export function contentSignature(doc){return JSON.stringify([doc.width,doc.height,doc.background,doc.transparent,doc.layers,doc.selection_asset]);}
+export function contentSignature(doc){return JSON.stringify([doc.width,doc.height,doc.background,doc.transparent,doc.background_pattern,doc.layers,doc.selection_asset]);}
 
 export function insertImageLayer(doc, layer) {
   ensureLayerCapacity(doc);
@@ -155,7 +165,15 @@ export function suggestInstalledPH3Models(settings, catalog) {
   const categories = native ? NATIVE_IMAGE_CATEGORIES : MODEL_CATEGORIES;
   for (const [field, category] of Object.entries(categories)) {
     const available = Array.isArray(catalog?.[category]) ? catalog[category] : [];
-    if (next[field]) continue; // Never change an explicit choice.
+    const saved = next[field];
+    if (saved) {
+      if (!native || field !== 'h3_image_clip_name' || available.includes(saved) || !preferences[field].includes(baseName(saved))) continue;
+      // Recover a missing stock encoder only when there is one unambiguous replacement.
+      const relocated = available.filter(item => baseName(item) === baseName(saved));
+      const matches = relocated.length ? relocated : available.filter(item => preferences[field].includes(baseName(item)));
+      if (matches.length === 1) { next[field] = matches[0]; selected.push(field); }
+      continue;
+    }
     for (const name of preferences[field]) {
       const matches = available.filter(item => baseName(item) === name);
       if (matches.length === 1) {

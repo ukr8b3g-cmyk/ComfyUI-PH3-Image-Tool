@@ -9,6 +9,8 @@ test('layer and selection commands use distinct familiar bindings',()=>{
   assert.equal(editorShortcut(key('Backspace')),'remove');
   assert.equal(editorShortcut(key('i',{ctrlKey:true,shiftKey:true})),'invertSelection');
   assert.equal(editorShortcut(key('e',{ctrlKey:true,shiftKey:true})),'mergeVisible');
+  assert.equal(editorShortcut(key('e')),'tool:pixelEraser');
+  assert.equal(editorShortcut(key('E',{shiftKey:true})),'tool:erase');
 });
 test('stack order and neighboring selection work with shifted bracket characters',()=>{
   assert.equal(editorShortcut(key(']',{ctrlKey:true})),'order:1');
@@ -18,7 +20,7 @@ test('stack order and neighboring selection work with shifted bracket characters
   assert.equal(editorShortcut(key(']',{altKey:true})),'select:1');
 });
 test('editing, composing, dialogs and AltGr never trigger document commands',()=>{
-  for(const e of [key('Delete'),key('j',{ctrlKey:true}),key('d',{ctrlKey:true})]){
+  for(const e of [key('Delete'),key('j',{ctrlKey:true}),key('d',{ctrlKey:true}),key('e'),key('E',{shiftKey:true})]){
     assert.equal(editorShortcut(e,{typing:true}),null);
     assert.equal(editorShortcut(e,{blocked:true}),null);
     assert.equal(editorShortcut({...e,isComposing:true}),null);

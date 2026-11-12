@@ -1,5 +1,5 @@
-import {reconcileJob} from './job-presence.mjs?v=59a8d35b929e86cd';
-import {cancelGeneration,confirmStopped,isInQueue} from './job-cancel.mjs?v=59a8d35b929e86cd';
+import {reconcileJob} from './job-presence.mjs?v=01bc95baa1764cb1';
+import {cancelGeneration,confirmStopped,isInQueue} from './job-cancel.mjs?v=01bc95baa1764cb1';
 const pause=(ms,signal)=>new Promise((resolve,reject)=>{
  const done=()=>{signal?.removeEventListener('abort',abort);resolve();},timer=setTimeout(done,ms);
  const abort=()=>{clearTimeout(timer);signal.removeEventListener('abort',abort);reject(signal.reason);};

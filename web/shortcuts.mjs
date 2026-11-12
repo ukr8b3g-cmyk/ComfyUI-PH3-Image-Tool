@@ -13,6 +13,7 @@ export function editorShortcut(e,{typing=false,blocked=false,tool=null}={}) {
     return ({j:'duplicate',d:'deselect',a:'selectAll',t:'transform',n:'newProject',o:'openProject','+':'zoomIn','=':'zoomIn','-':'zoomOut'})[key]||null;
   }
   if(key==='m')return 'tool:'+(e.shiftKey&&tool==='rect'?'ellipse':'rect');
+  if(key==='e')return 'tool:'+(e.shiftKey?'erase':'pixelEraser');
   if(!e.shiftKey&&(key==='w'||key==='l'))return 'tool:'+(key==='w'?'wand':'lasso');
   if(!e.shiftKey&&(key==='delete'||key==='backspace'))return 'remove';
   return null;

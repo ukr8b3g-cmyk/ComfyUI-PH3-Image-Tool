@@ -62,6 +62,13 @@ class Store:
         except FileNotFoundError as exc:
             raise ToolError("MISSING_ASSET", "A referenced image is missing", 404) from exc
 
+    def image_size(self, key):
+        try:
+            with Image.open(self._path("assets", key)) as image:
+                return dimensions(*image.size)
+        except FileNotFoundError as exc:
+            raise ToolError("MISSING_ASSET", "A referenced image is missing", 404) from exc
+
     def put_image(self, value):
         if isinstance(value, bytes):
             if len(value) > MAX_UPLOAD:

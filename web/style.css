@@ -74,6 +74,8 @@
 .ph3-right>.ph3-layer-dock{display:flex;flex-direction:column;flex:0 0 var(--ph3-layer-height,245px);box-sizing:border-box;overflow:hidden;padding-top:0}
 .ph3-right>.ph3-layer-dock>.ph3-layer-list{flex:1;min-height:0;max-height:none}
 .ph3-layer-dock>.ph3-section-title,.ph3-layer-dock>.ph3-row,.ph3-layer-dock>[data-i18n=saveCopy]{flex-shrink:0}
+.ph3-layer-background{flex:none;margin-top:4px}
+.ph3-layer .ph3-background-title{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;background:transparent;font-size:12px}
 .ph3-layer-split{height:12px;flex:none;cursor:row-resize;touch-action:none;user-select:none;margin:0 -10px 4px;display:flex;align-items:center;justify-content:center}
 .ph3-layer-split:before{content:'';width:44px;height:3px;border-radius:3px;background:var(--muted)}
 .ph3-layer-split:hover:before,.ph3-layer-split:focus-visible:before{background:var(--accent)}

@@ -60,3 +60,16 @@ test('native defaults find BF16 and W4A8 installations and respect a chosen loca
     assert.equal(suggestInstalledPH3Models({...settings,h3_image_unet_name:'other.safetensors'},catalog).settings.h3_image_unet_name,'other.safetensors');
   }
 });
+
+test('a missing stock native encoder recovers only with an unambiguous installed match',async()=>{
+  const {NATIVE_IMAGE,suggestInstalledPH3Models}=await import('../web/core.mjs');
+  const int8='qwen3vl_32b_minimax_h3_int8_convrot.safetensors';
+  const nvfp4='qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors';
+  const field='h3_image_clip_name';
+  const find=(saved,...text_encoders)=>suggestInstalledPH3Models({model_engine:NATIVE_IMAGE,[field]:saved},{text_encoders});
+  assert.equal(find(int8,'models/'+nvfp4,'custom.safetensors').settings[field],'models/'+nvfp4);
+  assert.equal(find(int8,'models/'+int8,nvfp4).settings[field],'models/'+int8);
+  assert.deepEqual(find(int8,'a/'+nvfp4,'b/'+nvfp4).selected,[]);
+  assert.deepEqual(find('custom.safetensors',nvfp4).selected,[]);
+  assert.equal(find(nvfp4,int8,nvfp4).settings[field],nvfp4);
+});

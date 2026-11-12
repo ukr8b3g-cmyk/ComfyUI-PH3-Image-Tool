@@ -1,9 +1,10 @@
-import {isDecorationLayer} from './core.mjs?v=59a8d35b929e86cd';
-import {drawSourceSpeed} from './source-speed.mjs?v=59a8d35b929e86cd';
-import {drawSourceBubble} from './source-bubbles.mjs?v=59a8d35b929e86cd';
-import {drawSourceText} from './source-text.mjs?v=59a8d35b929e86cd';
-import {prepareFonts} from './source-fonts.mjs?v=59a8d35b929e86cd';
-import {readMask,maskCanvas} from './selection.mjs?v=59a8d35b929e86cd';
+import {isDecorationLayer} from './core.mjs?v=01bc95baa1764cb1';
+import {drawCanvasBackground} from './canvas-background.mjs?v=01bc95baa1764cb1';
+import {drawSourceSpeed} from './source-speed.mjs?v=01bc95baa1764cb1';
+import {drawSourceBubble} from './source-bubbles.mjs?v=01bc95baa1764cb1';
+import {drawSourceText} from './source-text.mjs?v=01bc95baa1764cb1';
+import {prepareFonts} from './source-fonts.mjs?v=01bc95baa1764cb1';
+import {readMask,maskCanvas} from './selection.mjs?v=01bc95baa1764cb1';
 export function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 export const imageRasterKey=l=>(l.mask_asset?l.asset+':'+l.mask_asset:l.asset)+(l.colorize?':tint:'+(l.tintColor||'#ffd42a'):'');
 export const previewRasterKey=l=>'layer-preview:'+l.id;
@@ -18,15 +19,53 @@ export function modifiedRaster(layer,source,mask=null){
   if(layer.colorize){ctx.globalCompositeOperation='source-in';ctx.fillStyle=layer.tintColor||'#ffd42a';ctx.fillRect(0,0,out.width,out.height);}
   return out;
 }
+const IMAGE_CACHE_COUNT = 32;
+const IMAGE_CACHE_BYTES = 64 * 1024 * 1024;
+
 export class RasterCache {
-  constructor(assetUrl){this.assetUrl=assetUrl;this.images=new Map();this.masked=new Map();}
+  constructor(assetUrl){
+    this.assetUrl=assetUrl;
+    this.images=new Map();
+    this.pending=new Map();
+    this.imageBytes=0;
+    this.masked=new Map();
+  }
   async get(key) {
     if(!key)return null;
-    if(!this.images.has(key)) {
-      const job=new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Missing local image: '+key.slice(0,12)));img.src=this.assetUrl(key);});
-      this.images.set(key,job);job.catch(()=>this.images.delete(key));
+    const cached=this.images.get(key);
+    if(cached){
+      this.images.delete(key);
+      this.images.set(key,cached);
+      return cached.image;
     }
-    return this.images.get(key);
+    const pending=this.pending.get(key);
+    if(pending)return pending;
+
+    const load=new Promise((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>resolve(image);
+      image.onerror=()=>reject(Error('Missing local image: '+key.slice(0,12)));
+      image.src=this.assetUrl(key);
+    });
+    this.pending.set(key,load);
+    try{
+      const image=await load;
+      if(this.pending.get(key)===load)this.remember(key,image);
+      return image;
+    }finally{
+      if(this.pending.get(key)===load)this.pending.delete(key);
+    }
+  }
+  remember(key,image){
+    const bytes=image.naturalWidth*image.naturalHeight*4;
+    if(bytes>IMAGE_CACHE_BYTES)return;
+    while(this.images.size>=IMAGE_CACHE_COUNT||this.imageBytes+bytes>IMAGE_CACHE_BYTES){
+      const oldest=this.images.keys().next().value;
+      this.imageBytes-=this.images.get(oldest).bytes;
+      this.images.delete(oldest);
+    }
+    this.images.set(key,{image,bytes});
+    this.imageBytes+=bytes;
   }
   async prepare(doc) {
     const keys=new Set(doc.layers.filter(x=>x.type==='image'&&x.visible).flatMap(x=>[x.asset,x.mask_asset]).filter(Boolean));
@@ -38,7 +77,7 @@ export class RasterCache {
     }
     return output;
   }
-  dispose(){this.images.clear();this.masked.clear();}
+  dispose(){this.images.clear();this.pending.clear();this.imageBytes=0;this.masked.clear();}
 }
 function poly(ctx,points,close=true){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));if(close)ctx.closePath();}
 function paint(ctx,l){if(l.fill)ctx.fill();if(l.lineWidth>0)ctx.stroke();}
@@ -97,7 +136,7 @@ export function drawLayer(ctx,l,rasters) {
 }
 export function drawDocument(ctx,doc,rasters,{includeText=true,background=true}={}) {
   ctx.clearRect(0,0,doc.width,doc.height);
-  if(background&&!doc.transparent){ctx.fillStyle=doc.background;ctx.fillRect(0,0,doc.width,doc.height);}
+  if(background)drawCanvasBackground(ctx,doc);
   for(const l of doc.layers)if(includeText||!isDecorationLayer(l))drawLayer(ctx,l,rasters);
 }
 export async function exportCanvas(doc,cache,options={}) {

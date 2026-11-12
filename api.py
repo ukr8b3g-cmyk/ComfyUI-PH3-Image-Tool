@@ -36,7 +36,10 @@ def guarded(fn):
             same_origin(request)
             return await fn(request)
         except ToolError as exc:
-            return web.json_response({"error": {"code": exc.code, "message": str(exc)}}, status=exc.status)
+            error = {"code": exc.code, "message": str(exc)}
+            if exc.details is not None:
+                error["details"] = exc.details
+            return web.json_response({"error": error}, status=exc.status)
         except web.HTTPException:
             raise
         except (KeyError, TypeError, json.JSONDecodeError) as exc:
@@ -146,7 +149,7 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
         data.update(lettering_presets=[{k: p[k] for k in ("id", "ja", "en")} for p in lettering.PRESETS.values()],
                     lettering_styles=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.STYLES.values()],
                     lettering_decorations=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.DECORATIONS.values()],
-                    lettering_finishing=True, preserved_lettering_bubbles=True, version="0.9.0", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
+                    lettering_finishing=True, preserved_lettering_bubbles=True, version="0.9.1", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
         return web.json_response(data)
 
     @routes.post(BASE + "/lettering/preview")

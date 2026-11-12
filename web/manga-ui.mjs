@@ -1,7 +1,7 @@
-import {clone} from './core.mjs?v=59a8d35b929e86cd';
-import {MANGA_DEFAULTS} from './manga-core.mjs?v=59a8d35b929e86cd';
-import {exportCanvas,toBlob} from './render.mjs?v=59a8d35b929e86cd';
-import {inlineProgress} from './inline-progress.mjs?v=59a8d35b929e86cd';
+import {clone} from './core.mjs?v=01bc95baa1764cb1';
+import {MANGA_DEFAULTS} from './manga-core.mjs?v=01bc95baa1764cb1';
+import {exportCanvas,toBlob} from './render.mjs?v=01bc95baa1764cb1';
+import {inlineProgress} from './inline-progress.mjs?v=01bc95baa1764cb1';
 const el=(tag,cls='',text='')=>{const e=document.createElement(tag);e.className=cls;e.textContent=text;return e;};
 export async function openManga({layer,doc,cache,client,modal,tr,catalog,onApply,onGenerate,onAdopt,ph3=false,onClassic,shared}) {
   const {body,actions,finish,box}=modal(tr(ph3?'ph3ComicFilter':'comicFilter'),{maximizable:true});box.classList.add('ph3-processing');

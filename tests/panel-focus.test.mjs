@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {NATIVE_IMAGE} from '../web/core.mjs';
+import {hasGenerationSource,resolveGenerationMode} from '../web/core.mjs';
 const studio=readFileSync(new URL('../web/studio.mjs',import.meta.url),'utf8');
 const floatTabSync=studio.slice(studio.indexOf('  function syncFloatingLayerTab('),studio.indexOf('  function toggleFloat('));
 test('queueing image, AI text, manga or lettering does not switch the current tab',async()=>{
  const source=studio.slice(studio.indexOf('  async function generate('),studio.indexOf('  const stoppingJobs='));
  for(const mode of ['new','enhance','manga','lettering'])for(const tab of ['generate','properties','layers','candidates']){
-  const ctx={doc:{settings:{random_seed:false},layers:[]},modeSelect:{value:mode},record:{id:'project',revision:3},currentJobs:new Map(),jobs:[],activeTab:tab,withBusy:async fn=>fn(),saveRecord:async()=>{},client:{post:async path=>path.endsWith('/prepare')?{job:{id:'j'},prompt:{test:true}}:{},queue:async()=>({prompt_id:'p'})},isDecorationLayer:()=>false,renderJobs:()=>{},status:()=>{},tr:s=>s,startPolling:()=>{}};
-  ctx.NATIVE_IMAGE=NATIVE_IMAGE;ctx.showTab=name=>ctx.activeTab=name;vm.createContext(ctx);vm.runInContext(source,ctx);await ctx.generate(mode,{source_asset:'asset'});
+  const ctx={doc:{settings:{random_seed:false},layers:[]},modeSelect:{value:'auto'},record:{id:'project',revision:3},currentJobs:new Map(),jobs:[],activeTab:tab,withBusy:async fn=>fn(),saveRecord:async()=>{},client:{post:async path=>path.endsWith('/prepare')?{job:{id:'j'},prompt:{test:true}}:{},queue:async()=>({prompt_id:'p'})},hasGenerationSource,resolveGenerationMode,hasSelectionPixels:()=>false,renderJobs:()=>{},status:()=>{},tr:s=>s,startPolling:()=>{}};
+  ctx.showTab=name=>ctx.activeTab=name;vm.createContext(ctx);vm.runInContext(source,ctx);await ctx.generate(mode,{source_asset:'asset'});
   assert.equal(ctx.activeTab,tab,mode+' from '+tab);assert.equal(ctx.jobs.length,1);assert.equal(ctx.currentJobs.get('j').prompt_id,'p');
  }
 });

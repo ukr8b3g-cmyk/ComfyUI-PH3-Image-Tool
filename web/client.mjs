@@ -1,4 +1,4 @@
-import {ProgressTracker} from './progress.mjs?v=59a8d35b929e86cd';
+import {ProgressTracker} from './progress.mjs?v=01bc95baa1764cb1';
 const BASE='/ph3_image_tool';
 export class Client {
   constructor({fetcher=(...args)=>fetch(...args),url=x=>x,clientId=null,progressEvents=null,webSocketFactory=null}={}){this.fetcher=fetcher;this.url=url;this.clientId=clientId;this.progressEvents=progressEvents;this.webSocketFactory=webSocketFactory;this.progress=new ProgressTracker();this.progressCleanup=null;this.progressSocket=null;this.progressReady=null;this.reconnectTimer=null;this.ownClientId=null;this.disposed=false;}
@@ -30,7 +30,7 @@ export class Client {
     const opts={method};if(body!==null){opts.headers={'Content-Type':'application/json'};opts.body=JSON.stringify(body);}
     const response=await this.fetcher(path,opts);let value;
     try{value=await response.json();}catch{throw Error(`HTTP ${response.status}: invalid JSON response`);}
-    if(!response.ok||(value.error&&typeof value.error==='object')){const e=Error(value.error?.message||value.error?.type||(typeof value.error==='string'?value.error:`HTTP ${response.status}`));e.code=value.error?.code;e.detail=value.node_errors;throw e;}
+    if(!response.ok||(value.error&&typeof value.error==='object')){const e=Error(value.error?.message||value.error?.type||(typeof value.error==='string'?value.error:`HTTP ${response.status}`));e.code=value.error?.code;e.details=value.error?.details;e.detail=value.node_errors;throw e;}
     return value;
   }
   get(path){return this.request(BASE+path);}

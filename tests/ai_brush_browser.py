@@ -83,9 +83,10 @@ def main(output, native=False):
         brush = sidebar.get_by_role('button', name='AIブラシ', exact=True)
         brush.click()
         expect(brush).to_have_attribute('aria-pressed', 'true')
-        expect(scope).to_have_value('selection')
-        expect(generate).to_be_disabled()
-        checks.append('AI brush opens the partial generation panel; generation waits for a selection')
+        expect(scope).to_have_value('auto')
+        expect(scope).to_have_attribute('title', '自動 (画像全体を編集)')
+        expect(generate).to_be_enabled()
+        checks.append('Choosing the AI brush opens generation; auto scope stays on the full image until a selection exists')
 
         def stroke(x):
             canvas = editor.locator('.ph3-canvas').bounding_box()
@@ -130,10 +131,13 @@ def main(output, native=False):
         size.fill('18');size.press('Tab')
         first = stroke(.4)
         assert first and harness.store.image(first).getchannel('R').getpixel((115,110)) == 0
+        expect(scope).to_have_attribute('title', '自動 (選択範囲を編集)')
         scope.select_option('full')
         size.fill('42');size.press('Tab')
         selection_asset = stroke(.6)
-        expect(scope).to_have_value('selection')
+        expect(scope).to_have_value('full')
+        scope.select_option('auto')
+        expect(scope).to_have_attribute('title', '自動 (選択範囲を編集)')
         selected = harness.store.image(selection_asset).getchannel('R')
         assert [selected.getpixel((x, 110)) for x in (128, 160, 192)] == [255, 0, 255]
         assert selected.getpixel((208,110)) == 255

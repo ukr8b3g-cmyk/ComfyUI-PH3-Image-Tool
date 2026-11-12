@@ -1,4 +1,4 @@
-# ComfyUI-PH3-Image-Tool v0.9.0
+# ComfyUI-PH3-Image-Tool v0.9.1
 
 P-H3 ImageまたはMiniMax-H3-Imageによる1枚画像の生成と、文字・吹き出し・画像を重ねて編集するComfyUIカスタムノードです。ノードの **Open PH3 Image Tool** から同じ編集画面で作業します。
 
@@ -22,7 +22,7 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/ComfyUI-PH3-Image-Tool.git
 ```
 
-更新前にエディターとComfyUIワークフローを保存し、必要なら`.ph3tool`プロジェクトも書き出してください。既存フォルダーへ更新後、**ComfyUIを再起動してCtrl+F5**。右下の表示は **0.9.0** です。
+更新前にエディターとComfyUIワークフローを保存し、必要なら`.ph3tool`プロジェクトも書き出してください。既存フォルダーへ更新後、**ComfyUIを再起動してCtrl+F5**。右下の表示は **0.9.1** です。
 
 **`ComfyUI/user/default/ph3_image_tool/` の作品データは削除しないでください。** ノードID、image / alpha / selection出力、作品形式version 1は保持しています。モデル・フォント・利用者作品は配布ZIPに含めません。ComfyUI-Manager/Registryへの登録は今回のリリースに含みません。
 
@@ -38,22 +38,23 @@ Install the ZIP's inner folder under `ComfyUI/custom_nodes/`, or clone the repos
 
 Open the editor before queueing the outer workflow. In **Settings → Image models → Generation model**, choose **P-H3 Image** or **MiniMax-H3-Image** and select the installed model, text encoder and VAE. For P-H3 Image, also select the Image LoRA. Review generated candidates before adoption. Save / Apply to Node, Export image and Export project are separate operations.
 
-## v0.9.0でできること
+## v0.9.1でできること
 
 | 操作 | 内容 |
 |---|---|
-| 生成 | T2I・画像全体・選択範囲の編集。通常のComfyUIキューを利用し、共通バーでステップ/進捗率と対象ジョブの停止を表示 |
+| 生成 | 新規・画像全体・選択範囲を自動判定。手動指定も可能。通常のComfyUIキューを利用し、共通バーでステップ/進捗率と対象ジョブの停止を表示 |
 | 作業の継続 | 生成中も編集可能。履歴は手動で開き、候補更新でフォーカスを移動しません。採用は新規レイヤーとして追加し、編集中の文字やレイヤーを保持 |
 | 文字・吹き出し | 縦横書き、ローカルフォントの書体別選択、自動枠調整、字間/縦横比、線幅、色、集中線、フレーム |
 | AI効果文字 | 初期はT2I・参照OFF。ポップ/キュート/ファンシー、縦横、色/グラデーション。生成済み文字へ空の吹き出しを生成・合成し、文字を描き直さない方式 |
 | スタンプ | 記号・図形・ハート・音符・動線・レアリティ等を含む110点。文字型SFXは一覧から外し、旧作品用の素材は保持 |
-| 選択 | 矩形・楕円・投げ縄・自動選択・色から選択・選択ブラシ。追加/除外/共通部分、境界表示 |
+| 選択 | 投げ縄・AIブラシ・矩形・楕円・自動選択・色から選択・選択ブラシ。追加/除外/共通部分、点線の境界表示。選択編集時の背景色ズレを軽減 |
+| キャンバス背景 | 最下段の背景を表示切替。透過・単色・グラデーション・網点・平行線・市松 |
 | 調整・描画 | 選択プロパティから色相/彩度、明るさ/コントラスト、RGB/各色カーブ、塗り、透明化、コピー、部分生成、効果文字配置。元データ付き調整と透明ペイントをレイヤーとして保持 |
 | 漫画仕上げ | CPU漫画フィルター、P-H3漫画フィルター。元画像を保持し、白地・トーン・線画/ベタ・白抜きの4レイヤーへ分離 |
 | 背景削除 | Auto/ISNet/色指定/選択。クリックで追加削除・復元し、新しい透過レイヤーとして適用。ISNetは初回の取得確認後に保存・再利用 |
 | UI | 分離できるプロパティ/レイヤー/履歴、コンパクトな新規/復元画面、4色の重要操作、共有スウォッチ。表示回転は上部操作バーとRキー |
 
-[現行の操作ガイド](docs/USAGE.md) / [リリース内容](docs/releases/v0.9.0.md) / [変更履歴](CHANGELOG.md)
+[現行の操作ガイド](docs/USAGE.md) / [リリース内容](docs/releases/v0.9.1.md) / [変更履歴](CHANGELOG.md)
 
 ## 保存・書き出し
 
@@ -71,7 +72,7 @@ Auto-save stores completed generation candidates as WebP (default quality 80) wi
 - main反映: [ボタンの使用条件とマスクの説明](docs/COMMAND_AVAILABILITY_JA.md) / [選択部分のコピー・貼り付け](docs/PIXEL_CLIPBOARD_JA.md)。使えない操作を理由付きで無効化し、切り抜き済み画像へのマスク再適用が不要なことを説明しています。Node210件、隔離Chromium31項目で確認。
 - main反映: [ce59e89レビュー4件への対応](docs/REVIEW_CE59E89_FIXES_JA.md)。保存後の編集、バックアップ上限、閉じた加工画面からの遅延適用、ブラウザテストの読込を修正しています。
 - v0.9.0公開後の修正（main）: [v0.9.0監査5件の修正・回帰検証](docs/AUDIT_FIXES_JA.md)。品質1〜100の保存互換性、加工・ペイントの整合、対象レイヤーだけのプレビュー、外部削除ジョブの終了を修正。新規/サイズ変更は最大2048×2048、旧作品の読込・保存互換性は維持しています。
-- リリース時のPython/JavaScriptテストとZIP照合は[リリース記録](docs/releases/v0.9.0.md)を参照してください。
+- リリース時のPython/JavaScriptテストとZIP照合は[リリース記録](docs/releases/v0.9.1.md)を参照してください。
 - [2026-11-09の実Chrome/P-H3検証](docs/PRESERVED_LETTERING_VALIDATION_JA.md)では横書き/縦書きの文字保持と透過PNGを確認しています。**これは以前の検証で、v0.9.0全体の新しい実GPU/実画面確認を意味しません。** 最新の編集操作は上記の隔離Chromium試験で確認していますが、稼働中ComfyUIでの全操作や新しいGPU推論を確認したものではありません。
 - 任意の第三者画像生成では文字の保持を保証しません。空の吹き出しと既存文字を合成する処理は、元文字をAIへ描き直させません。
 - 信頼できる単一利用者のローカルComfyUI向けです。独立した認証/複数利用者の分離はありません。

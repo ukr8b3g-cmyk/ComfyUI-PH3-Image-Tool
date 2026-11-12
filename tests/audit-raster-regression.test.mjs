@@ -61,3 +61,54 @@ test('unverifiable v0.9.0 processed adjustments are retained but not offered as 
  const legacy=layer('old','current',{processing:{action:'remove_background'},retouch:{type:'fill',source_asset:'old'}});assert.equal(editableRetouch(legacy),null);bakeRetouch(legacy);assert.equal(legacy.retouch_history[0].source_asset,'old');
  const plain=layer('plain','current',{retouch:{type:'curves',source_asset:'old'}});assert.ok(editableRetouch(plain));
 });
+test('Undo can load an evicted raster from its original asset URL',async t=>{
+ const previous=globalThis.Image,loads=[];
+ t.after(()=>{globalThis.Image=previous;});
+ globalThis.Image=class {
+  naturalWidth=2;
+  naturalHeight=2;
+  set src(key){loads.push(key);this.key=key;queueMicrotask(()=>this.onload());}
+ };
+ const cache=new RasterCache(key=>key),history=new History(40);
+ let doc={canvas_revision:0,layers:[layer('one','0')]};
+ await cache.prepare(doc);
+ for(let i=1;i<=36;i++){
+  history.record(doc);doc.layers[0].asset=String(i);
+  await cache.prepare(doc);
+ }
+ assert.equal(cache.images.size,32);
+ assert.equal(cache.images.has('4'),false);
+ const count=loads.length;
+ for(let i=0;i<32;i++)doc=history.undo(doc);
+ const restored=await cache.prepare(doc);
+ assert.equal(restored.get('4').key,'4');
+ assert.deepEqual(loads.slice(count),['4']);
+});
+test('the byte budget evicts older images and pending loads cannot refill a disposed cache',async t=>{
+ const previous=globalThis.Image,loads=[];
+ t.after(()=>{globalThis.Image=previous;});
+ globalThis.Image=class {
+  naturalWidth=4096;
+  naturalHeight=2048;
+  set src(key){loads.push({key,image:this});}
+ };
+ const cache=new RasterCache(key=>key);
+ for(const key of ['one','two']){
+  const job=cache.get(key);loads.at(-1).image.onload();await job;
+ }
+ await cache.get('one');
+ const third=cache.get('three');loads.at(-1).image.onload();await third;
+ assert.deepEqual([...cache.images.keys()],['one','three']);
+ assert.equal(cache.imageBytes,64*1024*1024);
+ const stale=cache.get('reload'),same=cache.get('reload'),old=loads.at(-1).image;
+ assert.equal(loads.filter(entry=>entry.key==='reload').length,1);
+ cache.dispose();
+ const current=cache.get('reload'),fresh=loads.at(-1).image;
+ old.onload();
+ assert.equal(await stale,old);
+ assert.equal(await same,old);
+ assert.equal(cache.images.size,0);
+ fresh.onload();
+ assert.equal(await current,fresh);
+ assert.equal(await cache.get('reload'),fresh);
+});

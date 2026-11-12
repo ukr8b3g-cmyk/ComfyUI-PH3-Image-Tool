@@ -1,6 +1,7 @@
 """Build standard ComfyUI API graphs. No model loading or nested execution here."""
 from __future__ import annotations
 import math
+import numpy as np
 from PIL import Image, ImageChops, ImageFilter
 from .schema import ToolError, SIGMAS, MAX_SIDE, number, dimensions, extra_loras
 from .manga_presets import PRESETS as MANGA_PRESETS
@@ -12,10 +13,60 @@ CORE_NODES = ("UNETLoader", "CLIPLoader", "VAELoader", "LoraLoaderModelOnly",
               "BasicGuider", "RandomNoise", "KSamplerSelect", "SamplerCustomAdvanced", "VAEDecode")
 MODEL_FIELDS = {"unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras"}
 NATIVE_IMAGE = "minimax_h3_image"
+NATIVE_REFERENCE_MAX_PIXELS = 8_500_000
 NATIVE_SAMPLING_DEFAULTS = {"sampler_name": "euler", "scheduler": "simple", "steps": 6, "cfg": 1.0, "denoise": 1.0}
 NATIVE_NODES = ("UNETLoader", "CLIPLoader", "VAELoader", "MiniMaxH3ImageConditioning",
                 "ConditioningZeroOut", "KSampler", "VAEDecode")
 ENHANCER_NODES = ("CLIPLoader", "TextGenerateV2", "PH3ImageToolTextResult", "PH3ImageToolAsset")
+NATIVE_ENHANCER_SYSTEM = (
+    'Return one valid JSON object in the format {"expanded_caption":"Image prompt here"}. '
+    "Use double quotes for the key and value, and escape embedded double quotes. "
+    "Describe the finished image in English with detail proportionate to the request. "
+    "Do not turn the user's instructions into visible lettering. If exact lettering is requested, "
+    "quote it in its original language, preserving spelling, spacing, punctuation, line breaks and "
+    "the requested placement and writing direction. Use only supplied references, numbered in input "
+    "order, and borrow only the features assigned to each reference."
+)
+NATIVE_ENHANCER_TASKS = {
+    "new": (
+        "Start with the intended image and its composition, including relevant positions and counts. "
+        "Then describe the subjects, their actions and the visible style. If lettering is not requested, "
+        "describe an image without lettering."
+    ),
+    "full": (
+        "Identify relevant content in <Picture 1>, the source image, and the roles of any additional "
+        "references. Describe the finished image, separating the requested changes from the features "
+        "that stay. Preserve unrelated details and existing lettering unless the request changes them."
+    ),
+    "selection": (
+        "Use <Picture 1> as the source crop with surrounding context. The selection outline is not shown. "
+        "Locate the requested target by visible features or positions within the crop. Describe the "
+        "finished local edit and the adjustments needed to fit it into its surroundings. Preserve "
+        "unrelated details, including any lettering the request leaves unchanged. Refer to the existing "
+        "background as unchanged, including its color and tone, unless the requested edit changes it."
+    ),
+}
+
+
+def check_native_reference(size, source, index=None):
+    short_edge = min(size)
+    # MiniMaxH3ImageConditioning uses a 1024 short edge for vision and
+    # clamps the VAE short edge to 1024–2048. The VAE size bounds both paths.
+    scale = min(max(short_edge, 1024), 2048) / short_edge
+    w, h = (max(32, round(side * scale / 32) * 32) for side in size)
+    if max(w, h) <= MAX_SIDE and w * h <= NATIVE_REFERENCE_MAX_PIXELS:
+        return
+    label = {"selection": "Selection crop", "canvas": "Source image",
+             "additional": f"Reference image {index}", "lettering": "Lettering reference"}[source]
+    hint = ("Widen the selection or increase Context padding in Settings." if source == "selection"
+            else "Use an image with a less extreme aspect ratio.")
+    raise ToolError(
+        "NATIVE_REFERENCE_TOO_LARGE",
+        f"{label} would resize to {w} × {h} px in MiniMax-H3-Image. "
+        f"The reference limit is {MAX_SIDE} px on the long side and {NATIVE_REFERENCE_MAX_PIXELS / 1_000_000:g} MP. {hint}",
+        details={"source": source, "index": index, "width": w, "height": h,
+                 "max_side": MAX_SIDE, "max_pixels": NATIVE_REFERENCE_MAX_PIXELS},
+    )
 
 
 def fit_generation(width, height, megapixels=1.0, *, upscale=False):
@@ -124,6 +175,8 @@ def prepare_job(store, project_id, payload, available, node_names):
         opts = lettering.options(payload.get('lettering', {}))
         size = fit_generation(*lettering.material_size(opts), settings.get('max_megapixels', 1.0))
         request = lettering.request(store, record, payload, config, size)
+        if native and request["crop_asset"]:
+            check_native_reference(store.image_size(request["crop_asset"]), "lettering")
         from .output_saving import options as output_options
         request['output_save']=output_options(doc['settings'])
         job = store.create_job(project_id, request)
@@ -141,7 +194,7 @@ def prepare_job(store, project_id, payload, available, node_names):
     width, height = doc["width"], doc["height"]
     source_asset = payload.get("source_asset")
     scope = mode
-    if native_enhance:
+    if enhance:
         scope = payload.get("enhance_scope", "full" if source_asset else "new")
         if scope not in ("new", "full", "selection"):
             raise ToolError("INVALID_MODE", "Unknown prompt enhancement scope")
@@ -150,7 +203,7 @@ def prepare_job(store, project_id, payload, available, node_names):
     crop_asset = None
     selected_mask = None
     region = [0, 0, width, height]
-    if scope in {"full", "selection", "manga"} or (enhance and source_asset):
+    if scope in {"full", "selection", "manga"}:
         source = store.image(source_asset)
         if source.size != (width, height):
             raise ToolError("SOURCE_SIZE", "Source snapshot must match the document canvas")
@@ -168,6 +221,9 @@ def prepare_job(store, project_id, payload, available, node_names):
             left, top = max(0, left - pad), max(0, top - pad)
             right, bottom = min(width, right + pad), min(height, bottom + pad)
             region = [left, top, right - left, bottom - top]
+        if native and not enhance:
+            check_native_reference(region[2:], "selection" if scope == "selection" else "canvas")
+        if scope == "selection":
             # Feather inward: no generated alpha is permitted outside the original selection.
             if not enhance:
                 softened = ImageChops.multiply(mask, mask.filter(ImageFilter.GaussianBlur(feather))) if feather else mask
@@ -181,18 +237,29 @@ def prepare_job(store, project_id, payload, available, node_names):
     gen_width, gen_height = fit_generation(region[2], region[3], settings.get("max_megapixels", 1.0),
                                            upscale=native and mode == "selection")
     refs = [] if mode == "new" or (enhance and not crop_asset) else doc.get("references", [])
+    if native and not enhance:
+        for index, ref in enumerate(refs, 1):
+            check_native_reference(store.image_size(ref["asset"]), "additional", index)
     instruction = prompt
     if refs:
         role_text = " ".join(f"Use <Picture {i+2}> as a reference for {ref.get('role', 'appearance')}." for i, ref in enumerate(refs))
         instruction += "\n" + role_text
     if mode == "selection":
-        instruction += "\nKeep the original viewpoint, framing, lighting and unrelated details. Edit the requested subject within this crop."
+        if native:
+            instruction += ("\nWithin this crop, make the requested change and the local adjustments "
+                            "needed to fit it into the surroundings. Where the edit leaves the image "
+                            "unchanged, match the original colors and tones in <Picture 1>, including "
+                            "the existing background.")
+        else:
+            instruction += "\nKeep the original viewpoint, framing, lighting and unrelated details. Edit the requested subject within this crop."
     request = {"mode": mode, "canvas_revision": doc["canvas_revision"], "document_revision": record["revision"],
                "source_asset": source_asset if crop_asset else None, "crop_asset": crop_asset,
                "mask_asset": selected_mask, "region": region, "canvas": [width, height],
                "generation_size": [gen_width, gen_height], "prompt": prompt, "instruction": instruction,
                "prompt_source": "original" if enhance else doc["prompt"]["source"],
                "original_prompt": doc["prompt"]["original"], "references": refs, "config": config}
+    if native_enhance or (enhance and "enhance_scope" in payload):
+        request["enhance_scope"] = scope
     if mode == "manga":
         layer = next((l for l in doc['layers'] if l['id']==payload.get('source_layer_id') and l['type']=='image'), None)
         if layer is None or layer.get('locked'):
@@ -228,11 +295,9 @@ def build_graph(job):
         native = config.get("model_engine") == NATIVE_IMAGE
         if native:
             editing = bool(request.get("crop_asset"))
-            task = ("Write a detailed instruction for editing the first image. Preserve its framing and everything "
-                    "unrelated to the requested change. Refer to additional images in their input order."
-                    if editing else "Write a detailed visual description for generating the requested image.")
-            inputs.update({"system_prompt": 'Return a single JSON object with an "expanded_caption" string. '
-                           "Preserve requested words and visual details.",
+            scope = request.get("enhance_scope", "full" if editing else "new")
+            task = NATIVE_ENHANCER_TASKS[scope]
+            inputs.update({"system_prompt": NATIVE_ENHANCER_SYSTEM,
                            "prompt": task + "\n\nUser request:\n" + request["instruction"],
                            "max_length": 8196 if editing else 8192,
                            "sampling_mode": "on", "sampling_mode.temperature": 1.0, "sampling_mode.top_k": 20,
@@ -281,12 +346,76 @@ def build_graph(job):
     return graph
 
 
+def restore_selection_colors(source, patch, mask):
+    """Restore matching colors using evidence from the unselected part of the crop."""
+    bounds = mask.getbbox()
+    if source.size != patch.size or not bounds or mask.getextrema()[0] != 0:
+        return patch
+
+    original, generated, selection = np.asarray(source), np.asarray(patch), np.asarray(mask)
+    # Sample the surrounding context to estimate small, consistent shifts per source color.
+    stride = max(1, math.ceil(math.sqrt(selection.size / 65_536)))
+    before, after = original[::stride, ::stride], generated[::stride, ::stride]
+    sample_mask = selection[::stride, ::stride]
+    opaque = (before[..., 3] == 255) & (after[..., 3] == 255)
+    context = opaque & (sample_mask == 0)
+    if np.count_nonzero(context) < 16:
+        return patch
+    # A small uniform change on its own may be the requested edit. Require evidence
+    # of a distinct edit before treating similar colors elsewhere as drift.
+    selected = opaque & (sample_mask >= 128)
+    edits = after[selected, :3].astype(np.int16) - before[selected, :3]
+    if np.count_nonzero(np.max(np.abs(edits), axis=1) >= 24) < 8:
+        return patch
+
+    base = before[context, :3].astype(np.int16)
+    shift = after[context, :3].astype(np.int16) - base
+    bins = (base // 32) @ np.array([64, 8, 1], dtype=np.int16)
+    counts = np.bincount(bins, minlength=512)
+    anchors = []
+    for bucket in np.argsort(counts)[-8:]:
+        if counts[bucket] < max(16, len(base) * .02):
+            continue
+        group = bins == bucket
+        offset = np.median(shift[group], axis=0)
+        spread = np.quantile(np.max(np.abs(shift[group] - offset), axis=1), .75)
+        if 2 <= np.max(np.abs(offset)) <= 18 and spread <= 6:
+            anchors.append((np.median(base[group], axis=0), offset, min(5, math.ceil(spread) + 1)))
+    if not anchors:
+        return patch
+
+    # Preserve alpha and keep temporary arrays bounded for large selections.
+    corrected = np.array(patch)
+    left, top, right, bottom = bounds
+    rows = max(1, 131_072 // (right - left))
+    for y in range(top, bottom, rows):
+        part = np.s_[y:min(y + rows, bottom), left:right]
+        dst, src = corrected[part], original[part]
+        valid = (selection[part] > 0) & (src[..., 3] == 255) & (dst[..., 3] == 255)
+        base = src[valid, :3].astype(np.int16)
+        actual = dst[valid, :3].astype(np.int16)
+        shift = actual - base
+        weight = np.zeros(len(base))
+        for color, offset, inner in anchors:
+            color_distance = np.max(np.abs(base - color), axis=1)
+            error = np.max(np.abs(shift - offset), axis=1)
+            # Fade at the limits so a color close to a background sample does not
+            # cause a hard edge around the new subject.
+            strength = np.clip((16 - color_distance) / 8, 0, 1)
+            strength *= np.clip((2 * inner + 1 - error) / (inner + 1), 0, 1)
+            np.maximum(weight, strength, out=weight)
+        dst[valid, :3] = np.rint(actual - shift * weight[:, None]).astype(np.uint8)
+    return Image.fromarray(corrected)
+
+
 def capture_images(store, job_id, images):
     job = store.job(job_id)
     request = job["request"]
     if request["mode"] == "enhance":
         raise ToolError("JOB_KIND", "Image result cannot finish a text request")
     x, y, width, height = request["region"]
+    crop_asset = request.get("crop_asset") if request["mode"] == "selection" else None
+    source_crop = store.image(crop_asset) if crop_asset and request.get("mask_asset") else None
     results = []
     for image in images[:4]:
         raw = store.put_image(image)["asset"]
@@ -304,6 +433,8 @@ def capture_images(store, job_id, images):
             mask = store.image(request["mask_asset"]).getchannel("R")
             if mask.size != patch.size:
                 raise ToolError("MASK_SIZE", "Stored selection mask does not match the generation region")
+            if source_crop is not None:
+                patch = restore_selection_colors(source_crop, patch, mask)
             patch.putalpha(mask)
         if request['mode'] == 'manga':
             patch.putalpha(store.image(request['source_asset']).getchannel('A'))

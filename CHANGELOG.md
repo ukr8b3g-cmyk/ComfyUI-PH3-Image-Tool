@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.1 — 2026-11-12
+
+- Add MiniMax-H3-Image alongside P-H3 Image, with configurable sampling and local model selection. Choose generation scope automatically and tailor MiniMax prompt enhancement to new images, full edits, or selections.
+- Preserve source colors around selection edits when the surrounding crop provides a reliable match. Show the selection as a dotted outline without a tint.
+- Add editable canvas backgrounds, keep the active tab while selecting, float Layers on first use, and place Lasso and AI Brush first.
+- Add a layer eraser, guard oversized native references before queueing, and bound the decoded image cache.
+- Improve project backup round trips, undo/redo, draft and close handling, and delayed generation and filter results.
+- See [release notes and validation](docs/releases/v0.9.1.md).
+
 ## 0.9.0 — 2026-11-10
 
 - Publish the current single-image editor with generation review, shared progress/stop, non-destructive adoption, AI effect lettering and retained text assets.
