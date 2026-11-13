@@ -1,5 +1,8 @@
 # ComfyUI-PH3-Image-Tool v0.9.1
 
+<img width="1628" height="708" alt="download_4" src="https://github.com/user-attachments/assets/6d78368d-3b06-4013-a2f0-5a4290d75b0d" />
+
+
 P-H3 ImageまたはMiniMax-H3-Imageによる1枚画像の生成と、文字・吹き出し・画像を重ねて編集するComfyUIカスタムノードです。ノードの **Open PH3 Image Tool** から同じ編集画面で作業します。
 
 A single-image generation and layered editor for ComfyUI with P-H3 Image and MiniMax-H3-Image. Generate, edit selected regions, add editable text and speech bubbles, and export the composition in one workspace.
