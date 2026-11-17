@@ -1,6 +1,6 @@
 import {commandState} from './command-state.mjs?v=01bc95baa1764cb1';
 import {capturePixels,erasedMask,CLIPBOARD_LIMIT} from './pixel-clipboard.mjs?v=01bc95baa1764cb1';
-import {historySelection,CANVAS_BACKGROUND_LAYER,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=5428a988a04eb553';
+import {historySelection,CANVAS_BACKGROUND_LAYER,hasGenerationSource,resolveGenerationMode} from './core.mjs?v=10bbb41f4998859d';
 import {reconcileJob} from './job-presence.mjs?v=01bc95baa1764cb1';
 import {editableRetouch,bakeRetouch} from './edit-provenance.mjs?v=01bc95baa1764cb1';
 import {actionTone,brushShortcut,draggedBrush} from './ui-controls.mjs?v=01bc95baa1764cb1';
@@ -17,15 +17,16 @@ import {cancelGeneration,confirmStopped} from './job-cancel.mjs?v=01bc95baa1764c
 import {editorShortcut} from './shortcuts.mjs?v=01bc95baa1764cb1';
 import {STAMP_ASSETS} from './source-assets.mjs?v=01bc95baa1764cb1';
 import {groupFonts,loadFont,prepareFonts} from './source-fonts.mjs?v=01bc95baa1764cb1';
-import {ensureLayerCapacity,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness,imageModelMissingNodes,NATIVE_IMAGE} from './core.mjs?v=5428a988a04eb553';
+import {ensureLayerCapacity,moveLayerRelative,clone,uid,makeLayer,History,checkSize,checkNewSize,hitLayer,localPoint,worldPoint,candidateMatches,layerFromCandidate,addLetteringLayer,reorder,randomSeed,safeSeed,insertImageLayer,setPromptValue,suggestInstalledPH3Models,ph3ModelReadiness,imageModelMissingNodes,NATIVE_IMAGE} from './core.mjs?v=10bbb41f4998859d';
 import {selectionBoundary,floodSelect,colorRangeMask,featherMask,selectionOperation,combineMasks,rectangleMask,ellipseMask,polygonMask,strokeMask,invertMask,maskBounds,maskCanvas,readMask} from './selection.mjs?v=01bc95baa1764cb1';
 import {RasterCache,imageRasterKey,previewRasterKey,modifiedRaster,canvas,drawDocument,exportCanvas,layerSelectionMask,toBlob} from './render.mjs?v=01bc95baa1764cb1';
 import {BACKGROUND_PATTERNS,newBackgroundPattern,drawCanvasBackground} from './canvas-background.mjs?v=01bc95baa1764cb1';
 import {BUBBLES,SFX,SYMBOLS,FRAMES,COMIC,SPEEDS,TEXT_STYLES} from './presets.mjs?v=01bc95baa1764cb1';
-import {t,nativeReferenceError} from './i18n.mjs?v=01bc95baa1764cb1';
+import {t,nativeReferenceError} from './i18n.mjs?v=df2d83ef140c9ee4';
 import {toScreen,toDocument,anchoredView,fitView,wheelPixels,visibleHandlePoints,resizeLayer} from './viewport.mjs?v=01bc95baa1764cb1';
 import {icon,presetOptions,presetThumbnail,layerThumbnail} from './graphics.mjs?v=01bc95baa1764cb1';
 import {openProcessing} from './processing-ui.mjs?v=01bc95baa1764cb1';
+import {openSelectionBlend} from './selection-blend-ui.mjs?v=91648bd1838386b0';
 import {openManga} from './manga-ui.mjs?v=01bc95baa1764cb1';
 import {addMangaLayers} from './manga-core.mjs?v=01bc95baa1764cb1';
 
@@ -807,6 +808,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
       colorProperty('tintColor','tintColor',l.tintColor||'#ffd42a',true);
       colorSwatches(props,l.tintColor||'#ffd42a',value=>commit(d=>Object.assign(d.layers.find(x=>x.id===l.id),{tintColor:value,colorize:true})));
       props.append(button('maskLayer',applyLayerMask),button('clearLayerMask',()=>change('mask_asset',null)));
+      if(selectionBlendRecipe(l))props.append(button('selectionBlend',()=>adjustSelectionBlend(l.id)));
       const adjustRow=el('div','ph3-row ph3-adjustment-actions');for(const kind of ['hue_saturation','brightness_contrast','curves'])adjustRow.append(button('retouch'+kind,()=>startRetouch(kind)));props.append(adjustRow);if(editableRetouch(l))props.append(button('editRetouch',()=>startRetouch(l.retouch.type,true)));else if(l.retouch||l.retouch_history?.length)props.append(el('p','ph3-small',tr('retouchBakedHelp')));
       if(l.generation){const info=el('details','ph3-generation-info');info.append(el('summary','',tr('generationInfo')),el('p','ph3-small',`P-H3 · Seed ${l.generation.seed}\n${l.generation.prompt}`));props.append(info);}
     }else{
@@ -1182,11 +1184,47 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     catch(error){status(tr('stopFailed')+' '+error.message,true);}
     finally{stoppingJobs.delete(job.id);renderJobs();if(currentJobs.size)startPolling();}
   }
-  async function adopt(job,index=0,manual=true){
+  function selectionBlendRecipe(layer){
+    if(!catalog?.selection_reblend||!layer||layer.type!=='image'||layer.locked||!layer.visible||layer.colorize||layer.rotation%360)return null;
+    const gen=layer.generation;
+    if(gen?.mode!=='selection'||!gen.source_asset||!gen.mask_asset||gen.region?.length!==4)return null;
+    if(![layer.x,layer.y,layer.w,layer.h].every((value,i)=>value===gen.region[i]))return null;
+    let recipe=gen.reblend;
+    if(!recipe){
+      const job=jobs.find(item=>item.id===gen.job_id),index=gen.result_index??0;
+      if(job?.results?.[index])recipe=layerFromCandidate(doc,job,index).generation.reblend;
+    }
+    if(!recipe||layer.asset!==recipe.asset||(layer.mask_asset??null)!==recipe.mask_asset)return null;
+    return recipe;
+  }
+  function matchesResult(layer,job,index){return layer.generation?.job_id===job.id&&(layer.generation.result_index??0)===index;}
+  async function adjustSelectionBlend(layerId,job=null,index=0){
+    const layer=layerId?doc.layers.find(item=>item.id===layerId):layerFromCandidate(doc,job,index);
+    const recipe=selectionBlendRecipe(layer);
+    if(!recipe)return;
+    const project=record.id,revision=doc.canvas_revision,epoch=selectionEpoch;
+    await openSelectionBlend({layer:clone(layer),recipe,alreadyApplied:!!layerId,client,cache,modal,tr,sliderField,onApply:async(result,settings)=>{
+      clipboardGuard(project,revision,epoch);
+      const update=item=>{
+        Object.assign(item,result);
+        item.generation.reblend={...recipe,...settings,...result};
+      };
+      if(layerId){
+        const target=doc.layers.find(item=>item.id===layerId);
+        if(!selectionBlendRecipe(target))throw Error(tr('processingConflict'));
+        if(target.asset===result.asset&&target.mask_asset===result.mask_asset&&recipe.feather===settings.feather&&recipe.color_strength===settings.color_strength)return;
+        commit(()=>update(target),{refresh:false});await renderAll();renderJobs();
+      }else{
+        if(doc.layers.some(item=>matchesResult(item,job,index)))throw Error(tr('processingConflict'));
+        update(layer);await adopt(job,index,true,layer);
+      }
+    }});
+  }
+  async function adopt(job,index=0,manual=true,adjustedLayer=null){
     if(job.project_id!==record.id)throw Error('Generation belongs to another project');
     if(!manual&&!candidateMatches(doc,job,record.id))return false;
     ensureLayerCapacity(doc,job.request.mode==='manga'?4:1);
-    commit(d=>{const layer=layerFromCandidate(d,job,index);
+    commit(d=>{const layer=adjustedLayer||layerFromCandidate(d,job,index);
       if(job.request.mode==='manga'){
         const layers=addMangaLayers(d,job.results[index],{sourceId:job.request.source_layer?.id,sourceSignature:JSON.stringify(job.request.source_layer),names:mangaNames(),generation:layer.generation,preserveExisting:true});selected=layers[2].id;
       }else if(job.request.mode==='lettering'){
@@ -1212,7 +1250,15 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
     if(job.status==='failed')card.append(el('div','ph3-small',job.error==='Cancelled'?tr('stopped'):job.error||'Failed'));
     if(job.text){card.append(el('pre','',job.text),button('useText',()=>{commit(d=>{d.prompt.ai=job.text;d.prompt.source='ai';},{refresh:false});syncPrompt();}));}
     for(let i=0;i<(job.results||[]).length;i++){const result=job.results[i],img=el('img');img.src=client.assetURL(result.asset);img.alt=job.request.prompt;card.append(img);if(job.request.mode==='lettering'&&result.edge_clipped)card.append(el('p','ph3-small',tr('letteringClipped')));
-      const used=doc.layers.some(l=>l.generation?.job_id===job.id&&(l.generation.result_index??0)===i),stale=!candidateMatches(doc,job,record.id);const adoptButton=button(used?'applied':stale?'importStale':'apply',()=>adopt(job,i,true));adoptButton.disabled=used||doc.layers.length+(job.request.mode==='manga'?4:1)>256;if(!used&&adoptButton.disabled)adoptButton.title=tr('layerCapacity');card.append(adoptButton);
+      const used=doc.layers.find(layer=>matchesResult(layer,job,i)),stale=!candidateMatches(doc,job,record.id);const adoptButton=button(used?'applied':stale?'importStale':'apply',()=>adopt(job,i,true));adoptButton.disabled=!!used||doc.layers.length+(job.request.mode==='manga'?4:1)>256;if(!used&&adoptButton.disabled)adoptButton.title=tr('layerCapacity');card.append(adoptButton);
+      if(catalog?.selection_reblend&&job.request.mode==='selection'){
+        const layer=used||layerFromCandidate(doc,job,i);
+        if(selectionBlendRecipe(layer)){
+          const blend=button('selectionBlend',()=>adjustSelectionBlend(used?.id,job,i));
+          if(!used&&adoptButton.disabled){blend.disabled=true;blend.title=tr('layerCapacity');}
+          card.append(blend);
+        }
+      }
       if(job.request.mode==='lettering')card.append(button('letteringAddDecoration',()=>letteringModal(null,{job:clone(job),index:i}).catch(fail)));}
     jobsBox.append(card);
   }if(!jobsBox.children.length)jobsBox.append(el('p','ph3-small',tr('noCandidates')));}
@@ -1452,7 +1498,7 @@ export async function openStudio({client,projectId='',inputAsset=null,onApply=nu
   const operationButtons=el('div','ph3-selection-operations');operationButtons.setAttribute('role','group');operationButtons.dataset.i18nLabel='selectionOperation';
   function syncOperationButtons(context=commandContext()){for(const b of operationButtons.children){b.textContent=tr(b.dataset.operation);b.setAttribute('aria-label',b.textContent);b.title=tr('selection'+b.dataset.operation+'Help');b.setAttribute('aria-pressed',String(operation===b.dataset.operation));const key={subtract:'selectionSubtract',intersect:'selectionIntersect'}[b.dataset.operation],state=key?commandState(key,context):null;b.disabled=!!busy||!!state?.disabled;if(state?.disabled)b.title=tr(state.reason);}}
   for(const value of ['replace','add','subtract','intersect']){const b=el('button');b.type='button';b.dataset.operation=value;b.onclick=()=>{operation=value;syncOperationButtons();};operationButtons.append(b);}syncOperationButtons();viewbar.append(operationButtons);
-  for(const key of ['generate','properties','layers','candidates']){const b=button(key==='generate'?'generationTab':key==='candidates'?'historyTab':key,()=>showTab(key));b.dataset.tab=key;tabs.append(b);const panel=el('section','ph3-panel');panel.dataset.panel=key;panels[key]=panel;right.append(panel);}
+  for(const key of ['generate','properties','layers','candidates']){const b=button(key==='generate'?'generationTab':key==='candidates'?'historyTab':key,()=>{if(key==='candidates')renderJobs();showTab(key);});b.dataset.tab=key;tabs.append(b);const panel=el('section','ph3-panel');panel.dataset.panel=key;panels[key]=panel;right.append(panel);}
 
   const gen=panels.generate,props=panels.properties,layerPanel=panels.layers;
   const modeSelect=optionsSelect(Object.entries(GENERATION_MODE_LABELS).map(([mode,label])=>[mode,tr(label)]),'auto');field(gen,'mode',modeSelect);modeSelect.onchange=()=>{doc.canvas_revision++;stashDraft();updateToolbar();};

@@ -2,8 +2,9 @@
 from __future__ import annotations
 import math
 import numpy as np
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image
 from .schema import ToolError, SIGMAS, MAX_SIDE, number, dimensions, extra_loras
+from .selection_blend import feather_selection
 from .manga_presets import PRESETS as MANGA_PRESETS
 from . import lettering
 from .manga import MANGA_PROMPT, options as manga_options, store_finish, available as manga_available
@@ -224,10 +225,9 @@ def prepare_job(store, project_id, payload, available, node_names):
         if native and not enhance:
             check_native_reference(region[2:], "selection" if scope == "selection" else "canvas")
         if scope == "selection":
-            # Feather inward: no generated alpha is permitted outside the original selection.
             if not enhance:
-                softened = ImageChops.multiply(mask, mask.filter(ImageFilter.GaussianBlur(feather))) if feather else mask
-                selected_mask = store.put_image(softened.crop((left, top, right, bottom)))["asset"]
+                softened = feather_selection(mask, feather, (left, top, right, bottom))
+                selected_mask = store.put_image(softened)["asset"]
             source = source.crop((left, top, right, bottom))
         crop_asset = store.put_image(source)["asset"]
     elif mode != "new" and not enhance:
@@ -258,6 +258,8 @@ def prepare_job(store, project_id, payload, available, node_names):
                "generation_size": [gen_width, gen_height], "prompt": prompt, "instruction": instruction,
                "prompt_source": "original" if enhance else doc["prompt"]["source"],
                "original_prompt": doc["prompt"]["original"], "references": refs, "config": config}
+    if mode == "selection":
+        request.update(selection_asset=doc["selection_asset"], selection_feather=feather)
     if native_enhance or (enhance and "enhance_scope" in payload):
         request["enhance_scope"] = scope
     if mode == "manga":

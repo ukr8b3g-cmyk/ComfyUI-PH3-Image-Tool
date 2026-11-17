@@ -10,6 +10,7 @@ from aiohttp import web
 from .schema import ToolError, MAX_JSON_BYTES, default_document
 from .storage import MAX_UPLOAD, MAX_ARCHIVE
 from .generation import prepare_job
+from .selection_blend import reblend
 from .processing import comic, color_cutout, selection_cutout, isnet_cutout, COMIC_PRESETS
 from .runtime import get_store, model_catalog
 from . import lettering
@@ -149,7 +150,8 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
         data.update(lettering_presets=[{k: p[k] for k in ("id", "ja", "en")} for p in lettering.PRESETS.values()],
                     lettering_styles=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.STYLES.values()],
                     lettering_decorations=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.DECORATIONS.values()],
-                    lettering_finishing=True, preserved_lettering_bubbles=True, version="0.9.1", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
+                    lettering_finishing=True, preserved_lettering_bubbles=True, selection_reblend=True,
+                    version="0.9.1", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
         return web.json_response(data)
 
     @routes.post(BASE + "/lettering/preview")
@@ -241,6 +243,15 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
     @guarded
     async def jobs(request):
         return web.json_response(await asyncio.to_thread(store_provider().jobs, request.match_info["id"]))
+
+    @routes.post(BASE + "/selection/reblend")
+    @guarded
+    async def selection_reblend(request):
+        payload = await json_body(request)
+        result = await asyncio.to_thread(reblend, store_provider(), payload)
+        if isinstance(result, bytes):
+            return web.Response(body=result, content_type="image/png")
+        return web.json_response(result)
 
     @routes.post(BASE + "/process")
     @guarded

@@ -43,6 +43,11 @@ export class Client {
   }
   assetURL(key){return this.url(BASE+'/assets/'+encodeURIComponent(key));}
   async archive(id){const response=await this.fetcher(BASE+`/projects/${id}/export`);if(!response.ok){const data=await response.json();throw Error(data.error?.message||'Export failed');}return response.blob();}
+  async previewSelectionBlend(data,signal){
+    const response=await this.fetcher(BASE+'/selection/reblend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,preview:true}),signal});
+    if(!response.ok){const error=await response.json().catch(()=>null);throw Error(error?.error?.message||`Preview HTTP ${response.status}`);}
+    return response.blob();
+  }
   async encode(options){
     const response=await this.fetcher(BASE+'/encode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(options)});
     if(!response.ok){const data=await response.json();throw Error(data.error?.message||'Encoding failed');}return response.blob();

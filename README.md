@@ -41,6 +41,10 @@ Install the ZIP's inner folder under `ComfyUI/custom_nodes/`, or clone the repos
 
 Load the [P-H3 Image](examples/PH3_Image_Tool_P-H3_Image.json) or [MiniMax-H3-Image](examples/PH3_Image_Tool_MiniMax-H3-Image.json) workflow. Open the editor before queueing the outer workflow. In **Settings → Image models → Generation model**, choose **P-H3 Image** or **MiniMax-H3-Image** and select the installed model, text encoder and VAE. For P-H3 Image, also select the Image LoRA. Review generated candidates before adoption. Save / Apply to Node, Export image and Export project are separate operations.
 
+部分編集を生成したら、**履歴**の候補か採用済みレイヤーの**プロパティ**から**境界を調整**を開けます。ぼかし幅と色合わせを比較し、**合成を適用**を押すと同じ生成結果で合成し直せます。色合わせは境界付近、ぼかしも選択範囲の内側にかかります。旧候補は保存済みのマスクにぼかしを追加できます。
+
+After generating a selection edit, open **Adjust boundary** from the candidate in **History** or its adopted layer in **Properties**. Compare the feather and boundary color match, then choose **Apply blend** to reuse the same generation. Both adjustments stay inside the original selection. Older candidates support additional feathering on their saved masks.
+
 ### プロンプト補助 / Prompt enhancer
 
 **P-H3 Imageでは `p-h3-image_prompt_upsampler_w4a8.safetensors` を推奨します。** 同じファイルをMiniMax-H3-Imageでも使えます。ファイルを `ComfyUI/models/text_encoders/` に置き、**設定 → 画像モデル → プロンプト補助（任意）** で選択します。[Pruna AIの配布ページ](https://huggingface.co/PrunaAI/P-H3-Image-Comfy#prompt-upsampler)

@@ -98,11 +98,16 @@ export function layerFromCandidate(doc, job, index=0) {
       maskAsset=null;
     }
   }
+  const reblend=req.mode==='selection'&&req.source_asset&&req.mask_asset&&(item.layer_asset||item.asset)?{
+    result_asset:item.layer_asset||item.asset,selection_asset:req.selection_asset||null,
+    asset,mask_asset:maskAsset,feather:req.selection_asset?req.selection_feather??4:0,color_strength:0
+  }:null;
   return makeLayer('image',doc.width,doc.height,{name:req.prompt.slice(0,50),asset,
       mask_asset:maskAsset,x:item.x,y:item.y,w:item.w,h:item.h,...(req.mode==='lettering'?{decoration:true,rotation:req.parent_layer?.rotation??req.source_layer?.rotation??0}:{}),
     generation:{job_id:job.id,result_index:index,mode:req.mode,prompt:req.prompt,original_prompt:req.original_prompt,
       seed:req.config.seed,models:req.config,source_asset:req.source_asset,raw_asset:item.raw_asset,
-        mask_asset:req.mask_asset,generation_size:req.generation_size,region:req.region,...(req.mode==='lettering'?{preserved_lettering_asset:item.preserved_lettering_asset,glyph_rect:item.glyph_rect,lettering:req.lettering,source_layer_id:req.source_layer?.id,parent_job_id:req.parent_job_id,parent_result_index:req.parent_result_index,finish_only:!!req.finish_only}:{} )}});
+        mask_asset:req.mask_asset,generation_size:req.generation_size,region:req.region,...(reblend?{reblend}:{}),
+        ...(req.mode==='lettering'?{preserved_lettering_asset:item.preserved_lettering_asset,glyph_rect:item.glyph_rect,lettering:req.lettering,source_layer_id:req.source_layer?.id,parent_job_id:req.parent_job_id,parent_result_index:req.parent_result_index,finish_only:!!req.finish_only}:{} )}});
 }
 export function addLetteringLayer(doc,job,index,name,{preserveExisting=false}={}){
     ensureLayerCapacity(doc);

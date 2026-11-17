@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from aiohttp import web, FormData
 from aiohttp.test_utils import TestClient, TestServer
-from PIL import Image
+from PIL import Image, ImageChops
 from support import load,storage,document,MODELS,NODE_NAMES,NATIVE_MODELS,generation,schema
 
 api=load('api')
@@ -52,6 +52,60 @@ class APITests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(r.status,200);prepared=await r.json();self.assertIn('prompt',prepared)
         job=prepared['job'];r=await self.client.post('/ph3_image_tool/jobs/'+job['id']+'/state',json={'prompt_id':'abc-123','status':'queued'})
         self.assertEqual(r.status,200);self.assertEqual((await r.json())['status'],'queued')
+
+    async def test_reblend_adjusts_existing_selection_inside_its_boundary_without_a_job(self):
+        doc = document(192, 160)
+        source = Image.new('RGB', (192, 160), (90, 105, 120))
+        mask = Image.new('L', source.size, 0)
+        mask.paste(255, (40, 30, 152, 138))
+        doc['selection_asset'] = self.store.put_image(mask)['asset']
+        source_asset = self.store.put_image(source)['asset']
+        record = self.store.create(doc)
+        url = '/ph3_image_tool/projects/' + record['id']
+        prepared = await self.client.post(url + '/prepare', json={
+            'revision': 0, 'mode': 'selection', 'source_asset': source_asset,
+        })
+        self.assertEqual(prepared.status, 200)
+        request = (await prepared.json())['job']['request']
+        self.assertEqual(request['selection_asset'], doc['selection_asset'])
+        self.assertEqual(request['selection_feather'], doc['settings']['feather'])
+        x, y, w, h = request['region']
+        crop = (x, y, x + w, y + h)
+        selected = mask.crop(crop)
+        patch = Image.new('RGB', (w, h), (104, 118, 131))
+        patch.paste((207, 29, 25), (41 - x, 69 - y, 55 - x, 90 - y))
+        result_asset = self.store.put_image(patch)['asset']
+        payload = {key: request[key] for key in ('region', 'source_asset', 'mask_asset', 'selection_asset')}
+        payload.update(result_asset=result_asset, feather=request['selection_feather'], color_strength=0)
+        jobs = self.store.jobs(record['id'])
+        assets = set((self.store.root / 'assets').iterdir())
+        endpoint = '/ph3_image_tool/selection/reblend'
+        preview = await self.client.post(endpoint, json={**payload, 'preview': True})
+        self.assertEqual((preview.status, preview.content_type), (200, 'image/png'))
+        before = Image.open(io.BytesIO(await preview.read()))
+        self.assertEqual(before.getchannel('A').tobytes(), self.store.image(payload['mask_asset']).getchannel('R').tobytes())
+        self.assertEqual(set((self.store.root / 'assets').iterdir()), assets)
+
+        response = await self.client.post(endpoint, json={**payload, 'feather': 16, 'color_strength': 85})
+        self.assertEqual(response.status, 200)
+        result = await response.json()
+        adjusted = self.store.image(result['asset']).convert('RGB')
+        alpha = self.store.image(result['mask_asset']).getchannel('R')
+        original = source.crop(crop)
+        edge, center, red = (48 - x, 50 - y), (96 - x, 85 - y), (49 - x, 80 - y)
+        self.assertLess(adjusted.getpixel(edge)[0], patch.getpixel(edge)[0])
+        self.assertEqual(adjusted.getpixel(center), patch.getpixel(center))
+        self.assertEqual(adjusted.getpixel(red), patch.getpixel(red))
+        self.assertLess(alpha.getpixel(edge), before.getchannel('A').getpixel(edge))
+        composite = Image.composite(adjusted, original, alpha)
+        diff = ImageChops.difference(composite, original)
+        self.assertIsNone(Image.composite(Image.new('RGB', patch.size), diff, selected).getbbox())
+
+        legacy = await self.client.post(endpoint, json={**payload, 'selection_asset': None, 'feather': 0})
+        self.assertEqual(await legacy.json(), {'asset': result_asset, 'mask_asset': request['mask_asset']})
+        self.assertEqual(self.store.jobs(record['id']), jobs)
+        self.assertEqual(self.store.read(record['id']), record)
+
     async def test_native_oversize_references_return_a_reason_without_creating_jobs(self):
         self.catalog.update(NATIVE_MODELS)
         self.nodes.update(generation.NATIVE_NODES)
