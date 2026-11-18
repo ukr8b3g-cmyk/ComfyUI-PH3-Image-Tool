@@ -18,6 +18,14 @@ class APITests(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):await self.client.close();self.tmp.cleanup()
     async def create(self):
         response=await self.client.post('/ph3_image_tool/projects',json={'document':document()});self.assertEqual(response.status,200);return await response.json()
+    async def test_capability_version_matches_distribution(self):
+        from support import ROOT
+        import re
+        metadata = (ROOT / 'pyproject.toml').read_text(encoding='utf-8')
+        version = re.search(r'^version\s*=\s*"([^"]+)"', metadata, re.MULTILINE).group(1)
+        response = await self.client.get('/ph3_image_tool/capabilities')
+        self.assertEqual((await response.json())['version'], version)
+
     async def test_create_save_conflict(self):
         rec=await self.create();url='/ph3_image_tool/projects/'+rec['id'];body={'revision':0,'document':rec['document']}
         self.assertEqual((await self.client.put(url,json=body)).status,200)
@@ -105,6 +113,35 @@ class APITests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await legacy.json(), {'asset': result_asset, 'mask_asset': request['mask_asset']})
         self.assertEqual(self.store.jobs(record['id']), jobs)
         self.assertEqual(self.store.read(record['id']), record)
+
+    async def test_legacy_tight_crop_matches_full_selection_at_interior_and_canvas_edges(self):
+        source = Image.new('RGB', (96, 96), (100, 100, 100))
+        patch = Image.new('RGB', (48, 48), (110, 110, 110))
+        mask = Image.new('L', patch.size, 255)
+        asset = lambda image: self.store.put_image(image)['asset']
+        payload = dict(source_asset=asset(source), result_asset=asset(patch), mask_asset=asset(mask),
+                       feather=8, color_strength=100)
+        async def apply(data):
+            response = await self.client.post('/ph3_image_tool/selection/reblend', json=data)
+            self.assertEqual(response.status, 200)
+            return await response.json()
+
+        for x, y in [(24, 24), (0, 0), (48, 48)]:
+            with self.subTest(origin=(x, y)):
+                selection = Image.new('L', source.size)
+                selection.paste(mask, (x, y))
+                data = dict(payload, region=[x, y, *mask.size])
+                legacy = await apply(data)
+                self.assertEqual(legacy, await apply(dict(data, selection_asset=asset(selection))))
+                edge = (47 if x == 0 else 0, 24)
+                alpha = self.store.image(legacy['mask_asset']).getchannel('R')
+                self.assertLess(alpha.getpixel(edge), 255)
+                self.assertEqual(alpha.getpixel((24, 24)), 255)
+                if x == 0:
+                    self.assertEqual(alpha.getpixel((0, 24)), 255)
+                rgb = self.store.image(legacy['asset'])
+                self.assertLess(rgb.getpixel(edge)[0], 110)
+                self.assertEqual(rgb.getpixel((24, 24))[0], 110)
 
     async def test_native_oversize_references_return_a_reason_without_creating_jobs(self):
         self.catalog.update(NATIVE_MODELS)

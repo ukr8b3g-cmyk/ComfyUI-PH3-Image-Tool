@@ -44,7 +44,11 @@ class Harness:
             elif op=='deleteQueued':value={}
             elif op=='archive':binary=store.export(path)
             elif op=='encode':binary=exporting.encode_image(store.image(data['asset']),data)[0]
-            elif path=='/capabilities':value={**self.models,'storage':str(store.root)}
+            elif path=='/capabilities':value={**self.models,'storage':str(store.root),'selection_reblend':True,'version':load('runtime').TOOL_VERSION}
+            elif path=='/selection/reblend':
+                blend=load('selection_blend').reblend(store,data)
+                if data.get('preview'):binary=blend
+                else:value=blend
             elif path=='/projects' and op=='get':value=store.projects()
             elif path=='/projects' and op=='post':
                 doc=data.get('document') or schema.default_document(data.get('width',1024),data.get('height',1024))
@@ -95,6 +99,7 @@ const bytes64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.from
 window.ph3UploadCount=0;window.ph3UploadCompleted=0;window.ph3HoldUploadAt=0;window.ph3ReleaseUpload=null;
 const client={get:async p=>(await call('get',p)).value,post:async(p,d)=>(await call('post',p,d)).value,put:async(p,d)=>(await call('put',p,d)).value,
  upload:async(blob,name='image.png',path='/assets')=>{if(++window.ph3UploadCount===window.ph3HoldUploadAt)await new Promise(resolve=>window.ph3ReleaseUpload=()=>{window.ph3ReleaseUpload=null;resolve();});const result=(await call('upload',path,{base64:bytes64(new Uint8Array(await blob.arrayBuffer())),name})).value;window.ph3UploadCompleted++;return result;},
+ previewSelectionBlend:async data=>new Blob([Uint8Array.from(atob((await call('post','/selection/reblend',{...data,preview:true})).binary),c=>c.charCodeAt(0))],{type:'image/png'}),
  assetURL:k=>{if(!assets.has(k))throw Error('Missing test asset '+k);return assets.get(k);},
  encode:async options=>new Blob([Uint8Array.from(atob((await call('encode','',options)).binary),c=>c.charCodeAt(0))],{type:'image/'+options.format}),
  archive:async id=>new Blob([Uint8Array.from(atob((await call('archive',id)).binary),c=>c.charCodeAt(0))],{type:'application/zip'}),
@@ -145,6 +150,7 @@ def check_selection_adoption(browser, root, errors):
         page.set_content('<meta charset="utf-8"><link data-ph3-tool><style>' + css + '</style>')
         page.evaluate('id=>window.ph3TestProject=id', project['id'])
         page.evaluate('async MODULE_URL=>{' + BRIDGE + '}', bundle_modules(page))
+        assert page.locator('.ph3-footer').inner_text().endswith(load('runtime').TOOL_VERSION)
         page.locator('[data-tab=candidates]').click()
         page.locator('.ph3-card button[data-i18n=apply]').click()
         page.wait_for_function('ph3Editor.snapshot().layers.length===2')
@@ -169,8 +175,48 @@ def check_selection_adoption(browser, root, errors):
         page.evaluate('id=>ph3Open(id)', project['id'])
         page.wait_for_function('ph3Editor.snapshot().layers.length===2')
         assert page.evaluate('ph3Editor.snapshot().layers[1]') == layer
+        if legacy:
+            old = store.read(project['id'])
+            del old['document']['layers'][1]['generation']['reblend']
+            store.save(old['id'], old['document'], old['revision'])
+            page.locator('.ph3-top [data-i18n=close]').click()
+            page.locator('.ph3-tool[open]').wait_for(state='hidden')
+            page.evaluate('id=>ph3Open(id)', old['id'])
+            page.locator('.ph3-top [data-i18n=save]').click()
+            page.wait_for_function('revision=>ph3Applied.revision===revision', arg=old['revision']+2)
+            fresh = storage.Store(root / 'portable')
+            imported = fresh.import_archive(store.export(old['id']))
+            recipe = imported['document']['layers'][1]['generation']['reblend']
+            assert recipe == layer['generation']['reblend'] and not fresh.jobs(imported['id'])
+            assert fresh.image(recipe['result_asset']).size == (w, h)
+        page.locator('[data-tab=candidates]').click()
+        page.locator('.ph3-card [data-i18n=selectionBlend]').click()
+        dialog = page.locator('.ph3-selection-blend')
+        for control, value in zip(dialog.locator('input[type=number]').all(), ('12', '70')):
+            control.fill(value)
+            control.press('Tab')
+        dialog.locator('.ph3-modal-actions .primary').click()
+        dialog.wait_for(state='detached')
+        revision = store.read(project['id'])['revision']
+        page.locator('.ph3-top [data-i18n=save]').click()
+        page.wait_for_function('revision=>ph3Applied.revision>revision', arg=revision)
+        adjusted = store.read(project['id'])['document']
+        pixels = store.image(adjusted['composite_asset'])
+        assert pixels.tobytes() != actual.tobytes()
+        assert Image.composite(source, pixels, mask.point(lambda v: 255 if v else 0)).tobytes() == source.tobytes()
+        assert len(harness.graphs) == 0
+        page.locator('[data-tab=layers]').click()
+        page.locator('[data-i18n=saveCopy]').click()
+        page.wait_for_function('id=>ph3Applied.id!==id', arg=project['id'])
+        copy_id = page.evaluate('ph3Applied.id')
+        page.locator('[data-tab=candidates]').click()
+        assert page.locator('.ph3-card').count() == 0
+        assert store.jobs(copy_id) == [] and len(store.jobs(project['id'])) == 1
+        assert store.read(copy_id)['document']['layers'] == adjusted['layers']
         page.close()
-    return 'new and legacy selection candidates preserve corrected RGB and one mask through apply, Undo/Redo and save/reopen'
+    return ['new and legacy selection candidates preserve corrected RGB and one mask through apply, Undo/Redo and save/reopen',
+            'reblending a saved layer changes the composite only within the selection and queues no generation',
+            'saving a project copy keeps adjusted layers and separates its candidate history from the original']
 
 
 def main(output):
@@ -245,7 +291,7 @@ def main(output):
             with page.expect_file_chooser() as fc:click('importProject','.ph3-modal')
             fc.value.set_files(str(boundary_export));ready();page.wait_for_function('!document.querySelector(".ph3-overlay")');assert snap()['layers']==boundary_saved['layers'];assert schema.asset_ids(snap())==schema.asset_ids(boundary_saved);assert len(schema.asset_ids(snap()))==1025;checks.append('256 layers and 1025 images export and re-import through actual browser controls with all asset references intact')
             page.screenshot(path=str(output/'boundary-reimported.png'));(output/'boundary-roundtrip.json').write_text(json.dumps({'layers':256,'assets':len(schema.asset_ids(snap())),'export_bytes':boundary_export.stat().st_size,'layer_json_equal':True,'asset_ids_equal':True},indent=2),encoding='utf8')
-            checks.append(check_selection_adoption(browser,Path(temp)/'selection-store',errors))
+            checks.extend(check_selection_adoption(browser,Path(temp)/'selection-store',errors))
             assert not errors,errors;checks.append('no unhandled browser exceptions');browser.close()
     result={'environment':'Offline Chromium with real CPU storage and canvas; no ComfyUI or GPU inference','checks':checks,'passed':len(checks),'page_errors':errors,'gpu_tested':False,'live_comfyui_tested':False}
     (output/'browser-results.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf8');print(json.dumps(result,ensure_ascii=False,indent=2))

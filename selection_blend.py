@@ -3,7 +3,7 @@ from io import BytesIO
 import math
 
 import numpy as np
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops, ImageFilter, ImageOps
 
 from .schema import MAX_SIDE, ToolError, dimensions, number
 
@@ -114,7 +114,13 @@ def reblend(store, payload):
         original = store.image(payload["mask_asset"]).getchannel("R")
         if original.size != patch.size:
             raise ToolError("MASK_SIZE", "The saved mask must match the crop")
-        mask_box = (0, 0, width, height)
+        # Pixels beyond an interior crop edge are outside the old selection.
+        # A canvas edge, on the other hand, has no neighboring canvas pixels.
+        border = (int(x > 0), int(y > 0), int(x + width < source.width), int(y + height < source.height))
+        if any(border):
+            original = ImageOps.expand(original, border=border, fill=0)
+        left, top = border[:2]
+        mask_box = (left, top, left + width, top + height)
     selection = original.crop(mask_box)
     if not selection.getbbox():
         raise ToolError("EMPTY_SELECTION", "The original selection is empty")

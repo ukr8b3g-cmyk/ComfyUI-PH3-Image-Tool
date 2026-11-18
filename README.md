@@ -1,4 +1,4 @@
-# ComfyUI-PH3-Image-Tool v0.9.1
+# ComfyUI-PH3-Image-Tool v0.9.2
 
 <img width="1628" height="708" alt="download_4" src="https://github.com/user-attachments/assets/6d78368d-3b06-4013-a2f0-5a4290d75b0d" />
 
@@ -25,7 +25,7 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/ComfyUI-PH3-Image-Tool.git
 ```
 
-更新前にエディターとComfyUIワークフローを保存し、必要なら`.ph3tool`プロジェクトも書き出してください。既存フォルダーへ更新後、**ComfyUIを再起動してCtrl+F5**。右下の表示は **0.9.1** です。
+更新前にエディターとComfyUIワークフローを保存し、必要なら`.ph3tool`プロジェクトも書き出してください。既存フォルダーへ更新後、**ComfyUIを再起動してCtrl+F5**。右下の表示は **0.9.2** です。
 
 **`ComfyUI/user/default/ph3_image_tool/` の作品データは削除しないでください。** ノードID、image / alpha / selection出力、作品形式version 1は保持しています。モデル・フォント・利用者作品は配布ZIPに含めません。ComfyUI-Manager/Registryへの登録は今回のリリースに含みません。
 
@@ -53,7 +53,7 @@ MiniMax-H3-Imageでは `qwen3.5_9b_w4a8_gptq.safetensors` も選べます。同�
 
 **Recommended for P-H3 Image:** `p-h3-image_prompt_upsampler_w4a8.safetensors`. MiniMax-H3-Image can use the same file or `qwen3.5_9b_w4a8_gptq.safetensors`. Put the file in `ComfyUI/models/text_encoders/` and select it under **Settings → Image models → Prompt enhancer (optional)**. Both enhancers returned usable prompts for the same selection edit, and their relative speed varied across local runs.
 
-## v0.9.1でできること
+## v0.9.2でできること
 
 | 操作 | 内容 |
 |---|---|
@@ -69,7 +69,7 @@ MiniMax-H3-Imageでは `qwen3.5_9b_w4a8_gptq.safetensors` も選べます。同�
 | 背景削除 | Auto/ISNet/色指定/選択。クリックで追加削除・復元し、新しい透過レイヤーとして適用。ISNetは初回の取得確認後に保存・再利用 |
 | UI | 分離できるプロパティ/レイヤー/履歴、コンパクトな新規/復元画面、4色の重要操作、共有スウォッチ。表示回転は上部操作バーとRキー |
 
-[現行の操作ガイド](docs/USAGE.md) / [リリース内容](docs/releases/v0.9.1.md) / [変更履歴](CHANGELOG.md)
+[現行の操作ガイド](docs/USAGE.md) / [リリース内容](docs/releases/v0.9.2.md) / [変更履歴](CHANGELOG.md)
 
 ## 保存・書き出し
 
@@ -87,7 +87,7 @@ Auto-save stores completed generation candidates as WebP (default quality 80) wi
 - main反映: [ボタンの使用条件とマスクの説明](docs/COMMAND_AVAILABILITY_JA.md) / [選択部分のコピー・貼り付け](docs/PIXEL_CLIPBOARD_JA.md)。使えない操作を理由付きで無効化し、切り抜き済み画像へのマスク再適用が不要なことを説明しています。Node210件、隔離Chromium31項目で確認。
 - main反映: [ce59e89レビュー4件への対応](docs/REVIEW_CE59E89_FIXES_JA.md)。保存後の編集、バックアップ上限、閉じた加工画面からの遅延適用、ブラウザテストの読込を修正しています。
 - v0.9.0公開後の修正（main）: [v0.9.0監査5件の修正・回帰検証](docs/AUDIT_FIXES_JA.md)。品質1〜100の保存互換性、加工・ペイントの整合、対象レイヤーだけのプレビュー、外部削除ジョブの終了を修正。新規/サイズ変更は最大2048×2048、旧作品の読込・保存互換性は維持しています。
-- リリース時のPython/JavaScriptテストとZIP照合は[リリース記録](docs/releases/v0.9.1.md)を参照してください。
+- リリース時のPython/JavaScriptテストとZIP照合は[リリース記録](docs/releases/v0.9.2.md)を参照してください。
 - [2026-11-09の実Chrome/P-H3検証](docs/PRESERVED_LETTERING_VALIDATION_JA.md)では横書き/縦書きの文字保持と透過PNGを確認しています。**これは以前の検証で、v0.9.0全体の新しい実GPU/実画面確認を意味しません。** 最新の編集操作は上記の隔離Chromium試験で確認していますが、稼働中ComfyUIでの全操作や新しいGPU推論を確認したものではありません。
 - 任意の第三者画像生成では文字の保持を保証しません。空の吹き出しと既存文字を合成する処理は、元文字をAIへ描き直させません。
 - 信頼できる単一利用者のローカルComfyUI向けです。独立した認証/複数利用者の分離はありません。

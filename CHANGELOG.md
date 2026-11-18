@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.2 — 2026-11-18
+
+- Adjust the inward feather and edge color match of saved selection edits without regenerating. Fix old candidates cropped exactly to the selection and retain adjustment data in portable projects.
+- Keep candidate history scoped to the active project after saving a copy.
+- Enable image generation when the selected instruction contains text and display the current installed version.
+- See [release notes and validation](docs/releases/v0.9.2.md).
+
 ## 0.9.1 — 2026-11-12
 
 - Add MiniMax-H3-Image alongside P-H3 Image, with configurable sampling and local model selection. Choose generation scope automatically and tailor MiniMax prompt enhancement to new images, full edits, or selections.

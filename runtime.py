@@ -3,6 +3,8 @@ from functools import lru_cache
 from pathlib import Path
 from .storage import Store
 
+TOOL_VERSION = "0.9.2"
+
 @lru_cache(maxsize=1)
 def get_store():
     import folder_paths

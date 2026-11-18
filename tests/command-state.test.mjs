@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {commandState} from '../web/command-state.mjs';
 const image=(id='one',extra={})=>({id,type:'image',visible:true,locked:false,...extra});
-const context=(layers=[],extra={})=>({doc:{layers,references:[],prompt:{original:''}},selected:layers[0]?.id,hasSelection:false,...extra});
+const context=(layers=[],extra={})=>({doc:{layers,references:[],prompt:{original:'Edit the image',source:'original'}},selected:layers[0]?.id,hasSelection:false,...extra});
 test('empty documents do not offer meaningless layer, mask, cut, paste or merge commands',()=>{
  for(const key of ['maskLayer','clearLayerMask','remove','up','down','copyPixels','cutPixels','pastePixels','mergeVisible','comic','cutout'])assert.equal(commandState(key,context()).disabled,true,key);
  assert.equal(commandState('addText',context()).disabled,false);
@@ -19,6 +19,17 @@ test('clipboard, references, generation scope, undo and redo update with context
  assert.equal(commandState('undo',ctx).disabled,true);ctx.history={past:[{}],future:[]};assert.equal(commandState('undo',ctx).disabled,false);assert.equal(commandState('redo',ctx).disabled,true);
  ctx.mode='selection';assert.equal(commandState('generate',ctx).reason,'needSelection');ctx.hasSelection=true;assert.equal(commandState('generate',ctx).disabled,false);ctx.modelsReady=false;assert.equal(commandState('generate',ctx).reason,'setupFirst');
  ctx.doc.references=Array(7).fill({});assert.equal(commandState('addReference',ctx).reason,'referenceCapacity');
+});
+test('generation requires the selected instruction while enhancement reads the original',()=>{
+ const ctx=context([image()]);
+ ctx.doc.prompt={original:' ',ai:'Add an apple',source:'original'};
+ assert.equal(commandState('generate',ctx).reason,'needPrompt');
+ ctx.doc.prompt.source='ai';
+ assert.equal(commandState('generate',ctx).disabled,false);
+ assert.equal(commandState('enhance',ctx).reason,'needPrompt');
+ ctx.doc.prompt={original:'Add an apple',ai:'',source:'ai'};
+ assert.equal(commandState('generate',ctx).reason,'needPrompt');
+ assert.equal(commandState('enhance',ctx).disabled,false);
 });
 test('decoration-only canvases are not offered as an excluded image source',()=>{
  const ctx=context([image('stamp',{decoration:true})],{mode:'full'});assert.equal(commandState('generate',ctx).reason,'needImage');ctx.doc.settings={include_text:true};assert.equal(commandState('generate',ctx).disabled,false);

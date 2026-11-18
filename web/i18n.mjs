@@ -188,7 +188,7 @@ comicMenuHelp:["白黒仕上げか、設定した画像モデルでの漫画化�
   sampler:['Sampler','Sampler'],sigmas:['Sigma配列（上級者）','Sigma schedule (advanced)'],seed:['Seed','Seed'],randomSeed:['生成ごとにSeedを変更','Randomize seed for each generation'],
   choose:['選択してください','Select…'],none:['なし','None'],cancel:['取消','Cancel'],ok:['適用','Apply'],refresh:['再確認','Refresh'],
   empty:['画像をドロップするか、新規生成してください。','Drop an image or generate a new one.'],
-  notFinal:['v0.9.0 · 1枚画像の生成・レイヤー編集','v0.9.0 · Single-image generation and layered editing'],
+  notFinal:['1枚画像の生成・レイヤー編集','Single-image generation and layered editing'],
   inputHint:['選択外は合成で保持します。文字は標準ではAI入力に含めません。','Outside-selection pixels are preserved by compositing. Text is excluded from AI input by default.'],
   newRefs:['新規生成では参照画像を使いません。参照編集には画像全体編集を選んでください。','New-image mode does not use references. Choose entire-image editing to use them.'],
   modelWarning:['ComfyUIが認識したファイルから、生成方式に合うモデルを選べます。','Choose compatible model files from your ComfyUI installation.'],

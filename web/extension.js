@@ -16,7 +16,7 @@ function install(node,knownType=false){
     let baseline=[String(widget(node,'project_id')?.value||''),Number(widget(node,'revision')?.value||0)];
     try{
       // Keep the launch widget independent of the editor module graph.
-      const [{Client},{openStudio}]=await Promise.all([import('./client.mjs?v=2501ba46b8459d7a'),import('./studio.mjs?v=2a2fd6839af68286')]);
+      const [{Client},{openStudio}]=await Promise.all([import('./client.mjs?v=2501ba46b8459d7a'),import('./studio.mjs?v=6cdd2813eefa4c1a')]);
       const client=new Client({fetcher:(path,opts)=>api.fetchApi(path,opts),url:path=>api.apiURL(path),clientId:api.clientId,progressEvents:api});
       const editor=await openStudio({client,onGenerationJob:(job,graph)=>monitor.queued(job,graph),hostLocale:()=>app.ui?.settings?.getSettingValue?.('Comfy.Locale')||document.documentElement.lang||navigator.language,projectId:baseline[0],initialModelEngine:node.properties?.ph3_model_engine,initialModelFiles:node.properties?.ph3_model_files,inputAsset:node.__ph3Input||null,
         onApply:record=>{

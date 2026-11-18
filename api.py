@@ -12,7 +12,7 @@ from .storage import MAX_UPLOAD, MAX_ARCHIVE
 from .generation import prepare_job
 from .selection_blend import reblend
 from .processing import comic, color_cutout, selection_cutout, isnet_cutout, COMIC_PRESETS
-from .runtime import get_store, model_catalog
+from .runtime import TOOL_VERSION, get_store, model_catalog
 from . import lettering
 from .exporting import encode_image
 from .manga import available as manga_available, store_finish
@@ -151,7 +151,7 @@ def register_routes(routes, store_provider=get_store, catalog_provider=model_cat
                     lettering_styles=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.STYLES.values()],
                     lettering_decorations=[{k: p[k] for k in ('id', 'ja', 'en')} for p in lettering.DECORATIONS.values()],
                     lettering_finishing=True, preserved_lettering_bubbles=True, selection_reblend=True,
-                    version="0.9.1", comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
+                    version=TOOL_VERSION, comic_presets=list(COMIC_PRESETS), max_pixels=16_777_216, manga_available=manga_available())
         return web.json_response(data)
 
     @routes.post(BASE + "/lettering/preview")

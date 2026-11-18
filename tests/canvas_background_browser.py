@@ -49,9 +49,9 @@ def main(output):
         page.expose_function('ph3TestRPC', harness.rpc)
         css = (ROOT / 'web' / 'style.css').read_text(encoding='utf-8')
         page.set_content('<meta charset="utf-8"><link data-ph3-tool><style>' + css + '</style>')
-        bridge = BRIDGE.replace('openStudio({client,onApply:', 'openStudio({client,projectId,onApply:', 1)
-        page.evaluate('async ({MODULE_URL,projectId})=>{' + bridge + '}',
-                      {'MODULE_URL': bundle_modules(page), 'projectId': record['id']})
+        page.evaluate('id=>window.ph3TestProject=id', record['id'])
+        page.evaluate('async MODULE_URL=>{' + BRIDGE + '}', bundle_modules(page))
+        assert page.evaluate('ph3Editor.snapshot().settings.model_engine') == generation.NATIVE_IMAGE
 
         editor = page.locator('.ph3-tool[open]')
         scope = editor.locator('select[data-i18n-label=mode]')

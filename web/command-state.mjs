@@ -33,7 +33,10 @@ export function commandState(key,{doc,selected,hasSelection=false,clipboard=null
  case 'addReference':reason=(doc.references?.length||0)>=7?'referenceCapacity':null;break;
  case 'undo':reason=!history.past?.length?'nothingUndo':null;break;
  case 'redo':reason=!history.future?.length?'nothingRedo':null;break;
- case 'generate':reason=!modelsReady?'setupFirst':generationScopeError;break;
+ case 'generate':
+  reason=!modelsReady?'setupFirst':generationScopeError;
+  if(!reason&&!doc.prompt?.[doc.prompt?.source||'original']?.trim())reason='needPrompt';
+  break;
  case 'enhance':
   if(!doc.prompt?.original?.trim())reason='needPrompt';
   else if(doc.settings?.model_engine===NATIVE_IMAGE&&!enhancerAvailable)reason='choosePromptEnhancer';

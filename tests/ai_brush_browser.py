@@ -85,6 +85,8 @@ def main(output, native=False):
         expect(brush).to_have_attribute('aria-pressed', 'true')
         expect(scope).to_have_value('auto')
         expect(scope).to_have_attribute('title', '自動 (画像全体を編集)')
+        expect(generate).to_be_disabled()
+        generate_panel.get_by_role('textbox', name='原文', exact=True).fill('Add two small red highlights.')
         expect(generate).to_be_enabled()
         checks.append('Choosing the AI brush opens generation; auto scope stays on the full image until a selection exists')
 
